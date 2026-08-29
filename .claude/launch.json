@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vendor360",
+      "runtimeExecutable": "D:/flutter/bin/flutter.bat",
+      "runtimeArgs": [
+        "run",
+        "-d",
+        "web-server",
+        "--web-port",
+        "5501",
+        "--web-hostname",
+        "127.0.0.1"
+      ],
+      "cwd": "app",
+      "port": 5501,
+      "url": "http://127.0.0.1:5501"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+# Vendor360 backend dependencies.
+#
+# Install:  python -m pip install -r requirements.txt
+# Seed:     python seed.py --reset
+# Run:      python -m uvicorn app.main:app --reload --port 8010
+#
+# Upper bounds are set at the next major version: these are all libraries that
+# have broken APIs across majors before, and a student clone six months from
+# now should install the stack this was verified against.
+
+# ------------------------------------------------------------------- API
+fastapi>=0.115.0,<1.0
+uvicorn[standard]>=0.30.0,<1.0
+pydantic>=2.8.0,<3.0
+python-multipart>=0.0.9          # form/multipart parsing for FastAPI
+
+# -------------------------------------------------------------- database
+# SQLite in development; the same models run on Supabase Postgres by changing
+# DATABASE_URL alone (see app/core/db.py for the portable column types).
+sqlalchemy>=2.0.30,<3.0
+
+# ------------------------------------------------------------------- auth
+# JWT session tokens. OTP hashing uses stdlib hmac/hashlib, not passlib.
+python-jose[cryptography]>=3.3.0,<4.0
+
+# ---------------------------------------------------- forecasting engine
+# The TRD names Prophet. Prophet compiles a Stan backend and is fragile to
+# install on current Python, so app/services/forecasting.py uses a
+# gradient-boosted regressor over the same feature semantics (seasonality plus
+# holiday regressors) behind a stable interface. Adding Prophet later means
+# adding it here and changing `_fit_base_model` — nothing that calls it.
+numpy>=1.26,<3.0
+scikit-learn>=1.4,<2.0
+
+# ------------------------------------------------------------------ test
+pytest>=8.0,<9.0

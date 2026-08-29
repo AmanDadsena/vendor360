@@ -1,0 +1,50 @@
+name: vendor360
+description: "Vendor360 — AI-powered predictive intelligence for India's local vendors."
+publish_to: 'none'
+
+# versionName+versionCode for Play. Bump the build number on every upload.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  flutter_riverpod: ^3.4.2
+  go_router: ^17.5.0
+  intl: ^0.20.3
+  http: ^1.5.0
+
+  # The offline queue. The TRD specifies SQLite via drift/sqflite; this uses
+  # shared_preferences because it is the one durable store that behaves
+  # identically on Android and on Flutter web, where sqflite has no
+  # implementation. The queue holds tens of pending events, not a dataset, so
+  # a key-value store meets the requirement that survives an app restart
+  # (TC-S04). Swapping in drift means changing `offline_queue.dart` only.
+  shared_preferences: ^2.5.3
+
+  # Design system and domain, kept as packages so neither can reach for
+  # networking or state management.
+  vendor360_ui:
+    path: ../packages/vendor360_ui
+  vendor360_core:
+    path: ../packages/vendor360_core
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Inter is bundled rather than fetched at runtime, so typography is identical
+  # on every device and correct with no network on first launch — which for an
+  # offline-first app is the normal case, not the exception.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: ../packages/vendor360_ui/assets/fonts/Inter-Variable.ttf
