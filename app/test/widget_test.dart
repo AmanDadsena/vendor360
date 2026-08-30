@@ -90,6 +90,33 @@ void main() {
       expect(queue.depth, 0);
     });
 
+    test('in-memory fallback works and reports itself as not durable', () {
+      // Startup must never block or fail on storage. When platform storage
+      // cannot be opened the app runs on this instead of showing a blank
+      // screen — but it says so, rather than implying work is safely stored.
+      final queue = OfflineQueue.inMemory();
+
+      expect(queue.isDurable, isFalse);
+      expect(queue.deviceId, startsWith('dev-'));
+      expect(queue.depth, 0);
+    });
+
+    test('prefs-backed queue reports itself as durable', () async {
+      final queue = await OfflineQueue.open();
+      expect(queue.isDurable, isTrue);
+    });
+
+    test('in-memory queue supports the full enqueue/settle cycle', () async {
+      final queue = OfflineQueue.inMemory();
+      final event = await queue.enqueueMovement(
+        itemId: 'i', qty: 3, movement: 'sale',
+      );
+
+      expect(queue.depth, 1);
+      await queue.settle(<String, String>{event.clientEventId: 'applied'});
+      expect(queue.depth, 0);
+    });
+
     test('survives being reopened', () async {
       final first = await OfflineQueue.open();
       await first.enqueueMovement(itemId: 'i', qty: 4, movement: 'sale');

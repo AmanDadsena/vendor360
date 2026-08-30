@@ -221,25 +221,34 @@ class _ConsentList extends ConsumerWidget {
         data: (list) => Column(
           children: <Widget>[
             for (final consent in list)
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                value: consent.granted,
-                activeThumbColor: colors.accent,
-                title: Text(
-                  consent.lenderName,
-                  style: v360.text.bodyStrong.copyWith(color: colors.ink),
+              // ListTile paints its ink splash on the nearest Material
+              // ancestor, and V360Card's coloured Container occludes it — so
+              // without this the toggle gives no touch feedback at all. That
+              // matters most on exactly this control: it decides whether a
+              // lender can see the vendor's score, and a vendor who cannot tell
+              // whether the tap registered will tap again and flip it back.
+              Material(
+                color: Colors.transparent,
+                child: SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  value: consent.granted,
+                  activeThumbColor: colors.accent,
+                  title: Text(
+                    consent.lenderName,
+                    style: v360.text.bodyStrong.copyWith(color: colors.ink),
+                  ),
+                  subtitle: Text(
+                    consent.lenderKind.toUpperCase(),
+                    style: v360.text.label.copyWith(color: colors.inkSubtle),
+                  ),
+                  onChanged: (value) async {
+                    HapticFeedback.selectionClick();
+                    await ref
+                        .read(repositoryProvider)
+                        .setConsent(consent.lenderId, value);
+                    ref.invalidate(consentsProvider);
+                  },
                 ),
-                subtitle: Text(
-                  consent.lenderKind.toUpperCase(),
-                  style: v360.text.label.copyWith(color: colors.inkSubtle),
-                ),
-                onChanged: (value) async {
-                  HapticFeedback.selectionClick();
-                  await ref
-                      .read(repositoryProvider)
-                      .setConsent(consent.lenderId, value);
-                  ref.invalidate(consentsProvider);
-                },
               ),
             SizedBox(height: v360.spacing.sm),
             Row(

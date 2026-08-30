@@ -287,7 +287,10 @@ class _TodayCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: RollingNumber(
                     value: data.todaySalesValue.rupees,
-                    prefix: '₹',
+                    // Money.display carries the rupee symbol and the lakh
+                    // grouping; passing the raw number here would render
+                    // ₹12012.0 on the most-read figure in the product.
+                    format: (_) => data.todaySalesValue.display,
                     style: v360.text.display.copyWith(
                       color: Colors.white,
                       fontSize: 42,

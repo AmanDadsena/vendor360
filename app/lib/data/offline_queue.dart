@@ -58,6 +58,80 @@ class QueuedEvent {
       );
 }
 
+/// The small slice of key-value storage the queue actually needs.
+///
+/// Extracted as an interface for two reasons: it lets the app fall back to an
+/// in-memory store when the platform's storage is unavailable rather than
+/// failing to start, and it lets the queue be tested without mocking a plugin.
+abstract interface class KeyValueStore {
+  String? getString(String key);
+  int? getInt(String key);
+  List<String>? getStringList(String key);
+
+  Future<void> setString(String key, String value);
+  Future<void> setInt(String key, int value);
+  Future<void> setStringList(String key, List<String> value);
+  Future<void> remove(String key);
+
+  /// False when writes will not survive a restart, so the UI can say so
+  /// instead of implying work is safely stored.
+  bool get isDurable;
+}
+
+class _PrefsStore implements KeyValueStore {
+  _PrefsStore(this._prefs);
+
+  final SharedPreferences _prefs;
+
+  @override
+  bool get isDurable => true;
+
+  @override
+  String? getString(String key) => _prefs.getString(key);
+  @override
+  int? getInt(String key) => _prefs.getInt(key);
+  @override
+  List<String>? getStringList(String key) => _prefs.getStringList(key);
+
+  @override
+  Future<void> setString(String key, String value) => _prefs.setString(key, value);
+  @override
+  Future<void> setInt(String key, int value) => _prefs.setInt(key, value);
+  @override
+  Future<void> setStringList(String key, List<String> value) =>
+      _prefs.setStringList(key, value);
+  @override
+  Future<void> remove(String key) => _prefs.remove(key);
+}
+
+/// Last-resort store used when platform storage cannot be opened.
+///
+/// Every flow keeps working and the queue depth is still shown; only
+/// durability across a restart is lost.
+class _MemoryStore implements KeyValueStore {
+  final Map<String, Object> _values = <String, Object>{};
+
+  @override
+  bool get isDurable => false;
+
+  @override
+  String? getString(String key) => _values[key] as String?;
+  @override
+  int? getInt(String key) => _values[key] as int?;
+  @override
+  List<String>? getStringList(String key) => _values[key] as List<String>?;
+
+  @override
+  Future<void> setString(String key, String value) async => _values[key] = value;
+  @override
+  Future<void> setInt(String key, int value) async => _values[key] = value;
+  @override
+  Future<void> setStringList(String key, List<String> value) async =>
+      _values[key] = value;
+  @override
+  Future<void> remove(String key) async => _values.remove(key);
+}
+
 /// A durable local queue of pending writes.
 ///
 /// The device is the source of truth for in-progress actions (TRD 7). Every
@@ -71,7 +145,7 @@ class QueuedEvent {
 /// across a kill-and-relaunch — the actual requirement in TC-S04 — is
 /// unaffected by that choice.
 class OfflineQueue {
-  OfflineQueue._(this._prefs);
+  OfflineQueue._(this._store);
 
   static const String _queueKey = 'v360.sync.queue';
   static const String _seqKey = 'v360.sync.seq';
@@ -82,25 +156,33 @@ class OfflineQueue {
   /// queue behind it.
   static const int maxAttempts = 5;
 
-  final SharedPreferences _prefs;
+  final KeyValueStore _store;
+
+  /// True when queued work survives a restart. False after a fall back to the
+  /// in-memory store, which the app surfaces rather than hides.
+  bool get isDurable => _store.isDurable;
 
   static Future<OfflineQueue> open() async =>
-      OfflineQueue._(await SharedPreferences.getInstance());
+      OfflineQueue._(_PrefsStore(await SharedPreferences.getInstance()));
+
+  /// Non-durable queue, used when platform storage cannot be opened and in
+  /// tests that do not care about persistence.
+  static OfflineQueue inMemory() => OfflineQueue._(_MemoryStore());
 
   /// Stable per-install identifier, used to order events per device on the
   /// server and to attribute a conflict to the device that lost.
   String get deviceId {
-    var id = _prefs.getString(_deviceKey);
+    var id = _store.getString(_deviceKey);
     if (id == null) {
       final rng = Random.secure();
       id = 'dev-${List<int>.generate(8, (_) => rng.nextInt(16)).map((n) => n.toRadixString(16)).join()}';
-      _prefs.setString(_deviceKey, id);
+      _store.setString(_deviceKey, id);
     }
     return id;
   }
 
   List<QueuedEvent> get pending {
-    final raw = _prefs.getStringList(_queueKey) ?? const <String>[];
+    final raw = _store.getStringList(_queueKey) ?? const <String>[];
     final events = <QueuedEvent>[];
     for (final entry in raw) {
       try {
@@ -118,15 +200,15 @@ class OfflineQueue {
   int get depth => pending.length;
 
   Future<void> _write(List<QueuedEvent> events) async {
-    await _prefs.setStringList(
+    await _store.setStringList(
       _queueKey,
       events.map((e) => jsonEncode(e.toJson())).toList(),
     );
   }
 
   int _nextSeq() {
-    final next = (_prefs.getInt(_seqKey) ?? 0) + 1;
-    _prefs.setInt(_seqKey, next);
+    final next = (_store.getInt(_seqKey) ?? 0) + 1;
+    _store.setInt(_seqKey, next);
     return next;
   }
 
@@ -213,15 +295,15 @@ class OfflineQueue {
     await _write(remaining);
   }
 
-  Future<void> clear() => _prefs.remove(_queueKey);
+  Future<void> clear() => _store.remove(_queueKey);
 
   /// Cached authoritative state, so a cold launch with no signal still shows
   /// the vendor's real inventory rather than an empty screen.
   Future<void> cacheSnapshot(String key, Object value) =>
-      _prefs.setString('v360.cache.$key', jsonEncode(value));
+      _store.setString('v360.cache.$key', jsonEncode(value));
 
   dynamic readSnapshot(String key) {
-    final raw = _prefs.getString('v360.cache.$key');
+    final raw = _store.getString('v360.cache.$key');
     if (raw == null) return null;
     try {
       return jsonDecode(raw);
@@ -230,12 +312,12 @@ class OfflineQueue {
     }
   }
 
-  String? get token => _prefs.getString('v360.auth.token');
+  String? get token => _store.getString('v360.auth.token');
   Future<void> setToken(String? value) async {
     if (value == null) {
-      await _prefs.remove('v360.auth.token');
+      await _store.remove('v360.auth.token');
     } else {
-      await _prefs.setString('v360.auth.token', value);
+      await _store.setString('v360.auth.token', value);
     }
   }
 }

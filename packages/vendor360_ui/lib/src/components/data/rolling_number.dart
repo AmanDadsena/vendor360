@@ -14,6 +14,7 @@ class RollingNumber extends StatelessWidget {
     this.style,
     this.prefix = '',
     this.suffix = '',
+    this.format,
   });
 
   final num value;
@@ -21,13 +22,25 @@ class RollingNumber extends StatelessWidget {
   final String prefix;
   final String suffix;
 
+  /// Turns the value into the string that is rendered. Defaults to
+  /// `value.toString()`.
+  ///
+  /// Required for currency. Indian rupees group by lakh — 12,34,567, not
+  /// 1,234,567 — and the default renders 1234567 with no separators at all,
+  /// which at a glance misreads by an order of magnitude. A callback rather
+  /// than a currency flag keeps this package free of app models: the caller
+  /// supplies the formatting, the component only animates the glyphs.
+  final String Function(num value)? format;
+
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
     final motion = MotionScope.of(context);
     final effective =
         style ?? v360.text.display.copyWith(color: v360.colors.ink);
-    final digits = value.toString().split('');
+    // Every glyph animates, commas and separators included, so a grouped
+    // figure still rolls as one number rather than jumping.
+    final digits = (format?.call(value) ?? value.toString()).split('');
 
     // A four- or five-digit figure at display size can exceed a narrow
     // card. Scaling down preserves the design's big-number treatment
