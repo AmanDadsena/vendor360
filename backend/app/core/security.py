@@ -25,13 +25,20 @@ from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import Vendor
+from ..models import DistributorUser, Vendor
 from .config import get_settings
 from .db import get_db, utcnow
 
 _bearer = HTTPBearer(auto_error=False)
 
 MAX_OTP_ATTEMPTS = 5
+
+# The two principal types. A token carries exactly one, and each dependency
+# below asserts its own before touching the database -- so a distributor token
+# replayed against a vendor route is rejected before any query runs, rather
+# than relying on every handler to remember to check.
+ROLE_VENDOR = "vendor"
+ROLE_DISTRIBUTOR = "distributor"
 
 
 def generate_otp() -> str:
@@ -57,12 +64,21 @@ def verify_otp(code: str, phone: str, expected_hash: str) -> bool:
     return hmac.compare_digest(hash_otp(code, phone), expected_hash)
 
 
-def create_access_token(vendor_id: uuid.UUID, phone: str) -> str:
+def create_access_token(
+    subject_id: uuid.UUID, phone: str, role: str = ROLE_VENDOR
+) -> str:
+    """Mint a session token for either principal type.
+
+    `role` defaults to vendor so every existing caller keeps working unchanged.
+    A token minted before this claim existed decodes without one and is treated
+    as a vendor token, which is what it was.
+    """
     settings = get_settings()
     now = datetime.now(timezone.utc)
     payload = {
-        "sub": str(vendor_id),
+        "sub": str(subject_id),
         "phone": phone,
+        "role": role,
         "iat": now,
         "exp": now + timedelta(minutes=settings.access_token_minutes),
     }
@@ -91,18 +107,9 @@ def current_vendor(
     than a bare id makes it awkward for a handler to accidentally query with an
     id taken from the request body instead of the token.
     """
-    if credentials is None or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    payload = decode_token(credentials.credentials)
-    try:
-        vendor_id = uuid.UUID(payload.get("sub", ""))
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(status_code=401, detail="Malformed token subject") from exc
+    payload = _authenticated_payload(credentials)
+    _require_role(payload, ROLE_VENDOR)
+    vendor_id = _subject_id(payload)
 
     vendor = db.scalar(select(Vendor).where(Vendor.id == vendor_id))
     if vendor is None:
@@ -111,6 +118,62 @@ def current_vendor(
         raise HTTPException(status_code=401, detail="Vendor no longer exists")
 
     return vendor
+
+
+def current_distributor(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: Session = Depends(get_db),
+) -> DistributorUser:
+    """Resolve the authenticated distributor user, or reject.
+
+    The mirror of `current_vendor`, and the same discipline applies: every
+    `/dist` handler takes its `supplier_id` from `user.supplier_id` here, never
+    from the request body, so a distributor cannot read another wholesaler's
+    order book by editing a payload.
+    """
+    payload = _authenticated_payload(credentials)
+    _require_role(payload, ROLE_DISTRIBUTOR)
+    user_id = _subject_id(payload)
+
+    user = db.scalar(select(DistributorUser).where(DistributorUser.id == user_id))
+    if user is None:
+        raise HTTPException(status_code=401, detail="Distributor no longer exists")
+
+    return user
+
+
+def _authenticated_payload(
+    credentials: HTTPAuthorizationCredentials | None,
+) -> dict:
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return decode_token(credentials.credentials)
+
+
+def _require_role(payload: dict, expected: str) -> None:
+    """Reject a token minted for the other principal type.
+
+    A missing claim reads as `vendor`: tokens issued before the claim existed
+    were vendor tokens, and treating them as such keeps old sessions working
+    without widening anything — the absent claim can never satisfy the
+    distributor check.
+    """
+    if payload.get("role", ROLE_VENDOR) != expected:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"This endpoint requires a {expected} account",
+        )
+
+
+def _subject_id(payload: dict) -> uuid.UUID:
+    try:
+        return uuid.UUID(payload.get("sub", ""))
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=401, detail="Malformed token subject") from exc
 
 
 def touch_expiry(seconds: int) -> datetime:
