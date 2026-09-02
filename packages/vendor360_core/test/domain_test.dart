@@ -295,4 +295,110 @@ void main() {
       expect(languageFromCode('zz'), AppLanguage.hindi);
     });
   });
+
+  _packQuantityTests();
+}
+
+void _packQuantityTests() {
+  group('PackQuantity', () {
+    test('rounds up to whole cases — never leaves the shop short', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 12, packSize: 10, unit: 'kg',
+      );
+
+      expect(plan.packs, 2);
+      expect(plan.quantity, 20);
+      expect(plan.surplusOver(12), 8);
+      expect(plan.moqApplied, isFalse);
+    });
+
+    test('an exact multiple has no surplus', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 20, packSize: 10, unit: 'kg',
+      );
+
+      expect(plan.packs, 2);
+      expect(plan.surplusOver(20), 0);
+    });
+
+    test('a minimum order raises the count and says so', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 3, packSize: 10, unit: 'kg', moqPacks: 4,
+      );
+
+      expect(plan.packs, 4);
+      expect(plan.moqApplied, isTrue,
+          reason: 'the count came from the minimum, not from need');
+    });
+
+    test('a minimum below what is needed does not apply', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 100, packSize: 10, unit: 'kg', moqPacks: 2,
+      );
+
+      expect(plan.packs, 10);
+      expect(plan.moqApplied, isFalse);
+    });
+
+    test('no shortfall still respects the minimum', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 0, packSize: 12, unit: 'pkt', moqPacks: 1,
+      );
+
+      expect(plan.packs, 1);
+      expect(plan.moqApplied, isTrue);
+    });
+
+    test('a zero pack size is rejected rather than dividing by zero', () {
+      expect(
+        () => PackQuantity.forShortfall(
+          shortfall: 5, packSize: 0, unit: 'kg',
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('converts to a Quantity that keeps its unit', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 5, packSize: 12, unit: 'pkt',
+      );
+
+      expect(plan.asQuantity, const Quantity(12, 'pkt'));
+      expect(() => plan.asQuantity + const Quantity(1, 'kg'), throwsArgumentError);
+    });
+
+    test('costs are per case, not per unit', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 12, packSize: 10, unit: 'kg',
+      );
+
+      expect(plan.costAt(420), 840);
+    });
+
+    test('reads the way a wholesaler quotes it', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 12, packSize: 10, unit: 'kg',
+      );
+
+      expect(plan.packDisplay, '2 × 10 kg');
+      expect(plan.display, '2 cases · 20 kg');
+    });
+
+    test('one case is singular', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 4, packSize: 10, unit: 'kg',
+      );
+
+      expect(plan.display, '1 case · 10 kg');
+    });
+
+    test('editing the count by hand clears the minimum flag', () {
+      final plan = PackQuantity.forShortfall(
+        shortfall: 3, packSize: 10, unit: 'kg', moqPacks: 4,
+      );
+
+      expect(plan.copyWith(packs: 6).moqApplied, isFalse);
+      expect(plan.copyWith(packs: 6).quantity, 60);
+    });
+  });
 }

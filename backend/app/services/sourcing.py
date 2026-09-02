@@ -106,6 +106,18 @@ def salvage_rate(category: str) -> float:
     return SALVAGE_BY_SHELF_LIFE[-1][1]
 
 
+def _short_days(days: float) -> str:
+    """Render a days-of-cover figure without overstating it.
+
+    Under three days the decimal matters -- the difference between 1.4 and 2.4
+    days of milk is whether tomorrow's shelf is empty -- so it is kept, and
+    truncated rather than rounded so the figure is never optimistic.
+    """
+    if days < 3:
+        return f"{math.floor(days * 10) / 10:g}d"
+    return f"{math.floor(days):g}d"
+
+
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Great-circle distance. Good enough at city scale, and dependency-free."""
     radius = 6371.0
@@ -308,8 +320,12 @@ def _explain(options: list[SourcingOption], cover_days: float | None) -> None:
             reasons.append("no order history yet")
 
         if not option.arrives_in_time and cover_days is not None:
+            # This is the warning branch, so the cover figure must never round
+            # up: turning 1.5 days into "2d" against a 2-day lead reads as if
+            # the timing works, which is the opposite of what is being said.
             reasons.append(
-                f"arrives in {option.lead_days}d, stock lasts {cover_days:.0f}d"
+                f"arrives in {option.lead_days}d, stock lasts "
+                f"{_short_days(cover_days)}"
             )
         elif option.arrives_in_time and option.lead_days == 0:
             reasons.append("same-day delivery")
@@ -321,7 +337,7 @@ def _explain(options: list[SourcingOption], cover_days: float | None) -> None:
             )
         elif option.plan.surplus > 0:
             reasons.append(
-                f"{option.plan.surplus:g} {option.entry.unit} extra "
+                f"{round(option.plan.surplus, 1):g} {option.entry.unit} extra "
                 f"(sold by the {option.plan.pack_size:g})"
             )
 

@@ -13,6 +13,7 @@
 library;
 
 export 'src/values/quantity.dart';
+export 'src/values/pack_quantity.dart';
 export 'src/values/money.dart';
 export 'src/values/confidence.dart';
 export 'src/values/shelf_life.dart';

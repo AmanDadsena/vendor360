@@ -4,6 +4,8 @@ import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 
 import '../data/api_client.dart';
+import '../data/marketplace_models.dart';
+import '../data/marketplace_repository.dart';
 import '../data/models.dart';
 import '../data/offline_queue.dart';
 import '../data/repository.dart';
@@ -22,6 +24,13 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
 final repositoryProvider = Provider<VendorRepository>(
   (ref) => VendorRepository(
+    api: ref.watch(apiClientProvider),
+    queue: ref.watch(offlineQueueProvider),
+  ),
+);
+
+final marketplaceProvider = Provider<MarketplaceRepository>(
+  (ref) => MarketplaceRepository(
     api: ref.watch(apiClientProvider),
     queue: ref.watch(offlineQueueProvider),
   ),
@@ -46,17 +55,42 @@ final themeModeProvider =
 
 // -------------------------------------------------------------------- auth
 class SessionState {
-  const SessionState({this.vendor, this.loading = false, this.error});
+  const SessionState({
+    this.vendor,
+    this.distributor,
+    this.loading = false,
+    this.error,
+  });
 
   final Vendor? vendor;
+  final Distributor? distributor;
   final bool loading;
   final String? error;
 
-  bool get isSignedIn => vendor != null;
+  bool get isSignedIn => vendor != null || distributor != null;
 
-  SessionState copyWith({Vendor? vendor, bool? loading, String? error}) =>
+  /// Which shell to build. Null while signed out.
+  Principal? get principal => switch ((vendor, distributor)) {
+        (_, final Distributor _) => Principal.distributor,
+        (final Vendor _, _) => Principal.vendor,
+        _ => null,
+      };
+
+  bool get isDistributor => distributor != null;
+
+  /// What to greet them by, whichever side they are on.
+  String get displayName =>
+      distributor?.businessName ?? vendor?.storeName ?? '';
+
+  SessionState copyWith({
+    Vendor? vendor,
+    Distributor? distributor,
+    bool? loading,
+    String? error,
+  }) =>
       SessionState(
         vendor: vendor ?? this.vendor,
+        distributor: distributor ?? this.distributor,
         loading: loading ?? this.loading,
         error: error,
       );
@@ -67,16 +101,39 @@ class SessionNotifier extends Notifier<SessionState> {
   SessionState build() => const SessionState();
 
   VendorRepository get _repo => ref.read(repositoryProvider);
+  MarketplaceRepository get _market => ref.read(marketplaceProvider);
 
-  /// Restore a saved session on launch. Returns false if the vendor must
-  /// sign in again.
+  /// Restore a saved session on launch. Returns false if they must sign in
+  /// again.
+  ///
+  /// The stored token does not say which role it carries, so this tries the
+  /// vendor route first and falls back to the distributor one. Two requests
+  /// in the worst case, on a path that runs once per launch — cheaper than
+  /// persisting a role that could drift out of step with the token.
   Future<bool> restore() async {
-    if (!await _repo.restoreSession()) return false;
+    if (!await _repo.restoreSession()) {
+      return _restoreDistributor();
+    }
     try {
       final snapshot = await _repo.dashboard();
       state = SessionState(vendor: snapshot.vendor);
       return true;
     } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> _restoreDistributor() async {
+    final token = ref.read(offlineQueueProvider).token;
+    if (token == null) return false;
+
+    ref.read(apiClientProvider).setToken(token);
+    try {
+      state = SessionState(distributor: await _market.distributorMe());
+      return true;
+    } catch (_) {
+      ref.read(apiClientProvider).setToken(null);
+      await ref.read(offlineQueueProvider).setToken(null);
       return false;
     }
   }
@@ -93,19 +150,40 @@ class SessionNotifier extends Notifier<SessionState> {
     }
   }
 
+  /// Verify an OTP and adopt whichever role the server resolved.
+  ///
+  /// `intent` only matters for a number the server has never seen. An
+  /// existing account's role belongs to the account, not to what the sign-in
+  /// form happened to say — so someone tapping the wrong tile is signed into
+  /// the account they already have rather than given a confusing second one.
   Future<bool> verify({
     required String phone,
     required String code,
     required AppLanguage language,
+    Principal intent = Principal.vendor,
+    String? name,
+    String? storeName,
+    String? businessName,
+    String? locality,
   }) async {
     state = state.copyWith(loading: true);
     try {
-      final vendor = await _repo.verifyOtp(
+      final result = await _market.verify(
         phone: phone,
         code: code,
-        language: language.code,
+        language: language,
+        intent: intent,
+        name: name,
+        storeName: storeName,
+        businessName: businessName,
+        locality: locality,
       );
-      state = SessionState(vendor: vendor);
+
+      state = switch (result.principal) {
+        Principal.distributor =>
+          SessionState(distributor: Distributor.fromJson(result.payload)),
+        Principal.vendor => SessionState(vendor: vendorFromJson(result.payload)),
+      };
       return true;
     } catch (error) {
       state = SessionState(loading: false, error: _friendly(error));
@@ -236,3 +314,167 @@ class LanguageNotifier extends Notifier<AppLanguage> {
 
 final languageProvider =
     NotifierProvider<LanguageNotifier, AppLanguage>(LanguageNotifier.new);
+
+// ========================================================== marketplace
+// ----------------------------------------------------------- vendor side
+final distributorsProvider = FutureProvider.autoDispose<List<SupplierCard>>(
+  (ref) => ref.watch(marketplaceProvider).distributors(),
+);
+
+final connectionsProvider = FutureProvider.autoDispose<List<Connection>>(
+  (ref) => ref.watch(marketplaceProvider).connections(),
+);
+
+/// Sourcing for one item. Family-keyed so opening the sheet for a second item
+/// does not serve the first one's ranking from cache.
+final sourcingProvider =
+    FutureProvider.autoDispose.family<Sourcing, String>(
+  (ref, itemId) => ref.watch(marketplaceProvider).sourcing(itemId),
+);
+
+class OrderFilter extends Notifier<String?> {
+  @override
+  String? build() => null;
+  set value(String? v) => state = v;
+}
+
+final orderFilterProvider =
+    NotifierProvider<OrderFilter, String?>(OrderFilter.new);
+
+final ordersProvider = FutureProvider.autoDispose<List<PurchaseOrder>>(
+  (ref) => ref
+      .watch(marketplaceProvider)
+      .orders(status: ref.watch(orderFilterProvider)),
+);
+
+final orderDetailProvider =
+    FutureProvider.autoDispose.family<PurchaseOrder, String>(
+  (ref, id) => ref.watch(marketplaceProvider).order(id),
+);
+
+final ledgerProvider = FutureProvider.autoDispose<Ledger>(
+  (ref) => ref.watch(marketplaceProvider).ledger(),
+);
+
+/// The order being assembled. In memory only — a cart that survived a
+/// relaunch would quietly re-order yesterday's shortage.
+class CartNotifier extends Notifier<List<CartLine>> {
+  @override
+  List<CartLine> build() => <CartLine>[];
+
+  /// The cart holds one supplier at a time. Adding from a second wholesaler
+  /// replaces it rather than silently splitting into two orders — one basket
+  /// that turns into two deliveries is a worse surprise than being told.
+  bool wouldReplace(String supplierId) =>
+      state.isNotEmpty && state.first.option.supplierId != supplierId;
+
+  void add(CartLine line) {
+    if (wouldReplace(line.option.supplierId)) {
+      state = <CartLine>[line];
+      return;
+    }
+
+    final existing = state.indexWhere(
+      (l) => l.option.catalogEntryId == line.option.catalogEntryId,
+    );
+    if (existing >= 0) {
+      final merged = <CartLine>[...state];
+      merged[existing].packs += line.packs;
+      state = merged;
+    } else {
+      state = <CartLine>[...state, line];
+    }
+  }
+
+  void setPacks(String catalogEntryId, int packs) {
+    if (packs <= 0) return remove(catalogEntryId);
+    state = <CartLine>[
+      for (final l in state)
+        if (l.option.catalogEntryId == catalogEntryId)
+          (l..packs = packs)
+        else
+          l,
+    ];
+  }
+
+  void remove(String catalogEntryId) => state = <CartLine>[
+        for (final l in state)
+          if (l.option.catalogEntryId != catalogEntryId) l,
+      ];
+
+  void clear() => state = <CartLine>[];
+
+  double get total => state.fold(0, (sum, l) => sum + l.total);
+  String? get supplierId => state.isEmpty ? null : state.first.option.supplierId;
+  String? get supplierName =>
+      state.isEmpty ? null : state.first.option.supplierName;
+}
+
+final cartProvider =
+    NotifierProvider<CartNotifier, List<CartLine>>(CartNotifier.new);
+
+final masterCatalogProvider = FutureProvider.autoDispose
+    .family<List<MasterSku>, String>(
+  (ref, categories) => ref.watch(marketplaceProvider).masterCatalog(
+        categories: categories.isEmpty ? const [] : categories.split(','),
+      ),
+);
+
+// ------------------------------------------------------ distributor side
+final distSummaryProvider = FutureProvider.autoDispose<DistributorSummary>(
+  (ref) => ref.watch(marketplaceProvider).summary(),
+);
+
+/// The wholesaler's inbox opens on what needs answering, not on everything.
+/// An inbox that opens on history is one nobody clears.
+class DistInboxFilter extends Notifier<String?> {
+  @override
+  String? build() => 'placed';
+  set value(String? v) => state = v;
+}
+
+final distInboxFilterProvider =
+    NotifierProvider<DistInboxFilter, String?>(DistInboxFilter.new);
+
+final distInboxProvider = FutureProvider.autoDispose<List<PurchaseOrder>>(
+  (ref) => ref
+      .watch(marketplaceProvider)
+      .inbox(status: ref.watch(distInboxFilterProvider)),
+);
+
+final distOrderProvider =
+    FutureProvider.autoDispose.family<PurchaseOrder, String>(
+  (ref, id) => ref.watch(marketplaceProvider).inboxOrder(id),
+);
+
+final distCatalogProvider = FutureProvider.autoDispose<List<CatalogEntry>>(
+  (ref) => ref.watch(marketplaceProvider).catalog(),
+);
+
+class HorizonNotifier extends Notifier<int> {
+  @override
+  int build() => 7;
+  set value(int v) => state = v;
+}
+
+final demandHorizonProvider =
+    NotifierProvider<HorizonNotifier, int>(HorizonNotifier.new);
+
+final distDemandProvider = FutureProvider.autoDispose<Demand>(
+  (ref) => ref
+      .watch(marketplaceProvider)
+      .demand(horizonDays: ref.watch(demandHorizonProvider)),
+);
+
+final distBookProvider = FutureProvider.autoDispose<List<BookEntry>>(
+  (ref) => ref.watch(marketplaceProvider).book(),
+);
+
+final distLedgerProvider = FutureProvider.autoDispose<Ledger>(
+  (ref) => ref.watch(marketplaceProvider).receivables(),
+);
+
+final distPoolsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>(
+  (ref) => ref.watch(marketplaceProvider).openPools(),
+);

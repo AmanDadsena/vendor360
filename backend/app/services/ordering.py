@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import math
 import uuid
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -506,3 +507,80 @@ def outstanding(
         else:
             balance += entry.amount
     return round(balance, 2)
+
+
+@dataclass
+class LedgerSummary:
+    outstanding: float
+    overdue: float
+    due_this_week: float
+    # Per-entry: whether this charge is still unsettled past its due date.
+    overdue_ids: set[uuid.UUID]
+
+
+def summarise_ledger(entries: list[LedgerEntry]) -> LedgerSummary:
+    """Total, overdue and imminent balances from a list of ledger entries.
+
+    Overdue means *unpaid* and past its date, which is the only reading that
+    makes sense: a charge that was late and has since been settled is history,
+    not a debt. Computing it as "every charge past its due date" — the obvious
+    one-line version — reports an overdue figure larger than the total owed,
+    which is visibly nonsense to anyone reading the screen.
+
+    Payments are matched to their order where one is recorded, then any
+    unattributed payment is applied oldest-debt-first, which is both the
+    conventional accounting treatment and the one that flatters the shop least.
+    """
+    charges = [e for e in entries if e.kind != "payment"]
+    payments = [e for e in entries if e.kind == "payment"]
+
+    # Attributed payments settle their own order first.
+    paid_by_order: dict[uuid.UUID, float] = defaultdict(float)
+    floating = 0.0
+    for payment in payments:
+        if payment.order_id is not None:
+            paid_by_order[payment.order_id] += payment.amount
+        else:
+            floating += payment.amount
+
+    remaining: list[tuple[LedgerEntry, float]] = []
+    for charge in charges:
+        settled = paid_by_order.get(charge.order_id, 0.0) if charge.order_id else 0.0
+        applied = min(settled, charge.amount)
+        if charge.order_id is not None:
+            paid_by_order[charge.order_id] -= applied
+        remaining.append((charge, charge.amount - applied))
+
+    # Anything left over — a payment against no particular order, or an
+    # overpayment on one — comes off the oldest debt first.
+    leftover = floating + sum(max(0.0, v) for v in paid_by_order.values())
+    remaining.sort(key=lambda pair: pair[0].created_at)
+
+    settled_amounts: list[tuple[LedgerEntry, float]] = []
+    for charge, owed in remaining:
+        take = min(leftover, owed)
+        leftover -= take
+        settled_amounts.append((charge, owed - take))
+
+    now = utcnow()
+    week = now + timedelta(days=7)
+
+    total = overdue = due_week = 0.0
+    overdue_ids: set[uuid.UUID] = set()
+
+    for charge, owed in settled_amounts:
+        total += owed
+        if owed <= 0.005:
+            continue
+        if charge.due_on is not None and charge.due_on < now:
+            overdue += owed
+            overdue_ids.add(charge.id)
+        elif charge.due_on is not None and charge.due_on <= week:
+            due_week += owed
+
+    return LedgerSummary(
+        outstanding=round(total, 2),
+        overdue=round(overdue, 2),
+        due_this_week=round(due_week, 2),
+        overdue_ids=overdue_ids,
+    )

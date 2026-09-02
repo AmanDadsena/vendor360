@@ -11,7 +11,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api.routes import auth, capture, intelligence, inventory
+from .api.routes import (
+    auth,
+    capture,
+    distributor,
+    intelligence,
+    inventory,
+    onboarding,
+    orders,
+)
 from .core.config import get_settings
 from .core.db import Base, engine
 from .models import *  # noqa: F401,F403 - registers every table on Base.metadata
@@ -54,6 +62,9 @@ app.include_router(auth.router)
 app.include_router(inventory.router)
 app.include_router(capture.router)
 app.include_router(intelligence.router)
+app.include_router(onboarding.router)
+app.include_router(orders.router)
+app.include_router(distributor.router)
 
 
 @app.get("/health", tags=["meta"])

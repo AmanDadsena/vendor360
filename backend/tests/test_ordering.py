@@ -5,9 +5,12 @@ Test Plan identifiers continue the existing scheme: TC-O** for ordering.
 from __future__ import annotations
 
 import uuid
+from datetime import timedelta
 
 import pytest
 from sqlalchemy import select
+
+from app.core.db import utcnow
 
 from app.models import LedgerEntry, PurchaseOrder, Transaction
 from app.services.ordering import (
@@ -439,3 +442,145 @@ def test_open_orders_do_not_count_toward_fill_rate(
 
     assert fill_rate(db, supplier.id) is None
     assert db.scalar(select(PurchaseOrder.status).where(PurchaseOrder.id == order.id)) == "placed"
+
+
+# ------------------------------------------------------------ TC-L** ledger
+def test_tc_l01_a_settled_late_charge_is_no_longer_overdue(db, vendor, supplier):
+    """Overdue means unpaid and late, not merely late.
+
+    Summing every charge past its due date — the obvious one-liner — reports
+    an overdue figure larger than the total owed, which is visible nonsense on
+    the screen and was exactly the bug this pins.
+    """
+    from app.models import LedgerEntry
+    from app.services.ordering import summarise_ledger
+
+    order_id = uuid.uuid4()
+    long_ago = utcnow() - timedelta(days=30)
+
+    entries = [
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=order_id, kind="charge", amount=5000,
+            due_on=long_ago, created_at=long_ago,
+        ),
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=order_id, kind="payment", amount=5000,
+            created_at=utcnow() - timedelta(days=2),
+        ),
+    ]
+
+    summary = summarise_ledger(entries)
+
+    assert summary.outstanding == 0
+    assert summary.overdue == 0
+    assert summary.overdue_ids == set()
+
+
+def test_tc_l02_overdue_never_exceeds_outstanding(db, vendor, supplier):
+    from app.models import LedgerEntry
+    from app.services.ordering import summarise_ledger
+
+    late = utcnow() - timedelta(days=20)
+    first, second = uuid.uuid4(), uuid.uuid4()
+
+    entries = [
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=first, kind="charge", amount=4000,
+            due_on=late, created_at=late,
+        ),
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=second, kind="charge", amount=3000,
+            due_on=late, created_at=late,
+        ),
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=first, kind="payment", amount=4000,
+            created_at=utcnow(),
+        ),
+    ]
+
+    summary = summarise_ledger(entries)
+
+    assert summary.outstanding == 3000
+    assert summary.overdue == 3000
+    assert summary.overdue <= summary.outstanding
+
+
+def test_tc_l03_a_part_payment_leaves_only_the_remainder_overdue(db, vendor, supplier):
+    from app.models import LedgerEntry
+    from app.services.ordering import summarise_ledger
+
+    late = utcnow() - timedelta(days=10)
+    order_id = uuid.uuid4()
+
+    summary = summarise_ledger([
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=order_id, kind="charge", amount=1000,
+            due_on=late, created_at=late,
+        ),
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=order_id, kind="payment", amount=600,
+            created_at=utcnow(),
+        ),
+    ])
+
+    assert summary.outstanding == 400
+    assert summary.overdue == 400
+
+
+def test_tc_l04_an_unattributed_payment_clears_the_oldest_debt_first(
+    db, vendor, supplier
+):
+    """Conventional accounting, and the treatment that flatters the shop least."""
+    from app.models import LedgerEntry
+    from app.services.ordering import summarise_ledger
+
+    old = utcnow() - timedelta(days=40)
+    recent = utcnow() - timedelta(days=3)
+
+    summary = summarise_ledger([
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=uuid.uuid4(), kind="charge", amount=2000,
+            due_on=old, created_at=old,
+        ),
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=uuid.uuid4(), kind="charge", amount=1500,
+            due_on=utcnow() + timedelta(days=4), created_at=recent,
+        ),
+        # No order id: a walk-in cash payment.
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=None, kind="payment", amount=2000, created_at=utcnow(),
+        ),
+    ])
+
+    assert summary.outstanding == 1500
+    assert summary.overdue == 0          # the old debt was cleared
+    assert summary.due_this_week == 1500  # the recent one is merely imminent
+
+
+def test_tc_l05_a_charge_not_yet_due_is_neither_overdue_nor_this_week(
+    db, vendor, supplier
+):
+    from app.models import LedgerEntry
+    from app.services.ordering import summarise_ledger
+
+    summary = summarise_ledger([
+        LedgerEntry(
+            id=uuid.uuid4(), vendor_id=vendor.id, supplier_id=supplier.id,
+            order_id=uuid.uuid4(), kind="charge", amount=900,
+            due_on=utcnow() + timedelta(days=25), created_at=utcnow(),
+        ),
+    ])
+
+    assert summary.outstanding == 900
+    assert summary.overdue == 0
+    assert summary.due_this_week == 0

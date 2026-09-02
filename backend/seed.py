@@ -26,20 +26,28 @@ from sqlalchemy import delete, select
 from app.core.db import Base, SessionLocal, engine
 from app.models import (
     BargainPool,
+    CatalogEntry,
     ConflictAudit,
+    DistributorUser,
     Forecast,
     InventoryItem,
+    LedgerEntry,
     Lender,
+    OrderEvent,
     OtpChallenge,
     PoolMember,
+    PurchaseOrder,
+    PurchaseOrderLine,
     ScoreConsent,
     Supplier,
     SyncEvent,
     Transaction,
     Vendor,
+    VendorDistributor,
 )
 from app.services.catalog import shelf_life_for
 from app.services.signals import festival_intensity, forecast_weather, weather_effect
+from app.services.sourcing import haversine_km
 
 RNG = random.Random(2026)
 
@@ -110,19 +118,29 @@ PRODUCTS = [
     ("Ladoo",         "sweets",        "kg", 220, 280,   4),
 ]
 
+# Coverage is deliberate: every category a shop stocks is carried by at least
+# two wholesalers, so the sourcing screen always has something to rank against
+# something else. A single-supplier category would render as a list of one,
+# which teaches a vendor the ranking is decorative.
 SUPPLIERS = [
     ("Market Yard Wholesale", "mandi", 18.4890, 73.8710, "Market Yard",
      ["produce", "staples"], 1, 2000),
     ("Gultekdi Mandi", "mandi", 18.4936, 73.8656, "Gultekdi",
-     ["produce"], 1, 1500),
+     ["produce", "staples"], 1, 1500),
     ("Balaji Distributors", "distributor", 18.5121, 73.8290, "Kothrud",
-     ["dairy", "bakery", "snacks"], 2, 3000),
+     ["dairy", "bakery", "snacks", "sweets"], 2, 3000),
     ("Shree FMCG Agencies", "distributor", 18.5325, 73.8501, "Shivajinagar",
      ["snacks", "beverages", "personal_care", "household"], 2, 5000),
     ("Pune Dairy Supply", "distributor", 18.5602, 73.8110, "Aundh",
-     ["dairy"], 1, 1200),
+     ["dairy", "bakery"], 1, 1200),
     ("Ganesh Trading Co", "distributor", 18.5098, 73.9240, "Hadapsar",
-     ["staples", "household"], 3, 4000),
+     ["staples", "household", "personal_care"], 3, 4000),
+    ("Deccan Consumer Products", "distributor", 18.5164, 73.8412, "Deccan Gymkhana",
+     ["snacks", "beverages", "sweets", "personal_care"], 2, 2500),
+    ("Sahyadri Seasonal Goods", "distributor", 18.4571, 73.8620, "Katraj",
+     ["monsoon", "household", "produce"], 3, 1800),
+    ("Viman Nagar Cash & Carry", "distributor", 18.5651, 73.9128, "Viman Nagar",
+     ["staples", "dairy", "snacks", "beverages", "household", "monsoon"], 2, 6000),
 ]
 
 LENDERS = [
@@ -130,6 +148,32 @@ LENDERS = [
     ("Sahyadri NBFC", "nbfc", "lending@sahyadri.example"),
     ("Pune Urban Co-op Bank", "bank", "msme@puneurban.example"),
 ]
+
+# The person who answers the phone at each wholesaler, in SUPPLIERS order.
+# Phones sit in a 9820x block so they never collide with the 98765x vendor
+# range -- a number that is both a shop and a wholesaler cannot sign in.
+DISTRIBUTOR_STAFF = [
+    ("Ashok Rane", "9820010001"),
+    ("Sunil Gaikwad", "9820010002"),
+    ("Anil Shah", "9820010003"),
+    ("Farhan Qureshi", "9820010004"),
+    ("Deepak Salunkhe", "9820010005"),
+    ("Ganesh Bhandari", "9820010006"),
+    ("Rohit Chavan", "9820010007"),
+    ("Sameer Kulkarni", "9820010008"),
+    ("Nitin Wagh", "9820010009"),
+]
+
+# How each unit is cased at wholesale: (pack size, minimum packs).
+# Real distributors sell crates and sacks, and these are the sizes a Pune
+# wholesaler actually quotes.
+PACKING = {
+    "pkt": [(12, 1), (24, 1), (48, 2)],
+    "kg": [(5, 2), (10, 1), (25, 1)],
+    "l": [(5, 2), (15, 1)],
+    "pc": [(12, 1), (24, 1), (48, 2)],
+    "btl": [(24, 1)],
+}
 
 
 def as_utc(d: date, hour: int = 12) -> datetime:
@@ -225,16 +269,310 @@ def _recompute_reorder_points(db) -> int:
     return scored
 
 
+def _stage_demo_shop(db, vendor: Vendor) -> int:
+    """Guarantee the demo login has something to demonstrate.
+
+    Across the seeded world about one item in ten sits below its reorder point
+    and the median shop has two -- which is realistic, and which by chance
+    leaves roughly one shop in six with none at all. That is fine for the
+    aggregate and bad for the first screen a reviewer opens.
+
+    So the demo shop specifically is drawn down: a few items pushed just under
+    the line, and one taken close to empty so the at-risk and sourcing paths
+    have a worked example. The stock is reduced, not the reorder point --
+    those stay derived from real history, and the arithmetic on screen still
+    reconciles.
+    """
+    items = db.scalars(
+        select(InventoryItem).where(InventoryItem.vendor_id == vendor.id)
+    ).all()
+    if not items:
+        return 0
+
+    # Prefer fast-moving, restockable lines: the ones a shopkeeper would
+    # actually be reordering on a Tuesday.
+    ranked = sorted(
+        (i for i in items if i.reorder_point > 0),
+        key=lambda i: -i.reorder_point,
+    )
+
+    staged = 0
+    for index, item in enumerate(ranked[:5]):
+        if index == 0:
+            # Nearly out: this is the one that shows up as at-risk to whichever
+            # wholesaler supplies it, and drives the urgent sourcing case.
+            item.current_qty = round(item.reorder_point * 0.15, 1)
+        else:
+            item.current_qty = round(item.reorder_point * RNG.uniform(0.45, 0.9), 1)
+        staged += 1
+
+    return staged
+
+
+def _seed_marketplace(db, today: date) -> tuple[int, int, int]:
+    """Wire up the two-sided half: logins, price lists, connections, orders.
+
+    Built after the vendors and their transaction history exist, because
+    everything here is derived from them -- a connection points at a real
+    shop, and an order's lines are priced from a real catalogue.
+
+    Returns (catalogue lines, connections, orders).
+    """
+    suppliers = db.scalars(select(Supplier).order_by(Supplier.created_at)).all()
+    vendors = db.scalars(select(Vendor).order_by(Vendor.created_at)).all()
+    products = {p[0]: p for p in PRODUCTS}
+
+    # ------------------------------------------------------------- logins
+    for supplier, (name, phone) in zip(suppliers, DISTRIBUTOR_STAFF):
+        supplier.phone = phone
+        db.add(
+            DistributorUser(
+                supplier_id=supplier.id,
+                name=name,
+                phone=phone,
+                language_pref=RNG.choice(["hi", "mr", "en"]),
+            )
+        )
+    db.flush()
+
+    # ----------------------------------------------------------- catalogues
+    catalog_count = 0
+    listings: dict[uuid.UUID, list[CatalogEntry]] = {}
+
+    for supplier in suppliers:
+        entries: list[CatalogEntry] = []
+        for sku, cat, unit, cost, _price, _base in PRODUCTS:
+            if cat not in (supplier.categories or []):
+                continue
+
+            pack_size, moq = RNG.choice(PACKING.get(unit, [(12, 1)]))
+            # Wholesalers differ by a few percent on the same goods, which is
+            # what gives the sourcing screen something real to rank.
+            spread = RNG.uniform(0.93, 1.05)
+            entry = CatalogEntry(
+                supplier_id=supplier.id,
+                sku_name=sku,
+                category=cat,
+                unit=unit,
+                pack_size=pack_size,
+                pack_price=round(cost * pack_size * spread, 2),
+                moq_packs=moq,
+                lead_days=RNG.choice([None, None, supplier.lead_days, 1]),
+                available_packs=RNG.choice([None, None, RNG.randint(20, 400)]),
+            )
+            db.add(entry)
+            entries.append(entry)
+            catalog_count += 1
+
+        listings[supplier.id] = entries
+
+    db.flush()
+
+    # ---------------------------------------------------------- connections
+    connections = 0
+    vendor_links: dict[uuid.UUID, list[Supplier]] = {}
+
+    for vendor in vendors:
+        # A shop deals with the wholesalers who cover its aisles, preferring
+        # the nearby ones -- which is how these relationships actually form.
+        ranked = sorted(
+            suppliers,
+            key=lambda s: haversine_km(vendor.lat, vendor.lon, s.lat, s.lon),
+        )
+        chosen = ranked[: RNG.randint(2, 4)]
+        vendor_links[vendor.id] = chosen
+
+        for supplier in chosen:
+            scope = sorted({e.category for e in listings.get(supplier.id, [])})
+            # Most shops share their demand; a realistic minority does not, so
+            # the distributor's consent gaps are visible on day one.
+            shares = RNG.random() > 0.18
+            db.add(
+                VendorDistributor(
+                    vendor_id=vendor.id,
+                    supplier_id=supplier.id,
+                    status="active",
+                    shares_demand=shares,
+                    scope_categories=scope,
+                    credit_terms_days=RNG.choice([0, 0, 7, 7, 14, 21]),
+                    credit_limit=RNG.choice([0, 10000, 25000]),
+                    connected_at=as_utc(today - timedelta(days=RNG.randint(20, 120))),
+                )
+            )
+            connections += 1
+
+    db.flush()
+
+    # -------------------------------------------------------------- orders
+    # A spread across every status, so the distributor inbox, the vendor's
+    # order list and the ledger all have something in them immediately.
+    order_count = 0
+    sequence = 0
+    weights = [
+        ("delivered", 52),
+        ("placed", 14),
+        ("confirmed", 12),
+        ("dispatched", 10),
+        ("cancelled", 6),
+        ("draft", 6),
+    ]
+    statuses = [s for s, w in weights for _ in range(w)]
+
+    for vendor in vendors:
+        for _ in range(RNG.randint(2, 6)):
+            supplier = RNG.choice(vendor_links[vendor.id])
+            entries = listings.get(supplier.id) or []
+            if not entries:
+                continue
+
+            status = RNG.choice(statuses)
+            age = RNG.randint(1, 75)
+            placed_at = as_utc(today - timedelta(days=age), 10)
+
+            sequence += 1
+            terms = RNG.choice([0, 7, 14])
+            order = PurchaseOrder(
+                code=f"PO-{sequence:04d}",
+                vendor_id=vendor.id,
+                supplier_id=supplier.id,
+                status=status,
+                payment_terms_days=terms,
+                note=None,
+            )
+            db.add(order)
+            db.flush()
+
+            total = 0.0
+            for entry in RNG.sample(entries, k=min(len(entries), RNG.randint(1, 4))):
+                packs = float(RNG.randint(entry.moq_packs, entry.moq_packs + 6))
+                unit_price = round(entry.pack_price / entry.pack_size, 2)
+
+                confirmed = delivered = None
+                if status in ("confirmed", "dispatched", "delivered"):
+                    # Part-fills are the norm, not the exception, which is what
+                    # gives fill rate something to measure.
+                    confirmed = packs if RNG.random() > 0.22 else float(
+                        max(1, int(packs * RNG.uniform(0.5, 0.9)))
+                    )
+                if status == "delivered":
+                    delivered = confirmed
+
+                effective = delivered if delivered is not None else (
+                    confirmed if confirmed is not None else packs
+                )
+                line_total = round(effective * entry.pack_size * unit_price, 2)
+                total += line_total
+
+                item = db.scalar(
+                    select(InventoryItem).where(
+                        InventoryItem.vendor_id == vendor.id,
+                        InventoryItem.sku_name == entry.sku_name,
+                    )
+                )
+                spec = products.get(entry.sku_name)
+
+                db.add(
+                    PurchaseOrderLine(
+                        order_id=order.id,
+                        catalog_entry_id=entry.id,
+                        item_id=item.id if item else None,
+                        sku_name=entry.sku_name,
+                        category=spec[1] if spec else entry.category,
+                        unit=entry.unit,
+                        pack_size=entry.pack_size,
+                        unit_price=unit_price,
+                        packs_ordered=packs,
+                        packs_confirmed=confirmed,
+                        packs_delivered=delivered,
+                        line_total=line_total,
+                    )
+                )
+
+            order.amount_total = round(total, 2)
+
+            # Timestamps and the event journal, walked forward through the
+            # states this order actually reached.
+            reached = ["draft"]
+            if status != "draft":
+                order.placed_at = placed_at
+                order.expected_at = placed_at + timedelta(days=supplier.lead_days)
+                reached.append("placed")
+            if status in ("confirmed", "dispatched", "delivered"):
+                order.confirmed_at = placed_at + timedelta(hours=RNG.randint(1, 20))
+                reached.append("confirmed")
+            if status in ("dispatched", "delivered"):
+                order.dispatched_at = order.confirmed_at + timedelta(hours=RNG.randint(2, 30))
+                reached.append("dispatched")
+            if status == "delivered":
+                order.delivered_at = order.dispatched_at + timedelta(hours=RNG.randint(3, 36))
+                reached.append("delivered")
+            if status == "cancelled":
+                order.cancelled_at = placed_at + timedelta(hours=RNG.randint(1, 40))
+                reached.append("cancelled")
+
+            previous = None
+            for state in reached:
+                db.add(
+                    OrderEvent(
+                        order_id=order.id,
+                        actor_role="vendor" if state in ("draft", "placed") else "distributor",
+                        from_status=previous,
+                        to_status=state,
+                        created_at=getattr(order, f"{state}_at", None) or placed_at,
+                    )
+                )
+                previous = state
+
+            # A delivered order becomes money owed, and most of it gets paid.
+            if status == "delivered" and order.amount_total > 0:
+                db.add(
+                    LedgerEntry(
+                        vendor_id=vendor.id,
+                        supplier_id=supplier.id,
+                        order_id=order.id,
+                        kind="charge",
+                        amount=order.amount_total,
+                        due_on=order.delivered_at + timedelta(days=terms),
+                        note=f"{order.code} delivered",
+                        created_at=order.delivered_at,
+                    )
+                )
+                if RNG.random() > 0.32:
+                    paid = order.amount_total if RNG.random() > 0.25 else round(
+                        order.amount_total * RNG.uniform(0.4, 0.8), 2
+                    )
+                    order.amount_paid = paid
+                    db.add(
+                        LedgerEntry(
+                            vendor_id=vendor.id,
+                            supplier_id=supplier.id,
+                            order_id=order.id,
+                            kind="payment",
+                            amount=paid,
+                            note="Payment received",
+                            created_at=order.delivered_at + timedelta(days=RNG.randint(1, 20)),
+                        )
+                    )
+
+            order_count += 1
+
+    db.commit()
+    return catalog_count, connections, order_count
+
+
 def seed(vendor_count: int, days: int, reset: bool) -> None:
     Base.metadata.create_all(engine)
     db = SessionLocal()
 
     try:
         if reset:
+            # Ordered so a child table is always cleared before its parent.
             for model in (
-                ConflictAudit, SyncEvent, Forecast, Transaction, PoolMember,
-                BargainPool, ScoreConsent, InventoryItem, OtpChallenge,
-                Supplier, Lender, Vendor,
+                ConflictAudit, SyncEvent, Forecast, OrderEvent,
+                PurchaseOrderLine, LedgerEntry, PurchaseOrder,
+                Transaction, PoolMember, BargainPool, ScoreConsent,
+                VendorDistributor, CatalogEntry, DistributorUser,
+                InventoryItem, OtpChallenge, Supplier, Lender, Vendor,
             ):
                 db.execute(delete(model))
             db.commit()
@@ -385,11 +723,25 @@ def seed(vendor_count: int, days: int, reset: bool) -> None:
         print("\ncomputing dynamic reorder points...")
         print(f"  {_recompute_reorder_points(db)} items scored")
 
+        # Built last: connections point at real shops, and order lines are
+        # priced from a real catalogue against real inventory rows.
+        print("\nwiring the marketplace...")
+        entries, links, orders = _seed_marketplace(db, today)
+        print(f"  {entries} catalogue lines, {links} connections, {orders} orders")
+
+        demo = db.scalar(select(Vendor).order_by(Vendor.created_at))
+        staged = _stage_demo_shop(db, demo)
+        db.commit()
+        print(f"  {staged} items drawn down at {demo.store_name} for the demo login")
+
         print(f"\n{vendor_count} vendors, {days} days, {total_txns:,} transactions")
         print(f"{len(SUPPLIERS)} suppliers, {len(LENDERS)} lenders")
 
         first = db.scalar(select(Vendor).order_by(Vendor.created_at))
-        print(f"\nDemo login phone: {first.phone}  (OTP is returned by /auth/otp/request)")
+        staff = db.scalar(select(DistributorUser).order_by(DistributorUser.created_at))
+        print("\nOTP is returned by /auth/otp/request — there is no SMS gateway.")
+        print(f"  shop login:        {first.phone}   ({first.store_name})")
+        print(f"  distributor login: {staff.phone}   ({staff.supplier.name})")
 
     finally:
         db.close()

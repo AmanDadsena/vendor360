@@ -51,3 +51,7 @@ export 'src/components/vendor/expiry_chip.dart';
 export 'src/components/vendor/confidence_row.dart';
 export 'src/components/vendor/driver_badge.dart';
 export 'src/components/vendor/demand_heatmap.dart';
+export 'src/components/vendor/order_status_chip.dart';
+export 'src/components/vendor/pack_stepper.dart';
+export 'src/components/vendor/order_timeline.dart';
+export 'src/components/vendor/reason_row.dart';

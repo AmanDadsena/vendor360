@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
 import '../../core/strings.dart';
+import '../../data/marketplace_models.dart';
 
 /// Language choice, then phone + OTP.
 ///
@@ -26,6 +28,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   _Step _step = _Step.language;
   AppLanguage _language = AppLanguage.hindi;
+  Principal _intent = Principal.vendor;
   String? _devCode;
 
   @override
@@ -60,9 +63,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           phone: _phone.text.trim(),
           code: _code.text.trim(),
           language: _language,
+          intent: _intent,
         );
-    if (ok && mounted) {
-      ref.read(languageProvider.notifier).value = _language;
+    if (!ok || !mounted) return;
+
+    ref.read(languageProvider.notifier).value = _language;
+
+    // A shop with nothing on its shelves is a shop that has just signed up,
+    // whatever the sign-in form said — so the setup flow is offered on the
+    // state of the account rather than on a "was this a new account" flag
+    // that a re-install would get wrong.
+    if (ref.read(sessionProvider).isDistributor) return;
+    try {
+      final items = await ref.read(repositoryProvider).inventory();
+      if (mounted && items.isEmpty) context.go('/setup');
+    } catch (_) {
+      // Not worth blocking sign-in over. They land on the dashboard, which
+      // has its own empty state pointing at the same place.
     }
   }
 
@@ -128,8 +145,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             key: const ValueKey('language'),
                             selected: _language,
                             onSelect: (lang) => setState(() => _language = lang),
-                            onContinue: () => setState(() => _step = _Step.phone),
+                            onContinue: () => setState(() => _step = _Step.role),
                             strings: s,
+                          )
+                        : _step == _Step.role
+                        ? _RoleStep(
+                            key: const ValueKey('role'),
+                            selected: _intent,
+                            onSelect: (role) => setState(() => _intent = role),
+                            onContinue: () => setState(() => _step = _Step.phone),
+                            onBack: () => setState(() => _step = _Step.language),
                           )
                         : _step == _Step.phone
                             ? _PhoneStep(
@@ -137,7 +162,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                 controller: _phone,
                                 loading: session.loading,
                                 onSubmit: _sendCode,
-                                onBack: () => setState(() => _step = _Step.language),
+                                onBack: () => setState(() => _step = _Step.role),
                                 strings: s,
                               )
                             : _CodeStep(
@@ -169,7 +194,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-enum _Step { language, phone, code }
+enum _Step { language, role, phone, code }
 
 class _Brandmark extends StatefulWidget {
   const _Brandmark();
@@ -500,6 +525,147 @@ class _CodeStep extends StatelessWidget {
           onPressed: onBack,
         ),
       ],
+    );
+  }
+}
+
+
+/// Which side of the marketplace they are on.
+///
+/// Asked before the phone number rather than after, because it decides what
+/// the rest of sign-up means — and because a wholesaler who gets three
+/// screens of shop language before being offered their own console has
+/// already concluded the product is not for them.
+///
+/// This only affects a number the server has never seen. An existing
+/// account's role belongs to the account, so tapping the wrong tile signs you
+/// into what you already have rather than creating a confusing second thing.
+class _RoleStep extends StatelessWidget {
+  const _RoleStep({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+    required this.onContinue,
+    required this.onBack,
+  });
+
+  final Principal selected;
+  final ValueChanged<Principal> onSelect;
+  final VoidCallback onContinue;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final colors = v360.colors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          'Which are you?',
+          style: v360.text.titleL.copyWith(color: colors.ink),
+        ),
+        SizedBox(height: v360.spacing.xs),
+        Text(
+          'This sets up the right app for you.',
+          style: v360.text.body.copyWith(color: colors.inkMuted),
+        ),
+        SizedBox(height: v360.spacing.xl),
+        _RoleOption(
+          icon: Icons.storefront_rounded,
+          title: 'I run a shop',
+          body: 'Forecast what will sell, log stock by speaking, and order '
+              'from wholesalers before you run out.',
+          selected: selected == Principal.vendor,
+          onTap: () => onSelect(Principal.vendor),
+        ),
+        SizedBox(height: v360.spacing.md),
+        _RoleOption(
+          icon: Icons.local_shipping_rounded,
+          title: 'I supply shops',
+          body: 'See what the shops on your book will need, answer their '
+              'orders, and know who is about to run out.',
+          selected: selected == Principal.distributor,
+          onTap: () => onSelect(Principal.distributor),
+        ),
+        SizedBox(height: v360.spacing.xl),
+        V360Button.primary(label: 'Continue', expand: true, onPressed: onContinue),
+        SizedBox(height: v360.spacing.sm),
+        V360Button.ghost(label: 'Back', expand: true, onPressed: onBack),
+      ],
+    );
+  }
+}
+
+class _RoleOption extends StatelessWidget {
+  const _RoleOption({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final colors = v360.colors;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: title,
+      excludeSemantics: true,
+      child: V360Pressable(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: MotionScope.of(context).base,
+          curve: MotionScope.of(context).standard,
+          padding: EdgeInsets.all(v360.spacing.lg),
+          decoration: BoxDecoration(
+            color: selected ? colors.accentSurface : colors.surface,
+            borderRadius: BorderRadius.circular(V360Radius.lg),
+            border: Border.all(
+              color: selected ? colors.accent : colors.hairline,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(
+                icon,
+                size: 26,
+                color: selected ? colors.accentText : colors.inkMuted,
+              ),
+              SizedBox(width: v360.spacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: v360.text.titleS.copyWith(color: colors.ink),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      body,
+                      style: v360.text.caption.copyWith(color: colors.inkMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
