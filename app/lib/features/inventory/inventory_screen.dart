@@ -163,7 +163,7 @@ class _CategoryFilter extends ConsumerWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => SizedBox(width: v360.spacing.sm),
+        separatorBuilder: (_, _) => SizedBox(width: v360.spacing.sm),
         itemBuilder: (context, index) {
           final category = _categories[index];
           final active = category.key == selected;
@@ -189,7 +189,7 @@ class _CategoryFilter extends ConsumerWidget {
               child: Text(
                 category.label,
                 style: v360.text.caption.copyWith(
-                  color: active ? Colors.white : v360.colors.inkMuted,
+                  color: active ? v360.colors.onFill : v360.colors.inkMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),

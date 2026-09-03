@@ -234,7 +234,7 @@ class _NavItem extends StatelessWidget {
                       child: Text(
                         '$badge',
                         style: v360.text.label.copyWith(
-                          color: Colors.white,
+                          color: colors.onFill,
                           fontSize: 9,
                         ),
                       ),

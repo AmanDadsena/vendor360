@@ -251,7 +251,7 @@ class _BrandmarkState extends State<_Brandmark> with SingleTickerProviderStateMi
               ),
             );
           },
-          child: const Icon(Icons.storefront_rounded, size: 38, color: Colors.white),
+          child: Icon(Icons.storefront_rounded, size: 38, color: colors.onFill),
         ),
         SizedBox(height: v360.spacing.lg),
         Text(

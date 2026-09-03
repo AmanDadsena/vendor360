@@ -521,6 +521,12 @@ def demand(
     supplier = _supplier(db, user)
     outlook = demand_outlook(db, supplier, horizon_days=horizon_days)
 
+    # A read that writes. `demand_outlook` fills the forecast cache as it goes,
+    # and routes own the transaction here — without this the rows are flushed
+    # and then discarded when the session closes, which is exactly what made
+    # the cache look like it was not working at all.
+    db.commit()
+
     return DemandOut(
         horizon_days=outlook.horizon_days,
         consenting_shops=outlook.consenting_shops,

@@ -297,6 +297,7 @@ void main() {
   });
 
   _packQuantityTests();
+  _approxTests();
 }
 
 void _packQuantityTests() {
@@ -399,6 +400,32 @@ void _packQuantityTests() {
 
       expect(plan.copyWith(packs: 6).moqApplied, isFalse);
       expect(plan.copyWith(packs: 6).quantity, 60);
+    });
+  });
+}
+
+void _approxTests() {
+  group('Quantity.approx', () {
+    test('drops decimals once the fraction is noise rather than stock', () {
+      expect(const Quantity(528.79, 'kg').approx, '529 kg');
+      expect(const Quantity(1453.3, 'kg').approx, '1453 kg');
+      expect(const Quantity(94.51, 'pkt').approx, '95 pkt');
+    });
+
+    test('keeps one decimal below ten, where the fraction is real', () {
+      expect(const Quantity(2.46, 'pc').approx, '2.5 pc');
+      expect(const Quantity(6.49, 'pc').approx, '6.5 pc');
+      expect(const Quantity(0.4, 'kg').approx, '0.4 kg');
+    });
+
+    test('never renders a trailing .0', () {
+      expect(const Quantity(5.0, 'kg').approx, '5 kg');
+      expect(const Quantity(0.0, 'pc').approx, '0 pc');
+    });
+
+    test('leaves the precise display alone', () {
+      // The shelf-count case still gets its two decimals.
+      expect(const Quantity(2.46, 'pc').display, '2.46 pc');
     });
   });
 }

@@ -33,7 +33,7 @@ from ..models import (
     Vendor,
     VendorDistributor,
 )
-from .forecasting import forecast_item
+from . import forecast_cache
 from .ordering import fill_rate
 from .sourcing import daily_rate, days_of_cover, plan_packs
 
@@ -209,16 +209,20 @@ def demand_outlook(
         ).all()
 
         for item in items:
-            result = forecast_item(
-                item_id=str(item.id),
-                sku_name=item.sku_name,
-                category_key=item.category,
-                history=_history(db, item.id),
+            # Through the cache. Fitting a model per (shop x SKU) on every
+            # request put this endpoint at ten seconds against a seeded book,
+            # which is past the client's read timeout — so the screen fell
+            # back to an empty outlook and told the wholesaler they had no
+            # shops. A stale-by-a-day forecast is worth far more than that.
+            predicted = forecast_cache.total_for(
+                db,
+                item,
                 horizon_days=horizon_days,
                 today=today,
+                history=_history(db, item.id),
             )
             bucket = buckets[key]
-            bucket["qty"] += result.total_predicted
+            bucket["qty"] += predicted
             bucket["shops"].add(item.vendor_id)
             bucket["unit"] = item.unit
             bucket["category"] = item.category

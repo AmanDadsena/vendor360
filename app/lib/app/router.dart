@@ -32,8 +32,8 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
-      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
-      GoRoute(path: '/setup', builder: (_, __) => const SetupFlowScreen()),
+      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
+      GoRoute(path: '/setup', builder: (_, _) => const SetupFlowScreen()),
 
       // ------------------------------------------------------- vendor shell
       // The five bottom-nav destinations live inside a shell so the nav bar
@@ -46,20 +46,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: <RouteBase>[
             GoRoute(
               path: '/',
-              builder: (_, __) => const DashboardScreen(),
+              builder: (_, _) => const DashboardScreen(),
               routes: <RouteBase>[
-                GoRoute(path: 'receipt', builder: (_, __) => const ReceiptScreen()),
-                GoRoute(path: 'expiry', builder: (_, __) => const ExpiryScreen()),
-                GoRoute(path: 'heatmap', builder: (_, __) => const HeatmapScreen()),
-                GoRoute(path: 'pools', builder: (_, __) => const PoolsScreen()),
-                GoRoute(path: 'accuracy', builder: (_, __) => const AccuracyScreen()),
+                GoRoute(path: 'receipt', builder: (_, _) => const ReceiptScreen()),
+                GoRoute(path: 'expiry', builder: (_, _) => const ExpiryScreen()),
+                GoRoute(path: 'heatmap', builder: (_, _) => const HeatmapScreen()),
+                GoRoute(path: 'pools', builder: (_, _) => const PoolsScreen()),
+                GoRoute(path: 'accuracy', builder: (_, _) => const AccuracyScreen()),
                 GoRoute(
                   path: 'distributors',
-                  builder: (_, __) => const DistributorsScreen(),
+                  builder: (_, _) => const DistributorsScreen(),
                 ),
                 GoRoute(
                   path: 'orders',
-                  builder: (_, __) => const OrdersScreen(),
+                  builder: (_, _) => const OrdersScreen(),
                   routes: <RouteBase>[
                     GoRoute(
                       path: ':id',
@@ -68,21 +68,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ],
                 ),
-                GoRoute(path: 'cart', builder: (_, __) => const CartScreen()),
+                GoRoute(path: 'cart', builder: (_, _) => const CartScreen()),
               ],
             ),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/inventory', builder: (_, __) => const InventoryScreen()),
+            GoRoute(path: '/inventory', builder: (_, _) => const InventoryScreen()),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/voice', builder: (_, __) => const VoiceScreen()),
+            GoRoute(path: '/voice', builder: (_, _) => const VoiceScreen()),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/forecast', builder: (_, __) => const ForecastScreen()),
+            GoRoute(path: '/forecast', builder: (_, _) => const ForecastScreen()),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/health', builder: (_, __) => const HealthScreen()),
+            GoRoute(path: '/health', builder: (_, _) => const HealthScreen()),
           ]),
         ],
       ),
@@ -93,12 +93,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             DistShell(navigationShell: navigationShell),
         branches: <StatefulShellBranch>[
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/dist', builder: (_, __) => const DistTodayScreen()),
+            GoRoute(path: '/dist', builder: (_, _) => const DistTodayScreen()),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
             GoRoute(
               path: '/dist/orders',
-              builder: (_, __) => const DistOrdersScreen(),
+              builder: (_, _) => const DistOrdersScreen(),
               routes: <RouteBase>[
                 GoRoute(
                   path: ':id',
@@ -110,16 +110,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/dist/demand', builder: (_, __) => const DistDemandScreen()),
+            GoRoute(path: '/dist/demand', builder: (_, _) => const DistDemandScreen()),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
             GoRoute(
               path: '/dist/catalog',
-              builder: (_, __) => const DistCatalogScreen(),
+              builder: (_, _) => const DistCatalogScreen(),
             ),
           ]),
           StatefulShellBranch(routes: <RouteBase>[
-            GoRoute(path: '/dist/shops', builder: (_, __) => const DistShopsScreen()),
+            GoRoute(path: '/dist/shops', builder: (_, _) => const DistShopsScreen()),
           ]),
         ],
       ),

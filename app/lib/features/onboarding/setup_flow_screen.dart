@@ -165,7 +165,7 @@ class _SetupFlowScreenState extends ConsumerState<SetupFlowScreen> {
             loading: () => ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: v360.spacing.gutter),
               itemCount: 6,
-              itemBuilder: (_, __) => Padding(
+              itemBuilder: (_, _) => Padding(
                 padding: EdgeInsets.only(bottom: v360.spacing.sm),
                 child: const V360Skeleton(height: 52),
               ),

@@ -83,7 +83,7 @@ class AccuracyScreen extends ConsumerWidget {
             SizedBox(height: v360.spacing.md),
             signals.when(
               loading: () => const V360Skeleton(height: 180),
-              error: (_, __) => Text(
+              error: (_, _) => Text(
                 'Signal feed unavailable offline.',
                 style: v360.text.caption.copyWith(color: colors.inkMuted),
               ),

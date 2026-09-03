@@ -17,6 +17,7 @@ class V360Card extends StatelessWidget {
     this.radius = V360Radius.xl,
     this.onTap,
     this.color,
+    this.semanticLabel,
   });
 
   final Widget child;
@@ -26,6 +27,11 @@ class V360Card extends StatelessWidget {
 
   /// Overrides the surface colour. Pass a token, never a literal.
   final Color? color;
+
+  /// What a tappable card announces. Without it a reader falls back to
+  /// reading every string inside, which on a dense card is a paragraph where
+  /// a name would do.
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +60,7 @@ class V360Card extends StatelessWidget {
       feel: V360PressFeel.soft,
       highlight: true,
       borderRadius: BorderRadius.circular(radius),
+      semanticLabel: semanticLabel,
       child: card,
     );
   }

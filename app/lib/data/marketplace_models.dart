@@ -784,12 +784,18 @@ class AtRiskShop {
 
   Money get value => Money.rupees(estValue);
 
-  /// "runs out in 1.6 days, you take 3" — the whole argument in one line.
+  /// "1.6d left · 3d to reach them" — the whole argument in one line.
+  ///
+  /// A shop that has already run out says so. "0.0d left" reads as a
+  /// rounding artefact, which is the opposite of the urgency it should carry.
   String get urgency {
+    final reach = '${leadDays}d to reach them';
+    if (daysOfCover < 0.05) return 'Already out · $reach';
+
     final cover = daysOfCover < 3
         ? daysOfCover.toStringAsFixed(1)
         : daysOfCover.toStringAsFixed(0);
-    return '${cover}d left · ${leadDays}d to reach them';
+    return '${cover}d left · $reach';
   }
 
   static AtRiskShop fromJson(Map<String, dynamic> j) => AtRiskShop(

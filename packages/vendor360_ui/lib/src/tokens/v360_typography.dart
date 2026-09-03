@@ -6,12 +6,36 @@ import 'package:flutter/widgets.dart';
 /// typography renders correctly with no network. Tabular figures are enabled
 /// on every style — a functional requirement, not a stylistic one: rolling
 /// counters jitter without them and price columns fail to align.
+///
+/// Inter carries no Devanagari, so [devanagari] is bundled behind it as a
+/// fallback. This is load-bearing rather than decorative: `language_pref`
+/// defaults to `hi`, and without the fallback every Hindi and Marathi string —
+/// the language picker's own endonyms included — renders as empty boxes.
 @immutable
 class V360Typography {
   const V360Typography();
 
   static const String family = 'Inter';
+
+  /// Devanagari coverage for Hindi and Marathi.
+  ///
+  /// Must be a bundled package asset, not a platform font name. Flutter
+  /// prefixes *every* `fontFamilyFallback` entry with `packages/$package/`
+  /// when [package] is set, so a system family named here would resolve to
+  /// nothing at all — and would do it silently, with no error and no glyphs.
+  static const String devanagari = 'NotoSansDevanagari';
+
   static const String package = 'vendor360_ui';
+
+  /// Package-qualified family names, for the few places that set a font
+  /// without going through [_style] — `ThemeData` most importantly, since it
+  /// supplies the default for dialogs, snackbars and field hints, and it has
+  /// no `package` argument to do the prefixing for it.
+  static const String qualifiedFamily = 'packages/$package/$family';
+  static const String qualifiedDevanagari = 'packages/$package/$devanagari';
+
+  static const List<String> _fallback = <String>[devanagari];
+
   static const List<FontFeature> _features = <FontFeature>[
     FontFeature.tabularFigures(),
   ];
@@ -24,6 +48,7 @@ class V360Typography {
   }) =>
       TextStyle(
         fontFamily: family,
+        fontFamilyFallback: _fallback,
         package: package,
         fontSize: size,
         height: lineHeight / size,

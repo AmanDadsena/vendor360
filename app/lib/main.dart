@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
+import 'app/adaptive_frame.dart';
 import 'app/providers.dart';
 import 'app/router.dart';
 import 'data/offline_queue.dart';
@@ -56,8 +57,11 @@ class Vendor360App extends ConsumerWidget {
       builder: (context, child) {
         // MotionScope sits above everything, so honouring the platform's
         // reduce-motion setting is one switch rather than a per-widget
-        // obligation.
-        return MotionScope(child: child ?? const SizedBox.shrink());
+        // obligation. AdaptiveFrame sits just inside it, so the wide-screen
+        // treatment is decided once rather than per screen.
+        return MotionScope(
+          child: AdaptiveFrame(child: child ?? const SizedBox.shrink()),
+        );
       },
     );
   }

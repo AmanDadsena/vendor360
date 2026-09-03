@@ -46,6 +46,7 @@ class V360Colors {
     required this.accentSurfaceStrong,
     required this.actionFill,
     required this.onActionFill,
+    required this.onFill,
     required this.voice,
     required this.voiceText,
     required this.voiceSurface,
@@ -123,6 +124,18 @@ class V360Colors {
   /// Primary button label. Inverts with [actionFill].
   final Color onActionFill;
 
+  /// Content sitting on a saturated brand or status fill — a count on a
+  /// [danger] badge, a label on an [accent] chip, the dashboard hero over its
+  /// gradient.
+  ///
+  /// White in both themes, because those fills are saturated in both and
+  /// white is what stays legible on them. It is a token rather than a literal
+  /// so the *role* is stated: these were thirteen scattered `Colors.white`
+  /// calls, and the design system permits colour literals in this file only.
+  /// Distinct from [onActionFill], which inverts with the button fill and is
+  /// near-black in dark mode.
+  final Color onFill;
+
   factory V360Colors.light() => const V360Colors(
         // Warmed neutrals, so the off-white canvas reads as intentional rather
         // than as a grey that failed to be white.
@@ -142,6 +155,7 @@ class V360Colors {
         voiceSurface: Color(0xFFFDF1DC),
         actionFill: Color(0xFF1A2E2A),
         onActionFill: Color(0xFFFFFFFF),
+        onFill: Color(0xFFFFFFFF),
         warning: Color(0xFFD98A0F),
         warningText: Color(0xFF8A5600),
         warningSurface: Color(0xFFFAEFD9),
@@ -173,6 +187,7 @@ class V360Colors {
         voiceSurface: Color(0xFF2E2210),
         actionFill: Color(0xFF2FB39D),
         onActionFill: Color(0xFF04211C),
+        onFill: Color(0xFFFFFFFF),
         warning: Color(0xFFE9A22E),
         warningText: Color(0xFFF5C069),
         warningSurface: Color(0xFF2E2410),
@@ -199,6 +214,7 @@ class V360Colors {
         voiceSurface: Color.lerp(voiceSurface, other.voiceSurface, t)!,
         actionFill: Color.lerp(actionFill, other.actionFill, t)!,
         onActionFill: Color.lerp(onActionFill, other.onActionFill, t)!,
+        onFill: Color.lerp(onFill, other.onFill, t)!,
         warning: Color.lerp(warning, other.warning, t)!,
         warningText: Color.lerp(warningText, other.warningText, t)!,
         warningSurface: Color.lerp(warningSurface, other.warningSurface, t)!,

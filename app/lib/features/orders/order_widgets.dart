@@ -67,6 +67,19 @@ class OrderCard extends StatelessWidget {
 
     return V360Card(
       onTap: onTap,
+      // Named, because the card's own text reads as a pile of fragments —
+      // "Balaji Distributors, Waiting, PO-0001 · 1 item, Due in 2 days,
+      // ₹1,104". The sentence below is what a person would actually say.
+      semanticLabel: <String>[
+        '${order.code} from '
+            '${distributorView ? order.vendorName : order.supplierName}',
+        distributorView
+            ? order.status.distributorLabel
+            : order.status.vendorLabel,
+        order.total.display,
+        if (order.isLate) 'late',
+        if (order.hasShortfall) 'part-filled',
+      ].join(', '),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

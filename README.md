@@ -62,7 +62,11 @@ OTP is returned by the request endpoint and shown on screen.
 | Phone | Signs in as |
 |---|---|
 | `9876510000` | **Kumar General Stores** — the shop |
-| `9820010001` | **Market Yard Wholesale** — the distributor |
+| `9820010009` | **Viman Nagar Cash & Carry** — the distributor |
+
+The seed prints both, and picks the distributor with the fullest order book
+rather than whichever was created first — an account with nothing waiting and
+nobody running low makes the console look broken rather than calm.
 
 The role is a property of the account, not of the sign-in form, so the same
 screen serves both and the app builds whichever shell the server resolves.
@@ -85,7 +89,7 @@ cd packages/vendor360_ui && flutter test
 cd packages/vendor360_core && dart test
 ```
 
-308 tests across the four suites. The backend cases are named for the Test
+325 tests across the four suites. The backend cases are named for the Test
 Plan's `TC-` identifiers.
 
 ---
@@ -103,6 +107,7 @@ backend/            FastAPI — business logic and the ML services
 
 packages/
   vendor360_ui/     design system — tokens, theme, motion, components
+                    Inter for Latin, Noto Sans Devanagari behind it
   vendor360_core/   domain model, pure Dart, zero dependencies
 
 app/                the Flutter client — one binary, two shells
@@ -156,6 +161,15 @@ rather than applied silently at the doorstep. Orders carry three quantities
 wholesale; collapsing them to one number would destroy the fill rate, which is
 the most useful thing a shop can know about a supplier and the signal
 `sourcing.py` ranks on.
+
+**Forecasts are cached, once a day.** The `Forecast` table existed from the
+first commit and nothing wrote to it; every read refitted a gradient-boosted
+regressor. Invisible for one shop looking at one item, and fatal for the
+distributor outlook, which fits a model per shop × SKU — measured at 10.4
+seconds against a seeded book, past the client's read timeout, so the screen
+fell back to an empty outlook and told a wholesaler with fifteen shops that
+they had none. Writing through to that table takes it to 0.12s. The cache key
+is the date, because a day's sales are only complete when the day is.
 
 **Distributor visibility** is a connection-scoped consent, frozen at the moment
 it is granted. Computing the scope live from the wholesaler's catalogue would

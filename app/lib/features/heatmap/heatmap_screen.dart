@@ -212,7 +212,7 @@ class _CategoryPicker extends ConsumerWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _options.length,
-        separatorBuilder: (_, __) => SizedBox(width: v360.spacing.sm),
+        separatorBuilder: (_, _) => SizedBox(width: v360.spacing.sm),
         itemBuilder: (context, index) {
           final option = _options[index];
           final active = option.key == selected;
@@ -237,7 +237,7 @@ class _CategoryPicker extends ConsumerWidget {
               child: Text(
                 option.label,
                 style: v360.text.caption.copyWith(
-                  color: active ? Colors.white : v360.colors.inkMuted,
+                  color: active ? v360.colors.onFill : v360.colors.inkMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),

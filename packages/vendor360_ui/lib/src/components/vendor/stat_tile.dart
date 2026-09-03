@@ -109,13 +109,26 @@ class StatTile extends StatelessWidget {
                 ),
               ],
       ),
-      child: onTap == null
-          ? content
-          : InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(V360Radius.lg),
-              child: content,
-            ),
+      // The label, value and caption are three separate Text widgets, so a
+      // screen reader would otherwise announce them as three unrelated
+      // fragments — "overdue", "₹3,200" — with nothing tying them together.
+      // Merging into one node reads them as the single fact they are.
+      child: Semantics(
+        button: onTap != null,
+        label: <String>[
+          label,
+          value,
+          ?caption,
+        ].join(', '),
+        excludeSemantics: true,
+        child: onTap == null
+            ? content
+            : InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(V360Radius.lg),
+                child: content,
+              ),
+      ),
     );
   }
 }

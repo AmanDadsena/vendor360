@@ -222,8 +222,8 @@ class _AtRiskCard extends StatelessWidget {
           ),
           SizedBox(height: v360.spacing.xs),
           Text(
-            'Down to ${Quantity(shop.currentQty, shop.unit).display}, '
-            'selling about ${Quantity(shop.dailyRate, shop.unit).display} a '
+            '${shop.currentQty < 0.05 ? 'Shelf is empty' : 'Down to ${Quantity(shop.currentQty, shop.unit).approx}'}, '
+            'selling about ${Quantity(shop.dailyRate, shop.unit).approx} a '
             'day. Suggest ${shop.suggestedPacks.round()} '
             '${shop.suggestedPacks.round() == 1 ? 'case' : 'cases'}.',
             style: v360.text.caption.copyWith(color: colors.inkMuted),
@@ -289,7 +289,7 @@ class _DemandCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               Text(
-                Quantity(line.expectedQty, line.unit).display,
+                Quantity(line.expectedQty, line.unit).approx,
                 style: v360.text.titleS.copyWith(
                   color: colors.ink,
                   fontFeatures: const <FontFeature>[

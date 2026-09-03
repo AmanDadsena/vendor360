@@ -85,8 +85,13 @@ ThemeData buildV360Theme(Brightness brightness) {
     brightness: brightness,
     colorScheme: scheme,
     scaffoldBackgroundColor: colors.canvas,
-    fontFamily: V360Typography.family,
-    fontFamilyFallback: const <String>[V360Typography.family],
+    // Package-qualified. `ThemeData` has no `package` argument, so a bare
+    // 'Inter' here names a global family that was never registered — and the
+    // old fallback repeated the family, which could never supply a glyph the
+    // family itself was missing. Devanagari behind it is what stops dialogs,
+    // snackbars and field hints rendering Hindi as boxes.
+    fontFamily: V360Typography.qualifiedFamily,
+    fontFamilyFallback: const <String>[V360Typography.qualifiedDevanagari],
     textTheme: TextTheme(
       displayLarge: type.display,
       titleLarge: type.titleL,

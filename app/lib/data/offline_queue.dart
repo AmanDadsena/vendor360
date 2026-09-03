@@ -237,8 +237,8 @@ class OfflineQueue {
         'movement': movement,
         'source': source,
         'confidence': confidence,
-        if (rawText != null) 'raw_text': rawText,
-        if (unitValue != null) 'unit_value': unitValue,
+        'raw_text': ?rawText,
+        'unit_value': ?unitValue,
         'device_id': deviceId,
       },
     );

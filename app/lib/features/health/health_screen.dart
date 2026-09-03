@@ -214,7 +214,7 @@ class _ConsentList extends ConsumerWidget {
     return V360Card(
       child: consents.when(
         loading: () => const V360Skeleton(height: 120),
-        error: (_, __) => Text(
+        error: (_, _) => Text(
           'Lender list unavailable offline.',
           style: v360.text.caption.copyWith(color: colors.inkMuted),
         ),

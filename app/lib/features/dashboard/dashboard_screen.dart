@@ -256,7 +256,7 @@ class _TodayCard extends StatelessWidget {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: colors.onFill.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -268,7 +268,7 @@ class _TodayCard extends StatelessWidget {
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: colors.onFill.withValues(alpha: 0.08),
                 ),
               ),
             ),
@@ -278,7 +278,7 @@ class _TodayCard extends StatelessWidget {
                 Text(
                   strings.todaySales.toUpperCase(),
                   style: v360.text.label.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: colors.onFill.withValues(alpha: 0.85),
                   ),
                 ),
                 SizedBox(height: v360.spacing.sm),
@@ -292,7 +292,7 @@ class _TodayCard extends StatelessWidget {
                     // ₹12012.0 on the most-read figure in the product.
                     format: (_) => data.todaySalesValue.display,
                     style: v360.text.display.copyWith(
-                      color: Colors.white,
+                      color: colors.onFill,
                       fontSize: 42,
                       height: 1.0,
                     ),
@@ -304,27 +304,27 @@ class _TodayCard extends StatelessWidget {
                     Icon(
                       Icons.receipt_long_outlined,
                       size: 14,
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: colors.onFill.withValues(alpha: 0.85),
                     ),
                     SizedBox(width: v360.spacing.xs),
                     Text(
                       '${data.todayTransactionCount} entries',
                       style: v360.text.caption.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: colors.onFill.withValues(alpha: 0.85),
                       ),
                     ),
                     SizedBox(width: v360.spacing.lg),
                     Icon(
                       Icons.calendar_today_outlined,
                       size: 14,
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: colors.onFill.withValues(alpha: 0.85),
                     ),
                     SizedBox(width: v360.spacing.xs),
                     Expanded(
                       child: Text(
                         '${strings.thisWeek}: ${data.weekSalesValue.display}',
                         style: v360.text.caption.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85),
+                          color: colors.onFill.withValues(alpha: 0.85),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

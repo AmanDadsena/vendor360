@@ -29,7 +29,7 @@ class MarketplaceRepository {
   Future<List<SupplierCard>> distributors({String? category}) => withFallback(
         () async {
           final json = await api.get('/distributors', query: {
-            if (category != null) 'category': category,
+            'category': ?category,
           }) as List;
           return <SupplierCard>[
             for (final s in json)
@@ -82,7 +82,7 @@ class MarketplaceRepository {
       withFallback(
         () async {
           final json = await api.get('/orders', query: {
-            if (status != null) 'status': status,
+            'status': ?status,
             if (openOnly) 'open_only': true,
           }) as List;
           return <PurchaseOrder>[
@@ -117,8 +117,8 @@ class MarketplaceRepository {
         final json = await api.post('/orders', body: {
           'supplier_id': supplierId,
           'lines': [for (final l in lines) l.toJson()],
-          if (note != null) 'note': note,
-          if (poolId != null) 'pool_id': poolId,
+          'note': ?note,
+          'pool_id': ?poolId,
           'client_event_id': _eventId(),
           'place_immediately': placeImmediately,
         }) as Map<String, dynamic>;
@@ -129,7 +129,7 @@ class MarketplaceRepository {
       withoutFallback(() async {
         final json = await api.post(
           '/orders/$id/cancel',
-          body: {if (reason != null) 'reason': reason},
+          body: {'reason': ?reason},
         ) as Map<String, dynamic>;
         return PurchaseOrder.fromJson(json);
       });
@@ -151,7 +151,7 @@ class MarketplaceRepository {
               for (final e in received.entries)
                 {'line_id': e.key, 'packs': e.value},
             ],
-          if (note != null) 'note': note,
+          'note': ?note,
         }) as Map<String, dynamic>;
         return PurchaseOrder.fromJson(json);
       });
@@ -172,8 +172,8 @@ class MarketplaceRepository {
         () async {
           final json = await api.get('/onboarding/master-catalog', query: {
             if (categories.isNotEmpty) 'categories': categories.join(','),
-            if (category != null) 'category': category,
-            if (limit != null) 'limit': limit,
+            'category': ?category,
+            'limit': ?limit,
           }) as List;
           return <MasterSku>[
             for (final s in json)
@@ -205,7 +205,7 @@ class MarketplaceRepository {
       withFallback(
         () async {
           final json = await api.get('/dist/orders', query: {
-            if (status != null) 'status': status,
+            'status': ?status,
             if (openOnly) 'open_only': true,
           }) as List;
           return <PurchaseOrder>[
@@ -237,7 +237,7 @@ class MarketplaceRepository {
               for (final e in amended.entries)
                 {'line_id': e.key, 'packs': e.value},
             ],
-          if (note != null) 'note': note,
+          'note': ?note,
         }) as Map<String, dynamic>;
         return PurchaseOrder.fromJson(json);
       });
@@ -246,7 +246,7 @@ class MarketplaceRepository {
       withoutFallback(() async {
         final json = await api.post(
           '/dist/orders/$id/reject',
-          body: {if (reason != null) 'reason': reason},
+          body: {'reason': ?reason},
         ) as Map<String, dynamic>;
         return PurchaseOrder.fromJson(json);
       });
@@ -297,11 +297,11 @@ class MarketplaceRepository {
   }) =>
       withoutFallback(() async {
         final json = await api.patch('/dist/catalog/$id', body: {
-          if (packPrice != null) 'pack_price': packPrice,
-          if (packSize != null) 'pack_size': packSize,
-          if (moqPacks != null) 'moq_packs': moqPacks,
-          if (availablePacks != null) 'available_packs': availablePacks,
-          if (active != null) 'active': active,
+          'pack_price': ?packPrice,
+          'pack_size': ?packSize,
+          'moq_packs': ?moqPacks,
+          'available_packs': ?availablePacks,
+          'active': ?active,
         }) as Map<String, dynamic>;
         return CatalogEntry.fromJson(json);
       });
@@ -324,20 +324,22 @@ class MarketplaceRepository {
       });
 
   // ================================================== distributor: demand
-  Future<Demand> demand({int horizonDays = 7}) => withFallback(
+  /// The demand outlook. Deliberately **not** behind [withFallback].
+  ///
+  /// The house rule is that reads degrade to seeded data rather than block,
+  /// and everywhere else that is right. Here it was actively harmful: the
+  /// fallback returned an empty outlook, and an empty outlook is
+  /// indistinguishable from a real one — so a wholesaler with fifteen
+  /// connected shops was shown "Not enough shops yet. You have 0."
+  ///
+  /// A degraded read should say less than the truth, never something false.
+  /// Letting this throw puts the screen into its error state, which says it
+  /// could not load rather than inventing an answer.
+  Future<Demand> demand({int horizonDays = 7}) => withoutFallback(
         () async => Demand.fromJson(
           await api.get('/dist/demand', query: {'horizon_days': horizonDays})
               as Map<String, dynamic>,
         ),
-        () => const Demand(
-          horizonDays: 7,
-          consentingShops: 0,
-          totalConnected: 0,
-          lines: [],
-          atRisk: [],
-          deadLines: [],
-        ),
-        label: 'dist-demand',
       );
 
   Future<List<BookEntry>> book() => withFallback(
@@ -368,8 +370,8 @@ class MarketplaceRepository {
       withoutFallback(() => api.post('/dist/payments', body: {
             'vendor_id': vendorId,
             'amount': amount,
-            if (orderId != null) 'order_id': orderId,
-            if (note != null) 'note': note,
+            'order_id': ?orderId,
+            'note': ?note,
           }));
 
   // =================================================== distributor: pools
@@ -413,10 +415,10 @@ class MarketplaceRepository {
           'code': code,
           'language_pref': language.code,
           'role': intent == Principal.distributor ? 'distributor' : 'vendor',
-          if (name != null) 'name': name,
-          if (storeName != null) 'store_name': storeName,
-          if (businessName != null) 'business_name': businessName,
-          if (locality != null) 'locality': locality,
+          'name': ?name,
+          'store_name': ?storeName,
+          'business_name': ?businessName,
+          'locality': ?locality,
         }) as Map<String, dynamic>;
 
         final token = response['access_token'] as String;

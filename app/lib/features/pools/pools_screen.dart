@@ -40,7 +40,7 @@ class PoolsScreen extends ConsumerWidget {
           loading: () => ListView.builder(
             padding: EdgeInsets.all(v360.spacing.gutter),
             itemCount: 2,
-            itemBuilder: (_, __) => Padding(
+            itemBuilder: (_, _) => Padding(
               padding: EdgeInsets.only(bottom: v360.spacing.md),
               child: const V360Skeleton(height: 190),
             ),

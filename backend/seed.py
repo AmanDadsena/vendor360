@@ -21,7 +21,7 @@ import sys
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 
 from app.core.db import Base, SessionLocal, engine
 from app.models import (
@@ -212,6 +212,64 @@ def daily_quantity(
 
     qty *= RNG.uniform(0.78, 1.22)
     return max(0.0, qty)
+
+
+def _best_demo_distributor(db) -> DistributorUser:
+    """The wholesaler whose console has the most to show.
+
+    Same reasoning as `_stage_demo_shop`: the seeded world is rich in
+    aggregate, but any single account can land on a quiet corner of it. The
+    first-created supplier is a produce mandi whose shops are all well stocked
+    -- nothing waiting, nothing at risk, nothing overdue -- which makes the
+    flagship screens look broken rather than calm.
+
+    Nothing is fabricated here. This picks the account that already has the
+    fullest picture, so the demo login opens on real work.
+    """
+    from app.services.distributor_intel import at_risk_shops
+
+    best, best_score = None, -1
+    for user in db.scalars(select(DistributorUser).order_by(DistributorUser.created_at)):
+        supplier = user.supplier
+        waiting = db.scalar(
+            select(func.count(PurchaseOrder.id)).where(
+                PurchaseOrder.supplier_id == supplier.id,
+                PurchaseOrder.status.in_(("placed", "confirmed", "dispatched")),
+            )
+        ) or 0
+        score = len(at_risk_shops(db, supplier)) * 2 + waiting
+        if score > best_score:
+            best, best_score = user, score
+    return best
+
+
+def _warm_forecast_cache(db, horizon_days: int = 14) -> int:
+    """Precompute forecasts for every item that a distributor might aggregate.
+
+    The demand outlook fits a model per (shop x SKU). Cold, that is ten
+    seconds and past the client's read timeout; warm, it is a tenth of a
+    second. Warming here means a fresh clone is fast on the very first load
+    rather than after someone has already waited once.
+
+    Fourteen days so both the one-week and two-week horizons hit.
+    """
+    from app.services import forecast_cache
+
+    items = db.scalars(select(InventoryItem)).all()
+
+    def history_for(item):
+        rows = db.execute(
+            select(Transaction.occurred_at, Transaction.qty).where(
+                Transaction.item_id == item.id, Transaction.type == "sale"
+            )
+        ).all()
+        return [(ts.date(), float(q)) for ts, q in rows]
+
+    computed = forecast_cache.warm(
+        db, items, horizon_days=horizon_days, history_for=history_for
+    )
+    db.commit()
+    return computed
 
 
 def _recompute_reorder_points(db) -> int:
@@ -426,7 +484,18 @@ def _seed_marketplace(db, today: date) -> tuple[int, int, int]:
                 continue
 
             status = RNG.choice(statuses)
-            age = RNG.randint(1, 75)
+            # Weighted towards recent. A flat 1-75 spread put every delivery
+            # more than a week back, so the distributor's "delivered this
+            # week" read zero and every rupee outstanding was also overdue --
+            # a demo that looks simultaneously dead and alarming. Real order
+            # books are dense at the near end.
+            age = RNG.choice([
+                RNG.randint(1, 6),    # this week
+                RNG.randint(1, 6),
+                RNG.randint(7, 21),   # this month
+                RNG.randint(7, 21),
+                RNG.randint(22, 75),  # history
+            ])
             placed_at = as_utc(today - timedelta(days=age), 10)
 
             sequence += 1
@@ -537,7 +606,13 @@ def _seed_marketplace(db, today: date) -> tuple[int, int, int]:
                         created_at=order.delivered_at,
                     )
                 )
-                if RNG.random() > 0.32:
+                # Most invoices get settled, and the ones that are not skew
+                # old -- an unpaid bill is unpaid because it has been sitting.
+                # A flat rate produced either everything overdue (at 32%) or
+                # nothing overdue (at 18%), because payment had no relation to
+                # age. Tying them makes the overdue figure a real minority.
+                settled_odds = 0.94 if age <= 21 else 0.72
+                if RNG.random() < settled_odds:
                     paid = order.amount_total if RNG.random() > 0.25 else round(
                         order.amount_total * RNG.uniform(0.4, 0.8), 2
                     )
@@ -734,11 +809,16 @@ def seed(vendor_count: int, days: int, reset: bool) -> None:
         db.commit()
         print(f"  {staged} items drawn down at {demo.store_name} for the demo login")
 
+        # After the draw-down, so the cached forecasts reflect the stock the
+        # app will actually open on.
+        print("\nwarming the forecast cache...")
+        print(f"  {_warm_forecast_cache(db)} items precomputed")
+
         print(f"\n{vendor_count} vendors, {days} days, {total_txns:,} transactions")
         print(f"{len(SUPPLIERS)} suppliers, {len(LENDERS)} lenders")
 
         first = db.scalar(select(Vendor).order_by(Vendor.created_at))
-        staff = db.scalar(select(DistributorUser).order_by(DistributorUser.created_at))
+        staff = _best_demo_distributor(db)
         print("\nOTP is returned by /auth/otp/request — there is no SMS gateway.")
         print(f"  shop login:        {first.phone}   ({first.store_name})")
         print(f"  distributor login: {staff.phone}   ({staff.supplier.name})")

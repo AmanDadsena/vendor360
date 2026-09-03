@@ -90,7 +90,7 @@ class VendorRepository {
       withFallback(
         () async {
           final json = await api.get('/inventory', query: {
-            if (category != null) 'category': category,
+            'category': ?category,
             if (lowOnly) 'low_only': 'true',
           }) as List;
           await queue.cacheSnapshot('inventory', json);
@@ -393,7 +393,7 @@ class VendorRepository {
       heatmap({String? category, int days = 30}) => withFallback(
             () async {
               final json = await api.get('/heatmap', query: {
-                if (category != null) 'category': category,
+                'category': ?category,
                 'days': days,
               }) as Map<String, dynamic>;
 
