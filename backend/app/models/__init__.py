@@ -6,6 +6,7 @@ from .forecast import Forecast
 from .pool import BargainPool, PoolMember
 from .lender import Lender, ScoreConsent
 from .supplier import Supplier
+from .alert import Alert
 from .distributor import CatalogEntry, DistributorUser, VendorDistributor
 from .order import (
     ALLOWED_TRANSITIONS,
@@ -37,6 +38,7 @@ __all__ = [
     "PurchaseOrderLine",
     "OrderEvent",
     "LedgerEntry",
+    "Alert",
     "ORDER_STATUSES",
     "ALLOWED_TRANSITIONS",
     "TERMINAL_STATUSES",

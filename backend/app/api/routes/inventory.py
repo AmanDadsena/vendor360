@@ -24,6 +24,7 @@ from ...schemas import (
 from ...services.catalog import shelf_life_for
 from ...services.forecasting import forecast_item
 from ...services.safety_stock import compute_reorder_point
+from ...services.reactions import on_stock_changed
 from ...services.sync import MOVEMENT_SIGN
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
@@ -210,6 +211,10 @@ def record_movement(
     """
     item = _owned_item(db, vendor, body.item_id)
 
+    # Captured before the mutation: the stockout detector is edge-triggered,
+    # so it needs the value on the other side of the crossing.
+    previous_qty = item.current_qty
+
     sign = MOVEMENT_SIGN[body.movement]
     item.current_qty = max(0.0, item.current_qty + sign * body.qty)
     item.last_updated = utcnow()
@@ -237,6 +242,18 @@ def record_movement(
     db.commit()
 
     refresh_reorder_point(db, item, vendor)
+
+    # After the reorder point is refreshed, so a crossing is judged against
+    # the threshold this sale actually produced rather than a stale one.
+    on_stock_changed(
+        db,
+        vendor=vendor,
+        item=item,
+        previous_qty=previous_qty,
+        was_sale=body.movement == "sale",
+    )
+    db.commit()
+
     return TransactionOut.model_validate(txn)
 
 

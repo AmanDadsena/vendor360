@@ -17,6 +17,7 @@ from .api.routes import (
     distributor,
     intelligence,
     inventory,
+    live,
     onboarding,
     orders,
 )
@@ -65,6 +66,7 @@ app.include_router(intelligence.router)
 app.include_router(onboarding.router)
 app.include_router(orders.router)
 app.include_router(distributor.router)
+app.include_router(live.router)
 
 
 @app.get("/health", tags=["meta"])

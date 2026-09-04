@@ -769,4 +769,22 @@ class QuickAddOut(BaseModel):
     items: list[ItemOut]
 
 
+# ------------------------------------------------------------------ alerts
+class AlertOut(BaseModel):
+    id: uuid.UUID
+    kind: str
+    severity: str
+    title: str
+    body: str
+    subject_id: uuid.UUID | None = None
+    payload: dict = {}
+    read: bool
+    created_at: datetime
+
+
+class AlertsOut(BaseModel):
+    unread: int
+    alerts: list[AlertOut]
+
+
 TokenResponse.model_rebuild()
