@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
+import '../alerts/alerts_sheet.dart';
+import '../alerts/live_dot.dart';
 import '../orders/order_widgets.dart';
 
 /// The wholesaler's morning screen.
@@ -78,6 +80,9 @@ class DistTodayScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    const LiveDot(),
+                    SizedBox(width: v360.spacing.xs),
+                    AlertBell(onTap: () => showAlerts(context)),
                     V360IconButton(
                       icon: Icons.logout_rounded,
                       semanticLabel: 'Sign out',

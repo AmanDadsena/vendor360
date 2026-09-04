@@ -66,6 +66,12 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
+    // Opens the socket while signed in and re-reads what each event touches.
+    // Watched from the shell so liveness survives tab switches.
+    ref
+      ..watch(liveLifecycleProvider)
+      ..watch(liveRefreshProvider);
+
     final s = ref.watch(stringsProvider);
     final sync = ref.watch(syncProvider);
     final v360 = context.v360;

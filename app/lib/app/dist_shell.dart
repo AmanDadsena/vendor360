@@ -19,6 +19,10 @@ class DistShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref
+      ..watch(liveLifecycleProvider)
+      ..watch(liveRefreshProvider);
+
     final v360 = context.v360;
 
     // Watched rather than passed down: the badge has to move the moment an

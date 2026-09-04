@@ -18,6 +18,11 @@ dependencies:
   intl: ^0.20.3
   http: ^1.5.0
 
+  # The live channel. Server-Sent Events would need no package, but Flutter has
+  # no EventSource binding, so it would mean hand-rolling chunked parsing over
+  # http and losing the simplicity that was the reason to choose it.
+  web_socket_channel: ^3.0.3
+
   # The offline queue. The TRD specifies SQLite via drift/sqflite; this uses
   # shared_preferences because it is the one durable store that behaves
   # identically on Android and on Flutter web, where sqflite has no
@@ -37,6 +42,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  stream_channel: ^2.1.4
 
 flutter:
   uses-material-design: true

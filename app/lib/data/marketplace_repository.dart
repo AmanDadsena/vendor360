@@ -392,6 +392,36 @@ class MarketplaceRepository {
             body: {'bulk_unit_price': bulkUnitPrice},
           ));
 
+  // ====================================================== shared: alerts
+  /// The alert feed for whichever principal is signed in.
+  ///
+  /// Falls back to an empty feed rather than throwing: an unreachable server
+  /// should cost the badge, not the screen behind it. Safe here in a way it
+  /// was not for the demand outlook, because an empty alert list makes no
+  /// claim -- it says "nothing to show", not "you have no shops".
+  Future<AlertFeed> alerts({bool distributor = false}) => withFallback(
+        () async => AlertFeed.fromJson(
+          await api.get(distributor ? '/dist/alerts' : '/alerts')
+              as Map<String, dynamic>,
+        ),
+        () => AlertFeed.empty,
+        label: 'alerts',
+      );
+
+  Future<void> markAlertRead(String id, {bool distributor = false}) =>
+      withoutFallback(
+        () => api.post(
+          distributor ? '/dist/alerts/$id/read' : '/alerts/$id/read',
+        ),
+      );
+
+  Future<void> markAllAlertsRead({bool distributor = false}) =>
+      withoutFallback(
+        () => api.post(
+          distributor ? '/dist/alerts/read-all' : '/alerts/read-all',
+        ),
+      );
+
   // ======================================================== shared: auth
   /// Verify an OTP for either principal.
   ///

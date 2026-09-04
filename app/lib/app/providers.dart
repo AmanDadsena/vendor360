@@ -5,6 +5,7 @@ import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 
 import '../data/api_client.dart';
 import '../data/marketplace_models.dart';
+import '../data/live_connection.dart';
 import '../data/marketplace_repository.dart';
 import '../data/models.dart';
 import '../data/offline_queue.dart';
@@ -478,3 +479,84 @@ final distPoolsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>(
   (ref) => ref.watch(marketplaceProvider).openPools(),
 );
+
+// ============================================================ live channel
+final liveConnectionProvider = Provider<LiveConnection>((ref) {
+  final connection = LiveConnection(baseUrl: kApiBase);
+  ref.onDispose(connection.dispose);
+  return connection;
+});
+
+/// Opens the socket while signed in, closes it on sign-out.
+///
+/// Driven off the session rather than started by a screen, so liveness does
+/// not depend on which tab happens to be mounted — and so a sign-out cannot
+/// leave a socket open under the previous principal's token.
+final liveLifecycleProvider = Provider<void>((ref) {
+  final connection = ref.watch(liveConnectionProvider);
+  final signedIn = ref.watch(sessionProvider).isSignedIn;
+  final token = ref.watch(offlineQueueProvider).token;
+
+  if (signedIn && token != null) {
+    connection.start(token);
+  } else {
+    connection.stop();
+  }
+});
+
+final liveStatusProvider = StreamProvider<LiveStatus>((ref) {
+  ref.watch(liveLifecycleProvider);
+  final connection = ref.watch(liveConnectionProvider);
+  return connection.statusChanges.distinct();
+});
+
+final liveEventsProvider = StreamProvider<LiveEvent>((ref) {
+  ref.watch(liveLifecycleProvider);
+  return ref.watch(liveConnectionProvider).events;
+});
+
+// ------------------------------------------------------------------ alerts
+final alertsProvider = FutureProvider.autoDispose<AlertFeed>(
+  (ref) => ref.watch(marketplaceProvider).alerts(
+        distributor: ref.watch(sessionProvider).isDistributor,
+      ),
+);
+
+/// Re-reads whatever an event touched.
+///
+/// The single place the socket connects to the rest of the app. An event says
+/// "something changed"; this decides what to re-read; the screen then loads
+/// through its ordinary path. That indirection is what stops the socket
+/// becoming a second source of truth — there is exactly one way data arrives,
+/// and a dead socket only means nobody is prompting it.
+final liveRefreshProvider = Provider<void>((ref) {
+  ref.listen(liveEventsProvider, (_, next) {
+    final event = next.value;
+    if (event == null) return;
+
+    // An alert accompanies every detection, so the feed is always stale after
+    // one — and the unread badge is what the user notices first.
+    ref.invalidate(alertsProvider);
+
+    switch (event.type) {
+      case 'heatmap':
+        ref.invalidate(heatmapProvider);
+      case 'stockout':
+      case 'anomaly':
+        ref
+          ..invalidate(inventoryProvider)
+          ..invalidate(dashboardProvider)
+          ..invalidate(distDemandProvider)
+          ..invalidate(distSummaryProvider);
+      case 'surge':
+        ref
+          ..invalidate(poolsProvider)
+          ..invalidate(distPoolsProvider);
+      case 'order':
+        ref
+          ..invalidate(ordersProvider)
+          ..invalidate(distInboxProvider)
+          ..invalidate(distSummaryProvider);
+    }
+  });
+});

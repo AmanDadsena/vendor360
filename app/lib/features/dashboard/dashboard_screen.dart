@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
+import '../alerts/alerts_sheet.dart';
+import '../alerts/live_dot.dart';
 import '../../core/strings.dart';
 import '../../data/models.dart';
 
@@ -204,8 +206,14 @@ class _Greeting extends ConsumerWidget {
             ],
           ),
         ),
+        // Sync says whether *your* writes have landed; live says whether you
+        // are being told about anyone else's. Adjacent because they answer the
+        // same underlying question — how current is this screen.
         SyncBadge(queued: queued, syncing: syncing),
-        SizedBox(width: v360.spacing.sm),
+        SizedBox(width: v360.spacing.xs),
+        const LiveDot(),
+        SizedBox(width: v360.spacing.xs),
+        AlertBell(onTap: () => showAlerts(context)),
         V360IconButton(
           icon: v360.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
           onPressed: () => ref.read(themeModeProvider.notifier).toggle(),

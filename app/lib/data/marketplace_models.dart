@@ -1067,3 +1067,68 @@ class CartLine {
         'packs': packs,
       };
 }
+
+
+// ------------------------------------------------------------------ alerts
+/// One thing a detector noticed.
+class VendorAlert {
+  const VendorAlert({
+    required this.id,
+    required this.kind,
+    required this.severity,
+    required this.title,
+    required this.body,
+    required this.read,
+    required this.createdAt,
+    this.subjectId,
+    this.payload = const {},
+  });
+
+  final String id;
+  final String kind; // anomaly | stockout | surge
+  final String severity; // info | warning | urgent
+  final String title;
+  final String body;
+  final bool read;
+  final DateTime createdAt;
+  final String? subjectId;
+  final Map<String, dynamic> payload;
+
+  bool get isUrgent => severity == 'urgent';
+
+  /// The item this is about, when there is one — what "Order now" acts on.
+  String? get itemId => payload['item_id'] as String?;
+
+  String? get skuName => payload['sku_name'] as String?;
+
+  static VendorAlert fromJson(Map<String, dynamic> j) => VendorAlert(
+        id: j['id'] as String,
+        kind: j['kind'] as String? ?? 'info',
+        severity: j['severity'] as String? ?? 'info',
+        title: j['title'] as String? ?? '',
+        body: j['body'] as String? ?? '',
+        read: j['read'] as bool? ?? false,
+        createdAt: _dt(j['created_at']) ?? DateTime.now(),
+        subjectId: j['subject_id'] as String?,
+        payload: Map<String, dynamic>.from(
+          (j['payload'] as Map?) ?? const <String, dynamic>{},
+        ),
+      );
+}
+
+class AlertFeed {
+  const AlertFeed({required this.unread, required this.alerts});
+
+  final int unread;
+  final List<VendorAlert> alerts;
+
+  static const AlertFeed empty = AlertFeed(unread: 0, alerts: []);
+
+  static AlertFeed fromJson(Map<String, dynamic> j) => AlertFeed(
+        unread: _i(j['unread']),
+        alerts: <VendorAlert>[
+          for (final a in (j['alerts'] as List? ?? const []))
+            VendorAlert.fromJson(Map<String, dynamic>.from(a as Map)),
+        ],
+      );
+}
