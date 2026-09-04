@@ -5,6 +5,7 @@ import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
+import '../orders/sourcing_sheet.dart';
 import '../../core/strings.dart';
 
 /// Current stock, with live reorder thresholds.
@@ -287,10 +288,105 @@ class _ItemRow extends ConsumerWidget {
                 ),
               ),
             ),
+
+            // The two things a shopkeeper does at the shelf, without opening
+            // anything. Only on rows where they make sense: "sold out" on a
+            // shelf that still has stock, "order" on one that does not.
+            if (state != StockState.healthy || item.quantity.amount > 0) ...<Widget>[
+              SizedBox(height: v360.spacing.md),
+              Row(
+                children: <Widget>[
+                  if (item.quantity.amount > 0)
+                    Expanded(
+                      child: V360Button.ghost(
+                        label: 'Sold out',
+                        expand: true,
+                        onPressed: () => _markSoldOut(context, ref),
+                      ),
+                    ),
+                  if (item.quantity.amount > 0 && state != StockState.healthy)
+                    SizedBox(width: v360.spacing.sm),
+                  if (state != StockState.healthy)
+                    Expanded(
+                      child: V360Button.secondary(
+                        label: 'Order',
+                        expand: true,
+                        onPressed: () =>
+                            showSourcingSheet(context, itemId: item.id),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  /// Zero the shelf in one tap.
+  ///
+  /// Confirmed first, because it is destructive in the way that matters: it
+  /// writes a sale for everything left, which lands in the day's takings and
+  /// in every forecast built from them. Recorded as a sale rather than a
+  /// silent adjustment precisely so the numbers stay honest -- stock that
+  /// left the shelf is stock that left.
+  Future<void> _markSoldOut(BuildContext context, WidgetRef ref) async {
+    final remaining = item.quantity;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${item.skuName} sold out?'),
+        content: Text(
+          'This records the remaining ${remaining.display} as sold and takes '
+          'the shelf to zero.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sold out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(repositoryProvider).recordMovement(
+            itemId: item.id,
+            qty: remaining.amount,
+            movement: 'sale',
+            source: 'manual',
+          );
+      ref
+        ..invalidate(inventoryProvider)
+        ..invalidate(dashboardProvider);
+
+      if (!context.mounted) return;
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${item.skuName} marked sold out'),
+          action: SnackBarAction(
+            label: 'Order',
+            onPressed: () => showSourcingSheet(context, itemId: item.id),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$error'),
+          backgroundColor: context.v360.colors.danger,
+        ),
+      );
+    }
   }
 
   void _openSheet(BuildContext context, WidgetRef ref) {

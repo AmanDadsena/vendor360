@@ -28,11 +28,15 @@ from ...models import (
 )
 from ...schemas import (
     AtRiskShopOut,
+    BulkConfirmOut,
     CatalogEntryIn,
     CatalogEntryOut,
     CatalogEntryUpdate,
     DeadLineOut,
     DemandLineOut,
+    DispatchLegOut,
+    DispatchOut,
+    DispatchStopOut,
     DemandOut,
     DistributorSummaryOut,
     DistributorVendorOut,
@@ -328,6 +332,112 @@ def reject(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     db.commit()
     return order_out(db, order, detail=True)
+
+
+@router.post("/orders/bulk-confirm", response_model=BulkConfirmOut)
+def bulk_confirm(
+    user: DistributorUser = Depends(current_distributor),
+    db: Session = Depends(get_db),
+):
+    """Accept every waiting order in full, at once.
+
+    A wholesaler who can supply everything asked for should not have to open
+    twelve screens to say so. Confirms in full only -- anything needing a
+    part-fill is left alone, because the whole value of a part-fill is that it
+    was a decision, and a bulk action cannot make it.
+    """
+    waiting = db.scalars(
+        select(PurchaseOrder).where(
+            PurchaseOrder.supplier_id == user.supplier_id,
+            PurchaseOrder.status == "placed",
+        )
+    ).all()
+
+    confirmed: list[str] = []
+    failed = 0
+
+    for order in waiting:
+        try:
+            amend_lines(order, {}, "packs_confirmed")
+            transition(
+                db, order, "confirmed",
+                actor_role="distributor", actor_id=user.id,
+                note="Accepted in full",
+            )
+            confirmed.append(order.code)
+        except OrderError:
+            # One bad order must not sink the batch. It stays waiting, which
+            # is the honest outcome -- the wholesaler will see it still there.
+            failed += 1
+
+    db.commit()
+    return BulkConfirmOut(
+        confirmed=len(confirmed), failed=failed, order_codes=confirmed
+    )
+
+
+@router.get("/dispatch", response_model=DispatchOut)
+def dispatch_sheet(
+    user: DistributorUser = Depends(current_distributor),
+    db: Session = Depends(get_db),
+):
+    """Today's round, grouped by locality.
+
+    A flat list of confirmed orders is a to-do list; grouped by area it is a
+    route. Money owed rides along on each stop because collecting on delivery
+    is how this trade actually settles, and a driver who does not know what to
+    ask for does not ask.
+    """
+    orders = db.scalars(
+        select(PurchaseOrder).where(
+            PurchaseOrder.supplier_id == user.supplier_id,
+            PurchaseOrder.status.in_(("confirmed", "dispatched")),
+        )
+    ).all()
+
+    now = utcnow()
+    legs: dict[str, list[DispatchStopOut]] = {}
+
+    for order in orders:
+        vendor = db.get(Vendor, order.vendor_id)
+        if vendor is None:
+            continue
+
+        legs.setdefault(vendor.locality or "Unassigned", []).append(
+            DispatchStopOut(
+                order_id=order.id,
+                order_code=order.code,
+                vendor_id=vendor.id,
+                store_name=vendor.store_name,
+                phone=vendor.phone,
+                line_count=len(order.lines),
+                amount_total=order.amount_total,
+                amount_due=order.amount_due,
+                expected_at=order.expected_at,
+                overdue=order.expected_at is not None and order.expected_at < now,
+            )
+        )
+
+    built = [
+        DispatchLegOut(
+            locality=locality,
+            # Late stops first within a leg: the van is already in the area,
+            # and the only ordering that matters is who has waited longest.
+            stops=sorted(stops, key=lambda s: (not s.overdue, s.expected_at or now)),
+            total_value=round(sum(s.amount_total for s in stops), 2),
+            to_collect=round(sum(s.amount_due for s in stops), 2),
+        )
+        for locality, stops in legs.items()
+    ]
+    # Densest area first — the most deliveries per kilometre driven.
+    built.sort(key=lambda leg: -len(leg.stops))
+
+    return DispatchOut(
+        legs=built,
+        stop_count=sum(len(leg.stops) for leg in built),
+        total_value=round(sum(leg.total_value for leg in built), 2),
+        to_collect=round(sum(leg.to_collect for leg in built), 2),
+    )
 
 
 # ---------------------------------------------------------------- catalog

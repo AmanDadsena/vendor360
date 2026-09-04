@@ -6,6 +6,7 @@ import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
 import '../alerts/alerts_sheet.dart';
+import 'dispatch_sheet.dart';
 import '../alerts/live_dot.dart';
 import '../orders/order_widgets.dart';
 
@@ -128,8 +129,9 @@ class DistTodayScreen extends ConsumerWidget {
                       child: StatTile(
                         label: 'To send out',
                         value: '${data.toDispatch}',
+                        caption: data.toDispatch > 0 ? "see today's round" : null,
                         icon: Icons.local_shipping_outlined,
-                        onTap: () => context.go('/dist/orders'),
+                        onTap: () => showDispatch(context),
                       ),
                     ),
                   ],

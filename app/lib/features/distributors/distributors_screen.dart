@@ -227,19 +227,28 @@ class _SupplierCardView extends ConsumerWidget {
                     onPressed: () => _copy(context, supplier.phone!),
                   ),
                 ),
-              Expanded(
-                child: supplier.connected
-                    ? V360Button.ghost(
-                        label: 'Stop buying from them',
-                        expand: true,
-                        onPressed: () => _disconnect(context, ref),
-                      )
-                    : V360Button.primary(
-                        label: 'Connect',
-                        expand: true,
-                        onPressed: () => _connect(context, ref),
-                      ),
-              ),
+              if (supplier.connected) ...<Widget>[
+                Expanded(
+                  child: V360Button.secondary(
+                    label: 'Usual order',
+                    expand: true,
+                    onPressed: () => _usualOrder(context, ref),
+                  ),
+                ),
+                SizedBox(width: v360.spacing.sm),
+                V360IconButton(
+                  icon: Icons.link_off_rounded,
+                  semanticLabel: 'Stop buying from ${supplier.name}',
+                  onPressed: () => _disconnect(context, ref),
+                ),
+              ] else
+                Expanded(
+                  child: V360Button.primary(
+                    label: 'Connect',
+                    expand: true,
+                    onPressed: () => _connect(context, ref),
+                  ),
+                ),
             ],
           ),
         ],
@@ -284,6 +293,72 @@ class _SupplierCardView extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Connected to ${supplier.name}')),
       );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$error'),
+          backgroundColor: context.v360.colors.danger,
+        ),
+      );
+    }
+  }
+
+  /// Rebuild the last basket from this wholesaler and drop it in the cart.
+  ///
+  /// Most restocking is the same order again. Repriced from today's catalogue
+  /// on the server, because quoting last month's price would be quoting one
+  /// nobody honours — and the cart still shows every line before anything is
+  /// sent, so "usual" is a starting point rather than a blind repeat.
+  Future<void> _usualOrder(BuildContext context, WidgetRef ref) async {
+    try {
+      final lines =
+          await ref.read(marketplaceProvider).usualOrder(supplier.id);
+
+      if (!context.mounted) return;
+      if (lines.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No delivered order from ${supplier.name} yet — '
+              'the first one becomes your usual.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final cart = ref.read(cartProvider.notifier)..clear();
+      for (final line in lines) {
+        if (line.catalogEntryId == null) continue;
+        cart.add(
+          CartLine(
+            itemId: line.itemId,
+            packs: line.packsOrdered.round(),
+            option: SourcingOption(
+              supplierId: supplier.id,
+              supplierName: supplier.name,
+              catalogEntryId: line.catalogEntryId!,
+              skuName: line.skuName,
+              unit: line.unit,
+              packSize: line.packSize,
+              packPrice: line.unitPrice * line.packSize,
+              unitPrice: line.unitPrice,
+              moqPacks: 1,
+              packsNeeded: line.packsOrdered,
+              qtySupplied: line.qtyOrdered,
+              landedCost: line.lineTotal,
+              leadDays: supplier.leadDays,
+              arrivesInTime: true,
+              score: 1,
+              reasons: const <String>[],
+            ),
+          ),
+        );
+      }
+
+      HapticFeedback.mediumImpact();
+      context.go('/cart');
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

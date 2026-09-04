@@ -1132,3 +1132,105 @@ class AlertFeed {
         ],
       );
 }
+
+
+// ---------------------------------------------------------------- dispatch
+class DispatchStop {
+  const DispatchStop({
+    required this.orderId,
+    required this.orderCode,
+    required this.vendorId,
+    required this.storeName,
+    required this.phone,
+    required this.lineCount,
+    required this.amountTotal,
+    required this.amountDue,
+    required this.overdue,
+    this.expectedAt,
+  });
+
+  final String orderId;
+  final String orderCode;
+  final String vendorId;
+  final String storeName;
+  final String phone;
+  final int lineCount;
+  final double amountTotal;
+  final double amountDue;
+  final bool overdue;
+  final DateTime? expectedAt;
+
+  Money get total => Money.rupees(amountTotal);
+  Money get due => Money.rupees(amountDue);
+
+  static DispatchStop fromJson(Map<String, dynamic> j) => DispatchStop(
+        orderId: j['order_id'] as String,
+        orderCode: j['order_code'] as String,
+        vendorId: j['vendor_id'] as String,
+        storeName: j['store_name'] as String,
+        phone: j['phone'] as String? ?? '',
+        lineCount: _i(j['line_count']),
+        amountTotal: _d(j['amount_total']),
+        amountDue: _d(j['amount_due']),
+        overdue: j['overdue'] as bool? ?? false,
+        expectedAt: _dt(j['expected_at']),
+      );
+}
+
+/// Every stop in one locality — a van does one area at a time.
+class DispatchLeg {
+  const DispatchLeg({
+    required this.locality,
+    required this.stops,
+    required this.totalValue,
+    required this.toCollect,
+  });
+
+  final String locality;
+  final List<DispatchStop> stops;
+  final double totalValue;
+  final double toCollect;
+
+  Money get value => Money.rupees(totalValue);
+  Money get collect => Money.rupees(toCollect);
+
+  static DispatchLeg fromJson(Map<String, dynamic> j) => DispatchLeg(
+        locality: j['locality'] as String? ?? '—',
+        totalValue: _d(j['total_value']),
+        toCollect: _d(j['to_collect']),
+        stops: <DispatchStop>[
+          for (final s in (j['stops'] as List? ?? const []))
+            DispatchStop.fromJson(Map<String, dynamic>.from(s as Map)),
+        ],
+      );
+}
+
+class Dispatch {
+  const Dispatch({
+    required this.legs,
+    required this.stopCount,
+    required this.totalValue,
+    required this.toCollect,
+  });
+
+  final List<DispatchLeg> legs;
+  final int stopCount;
+  final double totalValue;
+  final double toCollect;
+
+  static const Dispatch empty =
+      Dispatch(legs: [], stopCount: 0, totalValue: 0, toCollect: 0);
+
+  Money get value => Money.rupees(totalValue);
+  Money get collect => Money.rupees(toCollect);
+
+  static Dispatch fromJson(Map<String, dynamic> j) => Dispatch(
+        stopCount: _i(j['stop_count']),
+        totalValue: _d(j['total_value']),
+        toCollect: _d(j['to_collect']),
+        legs: <DispatchLeg>[
+          for (final l in (j['legs'] as List? ?? const []))
+            DispatchLeg.fromJson(Map<String, dynamic>.from(l as Map)),
+        ],
+      );
+}

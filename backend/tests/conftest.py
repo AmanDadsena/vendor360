@@ -150,3 +150,51 @@ def connection(db, vendor, supplier):
     db.add(link)
     db.commit()
     return link
+
+
+# --------------------------------------------------------------- HTTP clients
+# Most suites test services directly, which is faster and says more about the
+# rule under test. These two exist for the handful of behaviours that only
+# exist at the route layer -- path shape, status codes, and the token scoping
+# that is the whole point of the `/dist` prefix.
+@pytest.fixture()
+def api(db):
+    """A TestClient whose requests share the test's own session.
+
+    Overriding `get_db` rather than letting FastAPI open its own means a
+    fixture-created row is visible to the request, and a request's write is
+    visible to the assertion afterwards -- without which every route test
+    would have to re-fetch through the API to see anything.
+    """
+    from fastapi.testclient import TestClient
+
+    from app.core.db import get_db
+    from app.main import app
+
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+def _authorise(client, subject_id, role):
+    from app.core.security import create_access_token
+
+    token = create_access_token(subject_id, "9999999999", role)
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
+
+
+@pytest.fixture()
+def client_vendor(api, vendor):
+    from app.core.security import ROLE_VENDOR
+
+    return _authorise(api, vendor.id, ROLE_VENDOR)
+
+
+@pytest.fixture()
+def client_dist(api, distributor_user):
+    from app.core.security import ROLE_DISTRIBUTOR
+
+    return _authorise(api, distributor_user.id, ROLE_DISTRIBUTOR)

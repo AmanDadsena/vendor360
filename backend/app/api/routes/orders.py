@@ -535,6 +535,60 @@ def receive_order(
     return order_out(db, order, detail=True)
 
 
+@router.get("/orders/usual/{supplier_id}", response_model=list[OrderLineOut])
+def usual_order(
+    supplier_id: uuid.UUID,
+    vendor: Vendor = Depends(current_vendor),
+    db: Session = Depends(get_db),
+):
+    """The last basket this shop ordered from this wholesaler.
+
+    Most restocking is the same order again. Making a shopkeeper rebuild it
+    line by line every week is the kind of friction that sends them back to a
+    phone call, so this hands back what they ordered last time, repriced from
+    the current catalogue -- last month's price would be a quote nobody
+    honours.
+
+    Delivered orders only. A draft or a cancelled one is not evidence of what
+    they usually buy.
+    """
+    last = db.scalar(
+        select(PurchaseOrder)
+        .where(
+            PurchaseOrder.vendor_id == vendor.id,
+            PurchaseOrder.supplier_id == supplier_id,
+            PurchaseOrder.status == "delivered",
+        )
+        .order_by(PurchaseOrder.delivered_at.desc())
+    )
+    if last is None:
+        return []
+
+    lines: list[OrderLineOut] = []
+    for line in last.lines:
+        entry = (
+            db.get(CatalogEntry, line.catalog_entry_id)
+            if line.catalog_entry_id
+            else None
+        )
+        if entry is not None and not entry.active:
+            # Withdrawn since. Silently repeating it would produce an order
+            # the wholesaler cannot fill.
+            continue
+
+        out = OrderLineOut.model_validate(line)
+        if entry is not None:
+            out = out.model_copy(
+                update={
+                    "unit_price": round(entry.unit_price, 2),
+                    "pack_size": entry.pack_size,
+                }
+            )
+        lines.append(out)
+
+    return lines
+
+
 # ----------------------------------------------------------------- ledger
 @router.get("/ledger", response_model=LedgerOut)
 def ledger(

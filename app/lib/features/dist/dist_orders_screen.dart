@@ -7,6 +7,7 @@ import 'package:vendor360_ui/vendor360_ui.dart';
 import '../../app/providers.dart';
 import '../../data/marketplace_models.dart';
 import '../orders/order_widgets.dart';
+import 'dispatch_sheet.dart';
 
 /// The wholesaler's inbox.
 ///
@@ -38,6 +39,13 @@ class DistOrdersScreen extends ConsumerWidget {
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         title: Text('Orders', style: v360.text.titleM.copyWith(color: colors.ink)),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.local_shipping_outlined),
+            tooltip: "Today's round",
+            onPressed: () => showDispatch(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -99,6 +107,9 @@ class DistOrdersScreen extends ConsumerWidget {
                     );
                   }
 
+                  final waiting =
+                      list.where((o) => o.status == OrderStatus.placed).length;
+
                   return RefreshIndicator(
                     color: colors.accent,
                     onRefresh: () async {
@@ -115,6 +126,12 @@ class DistOrdersScreen extends ConsumerWidget {
                         v360.spacing.x5,
                       ),
                       children: <Widget>[
+                        // Only worth offering when there is a batch. One
+                        // waiting order is quicker to open than to explain.
+                        if (waiting > 1) ...<Widget>[
+                          _BulkConfirm(count: waiting),
+                          SizedBox(height: v360.spacing.md),
+                        ],
                         for (final order in shown)
                           Padding(
                             padding: EdgeInsets.only(bottom: v360.spacing.md),
@@ -176,5 +193,93 @@ class _Chip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+
+/// Accept everything waiting, in full.
+///
+/// Offered only when several are waiting, and it confirms in full only —
+/// anything needing a part-fill is deliberately left alone, because the whole
+/// value of a part-fill is that it was a decision somebody made.
+class _BulkConfirm extends ConsumerStatefulWidget {
+  const _BulkConfirm({required this.count});
+
+  final int count;
+
+  @override
+  ConsumerState<_BulkConfirm> createState() => _BulkConfirmState();
+}
+
+class _BulkConfirmState extends ConsumerState<_BulkConfirm> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final colors = v360.colors;
+
+    return V360Card(
+      color: colors.accentSurface,
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '${widget.count} orders waiting',
+                  style: v360.text.bodyStrong.copyWith(color: colors.ink),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Accept them all in full if you can supply everything.',
+                  style: v360.text.caption.copyWith(color: colors.inkMuted),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: v360.spacing.sm),
+          V360Button.primary(
+            label: 'Accept all',
+            loading: _busy,
+            onPressed: _busy ? null : _run,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _run() async {
+    setState(() => _busy = true);
+    try {
+      final result = await ref.read(marketplaceProvider).bulkConfirm();
+      ref
+        ..invalidate(distInboxProvider)
+        ..invalidate(distSummaryProvider)
+        ..invalidate(distDispatchProvider);
+
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.failed == 0
+                ? '${result.confirmed} accepted'
+                : '${result.confirmed} accepted, ${result.failed} need a look',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$error'),
+          backgroundColor: context.v360.colors.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }

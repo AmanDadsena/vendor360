@@ -392,6 +392,38 @@ class MarketplaceRepository {
             body: {'bulk_unit_price': bulkUnitPrice},
           ));
 
+  /// The last basket this shop had delivered by this wholesaler, repriced.
+  ///
+  /// Most restocking is the same order again, and rebuilding it line by line
+  /// every week is the friction that sends a shopkeeper back to a phone call.
+  Future<List<OrderLine>> usualOrder(String supplierId) =>
+      withoutFallback(() async {
+        final json = await api.get('/orders/usual/$supplierId') as List;
+        return <OrderLine>[
+          for (final l in json)
+            OrderLine.fromJson(Map<String, dynamic>.from(l as Map)),
+        ];
+      });
+
+  // ============================================== distributor: ease of use
+  /// Accept every waiting order in full.
+  Future<({int confirmed, int failed})> bulkConfirm() =>
+      withoutFallback(() async {
+        final json =
+            await api.post('/dist/orders/bulk-confirm') as Map<String, dynamic>;
+        return (
+          confirmed: (json['confirmed'] as num?)?.toInt() ?? 0,
+          failed: (json['failed'] as num?)?.toInt() ?? 0,
+        );
+      });
+
+  Future<Dispatch> dispatch() => withFallback(
+        () async =>
+            Dispatch.fromJson(await api.get('/dist/dispatch') as Map<String, dynamic>),
+        () => Dispatch.empty,
+        label: 'dist-dispatch',
+      );
+
   // ====================================================== shared: alerts
   /// The alert feed for whichever principal is signed in.
   ///

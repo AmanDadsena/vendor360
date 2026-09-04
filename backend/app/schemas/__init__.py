@@ -787,4 +787,42 @@ class AlertsOut(BaseModel):
     alerts: list[AlertOut]
 
 
+# --------------------------------------------------- distributor: dispatch
+class DispatchStopOut(BaseModel):
+    """One shop on today's round."""
+
+    order_id: uuid.UUID
+    order_code: str
+    vendor_id: uuid.UUID
+    store_name: str
+    phone: str
+    line_count: int
+    amount_total: float
+    amount_due: float
+    expected_at: datetime | None = None
+    overdue: bool = False
+
+
+class DispatchLegOut(BaseModel):
+    """Every stop in one locality, so a van does one area at a time."""
+
+    locality: str
+    stops: list[DispatchStopOut]
+    total_value: float
+    to_collect: float
+
+
+class DispatchOut(BaseModel):
+    legs: list[DispatchLegOut]
+    stop_count: int
+    total_value: float
+    to_collect: float
+
+
+class BulkConfirmOut(BaseModel):
+    confirmed: int
+    failed: int
+    order_codes: list[str]
+
+
 TokenResponse.model_rebuild()

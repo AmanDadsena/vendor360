@@ -89,7 +89,7 @@ cd packages/vendor360_ui && flutter test
 cd packages/vendor360_core && dart test
 ```
 
-325 tests across the four suites. The backend cases are named for the Test
+383 tests across the four suites. The backend cases are named for the Test
 Plan's `TC-` identifiers.
 
 ---
@@ -102,7 +102,8 @@ backend/            FastAPI — business logic and the ML services
   app/services/     forecasting · safety_stock · health_score · nlp_parser
                     ocr_parser · sync · pooling · heatmap · signals
                     ordering · sourcing · distributor_intel · connections
-                    onboarding
+                    onboarding · event_bus · audiences · detectors
+                    notifier · reactions · forecast_cache
   seed.py           the demo world every screen is computed from
 
 packages/
@@ -170,6 +171,26 @@ seconds against a seeded book, past the client's read timeout, so the screen
 fell back to an empty outlook and told a wholesaler with fifteen shops that
 they had none. Writing through to that table takes it to 0.12s. The cache key
 is the date, because a day's sales are only complete when the day is.
+
+**Realtime** is an enhancement over the pull path, never a replacement for it.
+A `/live` WebSocket carries hints — *something changed* — and the client
+re-reads through its ordinary path, so there stays exactly one way data
+arrives and a dead socket costs liveness rather than correctness. Which mode
+you are in is on screen, because a display that has silently stopped updating
+looks identical to a quiet afternoon.
+
+**Three detectors** run on every stock movement. Stockout is edge-triggered on
+the crossing, because level-triggered re-fires on every subsequent sale and
+teaches people to swipe alerts away. Anomaly compares today against the
+trailing *same-weekday* distribution — Saturdays against Saturdays, since the
+weekend lift would otherwise flag every Saturday — and cannot use the forecast
+cache, which holds no value for today by design. Surge opens a group order when
+three shops in a locality go short of the same SKU inside six hours.
+
+**A live event passes the same consent gate as the pull path.** Entitlement is
+computed at publish time by code that can read the frozen scope, and a
+distributor outside it gets no alert row either — filtering only the socket
+would leave the same leak arriving more slowly.
 
 **Distributor visibility** is a connection-scoped consent, frozen at the moment
 it is granted. Computing the scope live from the wholesaler's catalogue would

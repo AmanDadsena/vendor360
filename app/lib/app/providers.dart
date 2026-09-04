@@ -480,6 +480,10 @@ final distPoolsProvider =
   (ref) => ref.watch(marketplaceProvider).openPools(),
 );
 
+final distDispatchProvider = FutureProvider.autoDispose<Dispatch>(
+  (ref) => ref.watch(marketplaceProvider).dispatch(),
+);
+
 // ============================================================ live channel
 final liveConnectionProvider = Provider<LiveConnection>((ref) {
   final connection = LiveConnection(baseUrl: kApiBase);

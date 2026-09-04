@@ -178,9 +178,11 @@ void main() {
     );
     expect(find.text('₹4502 outstanding'), findsOneWidget);
 
-    // Actions differ by state.
+    // Actions differ by state. A connected wholesaler leads with the thing a
+    // shop does weekly; disconnecting is demoted to an icon, because it is
+    // rare and destructive.
     expect(find.text('Connect'), findsOneWidget);
-    expect(find.text('Stop buying from them'), findsOneWidget);
+    expect(find.text('Usual order'), findsOneWidget);
   });
 
   testWidgets('a distributor who cannot see your numbers says so',
@@ -367,6 +369,10 @@ void main() {
     expect(find.text('TO ANSWER'), findsOneWidget);
     expect(find.text('₹14,108'), findsOneWidget);
     expect(find.text('₹3,200'), findsOneWidget);
+
+    // The book section sits below the fold in the test viewport, so it has to
+    // be scrolled to rather than assumed rendered.
+    await tester.scrollUntilVisible(find.text('RUNNING OUT'), 200);
     expect(find.text('RUNNING OUT'), findsOneWidget);
   });
 
