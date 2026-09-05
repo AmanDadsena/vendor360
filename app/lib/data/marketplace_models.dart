@@ -1234,3 +1234,34 @@ class Dispatch {
         ],
       );
 }
+
+
+// -------------------------------------------------------------------- demo
+/// Whether the server is manufacturing activity right now.
+class DemoStatus {
+  const DemoStatus({
+    required this.available,
+    required this.running,
+    required this.reason,
+    required this.demoRows,
+  });
+
+  final bool available;
+  final bool running;
+  final String reason;
+  final int demoRows;
+
+  static const DemoStatus off = DemoStatus(
+    available: false,
+    running: false,
+    reason: 'demo mode is not available',
+    demoRows: 0,
+  );
+
+  static DemoStatus fromJson(Map<String, dynamic> j) => DemoStatus(
+        available: j['available'] as bool? ?? false,
+        running: j['running'] as bool? ?? false,
+        reason: j['reason'] as String? ?? '',
+        demoRows: _i(j['demo_rows']),
+      );
+}

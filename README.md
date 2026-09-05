@@ -40,6 +40,18 @@ python seed.py --reset
 python -m uvicorn app.main:app --reload --port 8010
 ```
 
+To watch the app move without a second person, start it in demo mode:
+
+```bash
+DEMO_MODE=1 python -m uvicorn app.main:app --port 8010
+```
+
+Every few seconds a random shop sells something, so the heatmap shifts, alerts
+fire and pools form with nobody touching the app. It is **simulated activity**
+and both shells say so in a banner while it runs. It refuses to start against
+anything but SQLite, every row it writes is marked `source="demo"`, and
+`DELETE /demo/pulse/sales` removes them all again.
+
 Interactive API docs at <http://127.0.0.1:8010/docs>.
 
 ### 2. Client
@@ -89,7 +101,7 @@ cd packages/vendor360_ui && flutter test
 cd packages/vendor360_core && dart test
 ```
 
-383 tests across the four suites. The backend cases are named for the Test
+410 tests across the four suites. The backend cases are named for the Test
 Plan's `TC-` identifiers.
 
 ---
@@ -171,6 +183,14 @@ seconds against a seeded book, past the client's read timeout, so the screen
 fell back to an empty outlook and told a wholesaler with fifteen shops that
 they had none. Writing through to that table takes it to 0.12s. The cache key
 is the date, because a day's sales are only complete when the day is.
+
+**Demo mode fabricates, and says so.** The pulse writes real transactions —
+it has to, because the heatmap aggregates from the database and an event with
+no write would make the client re-read identical numbers. So the guard is not
+"don't write" but "never be mistakable": off unless `DEMO_MODE=1`, refuses any
+database that is not SQLite, marked `source="demo"` on every row, labelled in
+both shells while running, and removable in one query. Fiction that cannot be
+told apart from data is the hazard, not fiction as such.
 
 **Realtime** is an enhancement over the pull path, never a replacement for it.
 A `/live` WebSocket carries hints — *something changed* — and the client

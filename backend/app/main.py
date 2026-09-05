@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import (
     auth,
     capture,
+    demo,
     distributor,
     intelligence,
     inventory,
@@ -31,7 +32,17 @@ async def lifespan(app: FastAPI):
     # Fine for the prototype's SQLite target. Against Supabase the schema is
     # owned by the migrations directory and this becomes a no-op.
     Base.metadata.create_all(engine)
-    yield
+
+    # Starts only when DEMO_MODE=1 and the database is SQLite; `start` makes
+    # that decision itself and logs why when it declines, so this call is
+    # unconditional and the policy lives in one place.
+    from .services.demo_pulse import pulse
+
+    pulse.start()
+    try:
+        yield
+    finally:
+        await pulse.stop()
 
 
 settings = get_settings()
@@ -67,12 +78,24 @@ app.include_router(onboarding.router)
 app.include_router(orders.router)
 app.include_router(distributor.router)
 app.include_router(live.router)
+app.include_router(demo.router)
 
 
 @app.get("/health", tags=["meta"])
 def health():
-    """Liveness probe. Deliberately unauthenticated and dependency-free."""
-    return {"status": "ok", "service": settings.app_name}
+    """Liveness probe. Deliberately unauthenticated and dependency-free.
+
+    Reports the demo pulse because simulated activity must be discoverable
+    from outside the process. Anyone looking at this server should be able to
+    tell whether the numbers moving on a screen describe anything real.
+    """
+    from .services.demo_pulse import pulse
+
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "demo_pulse": "running" if pulse.running else "off",
+    }
 
 
 @app.get("/meta/categories", tags=["meta"])

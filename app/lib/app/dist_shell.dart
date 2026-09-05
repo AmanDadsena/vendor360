@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
+import '../features/alerts/demo_banner.dart';
 import 'providers.dart';
 
 /// The frame around the wholesaler's five destinations.
@@ -35,7 +36,12 @@ class DistShell extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: v360.colors.canvas,
-      body: navigationShell,
+      body: Column(
+        children: <Widget>[
+          const DemoBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: _DistNav(
         index: navigationShell.currentIndex,
         pending: pending,

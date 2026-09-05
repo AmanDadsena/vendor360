@@ -17,6 +17,8 @@ from app.core.db import utcnow
 from app.models import BargainPool, InventoryItem, Transaction, Vendor
 from app.services.detectors import (
     ANOMALY_Z,
+    SHOP_UTC_OFFSET_HOURS,
+    shop_hour,
     MIN_RELATIVE_SPREAD,
     MIN_DAY_FRACTION,
     day_fraction,
@@ -26,10 +28,23 @@ from app.services.detectors import (
 )
 
 
-def _midday(offset_days: int = 0) -> datetime:
-    """A fixed 2pm, so tests do not pass or fail depending on when they run."""
+def _at_shop_hour(hour: float, *, offset_days: int = 0) -> datetime:
+    """A UTC instant that is `hour` on the *shop's* clock.
+
+    Fixtures name shop time because that is what the detectors reason about.
+    Writing them in UTC is what let the timezone bug hide: a test asserting
+    "2pm" meant 19:30 in Pune, and nothing said so.
+    """
+    utc_hour = (hour - SHOP_UTC_OFFSET_HOURS) % 24
     day = datetime.now(timezone.utc).date() - timedelta(days=offset_days)
-    return datetime.combine(day, time(14, 0), timezone.utc)
+    return datetime.combine(
+        day, time(int(utc_hour), int((utc_hour % 1) * 60)), timezone.utc
+    )
+
+
+def _midday(offset_days: int = 0) -> datetime:
+    """2pm on the shop's clock, so tests do not drift with the wall clock."""
+    return _at_shop_hour(14, offset_days=offset_days)
 
 
 def _sell(db, item, qty, *, when):
@@ -101,12 +116,52 @@ def test_tc_r01_an_item_with_no_reorder_point_cannot_cross_one(db, milk):
     assert detect_stockout(milk, previous_qty=10) is None
 
 
+# --------------------------------------------------------- TC-R04 shop clock
+def test_tc_r04_the_trading_day_is_the_shops_clock_not_utc():
+    """The bug this pins was silent and total.
+
+    DAY_OPENS/DAY_CLOSES describe a Pune shop's day, but the hour was read
+    from UTC. Pune is UTC+5:30, so the 07:00-21:00 window landed at
+    01:30-15:30 UTC: the anomaly detector stayed quiet through every Pune
+    morning and woke through the night, and nothing anywhere said so.
+    """
+    assert SHOP_UTC_OFFSET_HOURS == 5.5
+
+    # 04:47 UTC is 10:17 in Pune -- mid-morning, a shop's busiest hours.
+    morning = datetime(2026, 9, 5, 4, 47, tzinfo=timezone.utc)
+    assert shop_hour(morning) == pytest.approx(10.28, abs=0.02)
+    assert day_fraction(morning) > 0, "a Pune shop is open and selling at 10am"
+
+    # 23:00 UTC is 04:30 in Pune -- shut.
+    night = datetime(2026, 9, 5, 23, 0, tzinfo=timezone.utc)
+    assert shop_hour(night) == pytest.approx(4.5)
+    assert day_fraction(night) == 0
+
+
+def test_tc_r04_the_shop_clock_wraps_past_midnight():
+    """An offset that pushes past midnight lands at the start of the day."""
+    late = datetime(2026, 9, 5, 20, 0, tzinfo=timezone.utc)  # 01:30 Pune
+
+    assert shop_hour(late) == pytest.approx(1.5)
+    assert 0 <= shop_hour(late) < 24
+
+
+def test_tc_r04_day_fraction_runs_zero_to_one_across_the_shop_day():
+    def at(utc_hour: float) -> float:
+        h = int(utc_hour)
+        m = int((utc_hour - h) * 60)
+        return day_fraction(datetime(2026, 9, 5, h, m, tzinfo=timezone.utc))
+
+    # 07:00 Pune == 01:30 UTC, 21:00 Pune == 15:30 UTC.
+    assert at(1.5) == pytest.approx(0.0)
+    assert at(8.5) == pytest.approx(0.5, abs=0.02)
+    assert at(15.5) == pytest.approx(1.0)
+
+
 # ------------------------------------------------------------ TC-R02 anomaly
 def test_tc_r02_quiet_before_enough_of_the_day_has_passed(db, milk):
     """At 8am one early customer looks like a surge. Silence is the honest output."""
-    early = datetime.combine(
-        datetime.now(timezone.utc).date(), time(8, 0), timezone.utc
-    )
+    early = _at_shop_hour(8)  # 08:00 in the shop, barely open
     assert day_fraction(early) < MIN_DAY_FRACTION
     assert detect_anomaly(db, milk, now=early) is None
 
@@ -136,11 +191,12 @@ def test_tc_r02_flags_a_genuine_spike(db, milk):
 
 def test_tc_r02_a_normal_day_is_not_an_anomaly(db, milk):
     _weekday_history(db, milk, per_week=10)
-    # Roughly the expected share of a 10-a-day item by 2pm.
+    # 2pm is halfway through a 07:00-21:00 shop day, so half a normal day's
+    # sales is exactly ordinary.
     _sell(db, milk, 5, when=_midday() - timedelta(hours=1))
     db.commit()
 
-    assert detect_anomaly(db, milk, now=_midday()) is None
+    assert detect_anomaly(db, milk, now=_at_shop_hour(14)) is None
 
 
 def test_tc_r02_flags_a_collapse_as_information_not_alarm(db, milk):
@@ -174,7 +230,7 @@ def test_tc_r02_compares_like_weekdays(db, milk):
     flag every Saturday as a surge and the detector would be noise by design.
     """
     _weekday_history(db, milk, per_week=10)
-    # A quantity that is ordinary for this weekday.
+    # Half a normal day's sales, halfway through the day.
     _sell(db, milk, 5, when=_midday() - timedelta(hours=1))
     db.commit()
 

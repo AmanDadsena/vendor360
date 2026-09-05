@@ -424,6 +424,19 @@ class MarketplaceRepository {
         label: 'dist-dispatch',
       );
 
+  // ======================================================== shared: demo
+  /// Whether simulated activity is running.
+  ///
+  /// Falls back to off rather than throwing. A server that cannot be reached
+  /// is certainly not running a demo pulse for this client, and the honest
+  /// default for a label that says "this is fake" is to not show it.
+  Future<DemoStatus> demoStatus() => withFallback(
+        () async =>
+            DemoStatus.fromJson(await api.get('/demo/pulse') as Map<String, dynamic>),
+        () => DemoStatus.off,
+        label: 'demo-status',
+      );
+
   // ====================================================== shared: alerts
   /// The alert feed for whichever principal is signed in.
   ///

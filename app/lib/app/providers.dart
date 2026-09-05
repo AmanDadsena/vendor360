@@ -484,6 +484,16 @@ final distDispatchProvider = FutureProvider.autoDispose<Dispatch>(
   (ref) => ref.watch(marketplaceProvider).dispatch(),
 );
 
+/// Whether the server is manufacturing activity.
+///
+/// Polled rather than pushed: it changes when someone starts or stops the
+/// pulse, which is a human action at a keyboard and not something worth a
+/// socket message. Re-read on every live event so the banner appears within
+/// one tick of the pulse starting.
+final demoPulseProvider = FutureProvider<DemoStatus>(
+  (ref) => ref.watch(marketplaceProvider).demoStatus(),
+);
+
 // ============================================================ live channel
 final liveConnectionProvider = Provider<LiveConnection>((ref) {
   final connection = LiveConnection(baseUrl: kApiBase);
@@ -541,6 +551,10 @@ final liveRefreshProvider = Provider<void>((ref) {
     // An alert accompanies every detection, so the feed is always stale after
     // one — and the unread badge is what the user notices first.
     ref.invalidate(alertsProvider);
+
+    // Cheap, and it means the DEMO label appears within a tick of the pulse
+    // being started rather than on the next cold load.
+    ref.invalidate(demoPulseProvider);
 
     switch (event.type) {
       case 'heatmap':

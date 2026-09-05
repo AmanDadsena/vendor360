@@ -39,6 +39,12 @@ class Settings:
         # flag that must be false before this ever faces a real vendor.
         self.expose_otp: bool = os.getenv("EXPOSE_OTP", "1") == "1"
 
+        # Simulated shop activity, so a demo moves with one person watching.
+        # Off unless explicitly asked for, because it is the only thing in the
+        # project that writes data describing events that did not happen.
+        # `demo_pulse` additionally refuses to run against anything but SQLite.
+        self.demo_mode: bool = os.getenv("DEMO_MODE", "0") == "1"
+
     @property
     def is_sqlite(self) -> bool:
         return self.database_url.startswith("sqlite")

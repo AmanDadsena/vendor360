@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../core/strings.dart';
+import '../features/alerts/demo_banner.dart';
 import 'providers.dart';
 
 /// The persistent frame around the five primary destinations.
@@ -78,7 +79,12 @@ class _AppShellState extends ConsumerState<AppShell>
 
     return Scaffold(
       backgroundColor: v360.colors.canvas,
-      body: widget.navigationShell,
+      body: Column(
+        children: <Widget>[
+          const DemoBanner(),
+          Expanded(child: widget.navigationShell),
+        ],
+      ),
       bottomNavigationBar: _BottomNav(
         index: widget.navigationShell.currentIndex,
         onTap: (index) => widget.navigationShell.goBranch(

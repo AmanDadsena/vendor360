@@ -49,8 +49,23 @@ BASELINE_WEEKS = 8
 MIN_RELATIVE_SPREAD = 0.15
 
 # A neighbourhood shop's trading day, used to work out how much of it is gone.
+# These are hours on the *shop's* clock, not UTC.
 DAY_OPENS = 7
 DAY_CLOSES = 21
+
+# Hours to add to UTC to get the shop's local time.
+#
+# The whole seeded world is Pune -- Pune localities, Pune coordinates for the
+# weather lookup, `city="Pune"` on every vendor -- so IST is the shop clock.
+# Without this the trading window is evaluated in UTC, which puts a Pune
+# shop's 07:00-21:00 day at 01:30-15:30 UTC: the anomaly detector then stays
+# silent through every Pune morning and wakes up through the night.
+#
+# A deployment spanning timezones would derive this per vendor from their
+# coordinates. One constant is honest for a single-city prototype, and having
+# it named is what makes the assumption visible rather than buried in an
+# `.hour` call.
+SHOP_UTC_OFFSET_HOURS = 5.5
 
 # Shops going short of the same SKU inside this window are one event, not
 # several coincidences.
@@ -80,10 +95,19 @@ def approx(amount: float) -> str:
     return f"{round(amount * 10) / 10:g}"
 
 
-def day_fraction(now: datetime | None = None) -> float:
-    """How much of the trading day has passed, 0..1."""
+def shop_hour(now: datetime | None = None) -> float:
+    """The hour on the shop's clock, as a fraction.
+
+    Wraps, so an offset that pushes past midnight lands back at the start of
+    the day rather than at 25 o'clock.
+    """
     now = now or utcnow()
-    elapsed = now.hour + now.minute / 60 - DAY_OPENS
+    return (now.hour + now.minute / 60 + SHOP_UTC_OFFSET_HOURS) % 24
+
+
+def day_fraction(now: datetime | None = None) -> float:
+    """How much of the trading day has passed, 0..1, on the shop's clock."""
+    elapsed = shop_hour(now) - DAY_OPENS
     return max(0.0, min(1.0, elapsed / (DAY_CLOSES - DAY_OPENS)))
 
 

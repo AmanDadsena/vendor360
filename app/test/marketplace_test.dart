@@ -9,6 +9,7 @@ import 'package:vendor360/app/providers.dart';
 import 'package:vendor360/data/api_client.dart';
 import 'package:vendor360/data/marketplace_models.dart';
 import 'package:vendor360/data/offline_queue.dart';
+import 'package:vendor360/features/alerts/demo_banner.dart';
 import 'package:vendor360/features/dist/dist_demand_screen.dart';
 import 'package:vendor360/features/dist/dist_orders_screen.dart';
 import 'package:vendor360/features/dist/dist_shops_screen.dart';
@@ -530,6 +531,57 @@ void main() {
 
     expect(find.text('No shops yet'), findsOneWidget);
     expect(find.textContaining('Adding prices'), findsOneWidget);
+  });
+
+  // ========================================================== demo banner
+  testWidgets('the demo banner is absent when nothing is simulated',
+      (tester) async {
+    boot(<String, Object?>{
+      '/demo/pulse': <String, Object?>{
+        'available': false,
+        'running': false,
+        'reason': 'DEMO_MODE is not set',
+        'sales_emitted': 0,
+        'demo_rows': 0,
+      },
+    });
+
+    await tester.pumpWidget(host(const DemoBanner()));
+    await settle(tester);
+
+    expect(find.textContaining('DEMO'), findsNothing);
+  });
+
+  testWidgets('the demo banner says so loudly while the pulse runs',
+      (tester) async {
+    boot(<String, Object?>{
+      '/demo/pulse': <String, Object?>{
+        'available': true,
+        'running': true,
+        'reason': 'demo mode is on',
+        'sales_emitted': 11,
+        'demo_rows': 11,
+      },
+    });
+
+    await tester.pumpWidget(host(const DemoBanner()));
+    await settle(tester);
+
+    // The pulse writes real transactions, so the numbers moving on screen
+    // describe events that did not happen. Saying so is the whole point.
+    expect(find.text('DEMO MODE · simulated activity'), findsOneWidget);
+  });
+
+  testWidgets('an unreachable server does not claim a demo is running',
+      (tester) async {
+    // The honest default for a label that says "this is fake" is not to show
+    // it: a server we cannot reach is certainly not running a pulse for us.
+    boot(<String, Object?>{});
+
+    await tester.pumpWidget(host(const DemoBanner()));
+    await settle(tester);
+
+    expect(find.textContaining('DEMO'), findsNothing);
   });
 
   // ================================================================ theme

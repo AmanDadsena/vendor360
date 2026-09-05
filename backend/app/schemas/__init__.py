@@ -825,4 +825,18 @@ class BulkConfirmOut(BaseModel):
     order_codes: list[str]
 
 
+# ------------------------------------------------------------------- demo
+class DemoStatusOut(BaseModel):
+    available: bool
+    running: bool
+    reason: str
+    sales_emitted: int
+    demo_rows: int
+
+
+class DemoSweepOut(BaseModel):
+    removed: int
+    note: str
+
+
 TokenResponse.model_rebuild()
