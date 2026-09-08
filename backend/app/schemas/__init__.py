@@ -147,6 +147,14 @@ class TransactionOut(ORMModel):
     occurred_at: datetime
 
 
+class WastageSummaryOut(BaseModel):
+    total_lost_value: float
+    total_lost_units: float
+    wastage_events_count: int
+    top_spoilage_category: str
+    recovery_tip: str
+
+
 # --------------------------------------------------------------- voice
 class VoiceEntryIn(BaseModel):
     transcript: str

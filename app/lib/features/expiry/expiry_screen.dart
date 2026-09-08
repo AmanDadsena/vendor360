@@ -101,6 +101,40 @@ class ExpiryScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  SizedBox(height: v360.spacing.lg),
+                  V360Reveal(
+                    delayIndex: 1,
+                    child: Container(
+                      padding: EdgeInsets.all(v360.spacing.md),
+                      decoration: BoxDecoration(
+                        color: colors.accentSurface,
+                        borderRadius: BorderRadius.circular(V360Radius.md),
+                        border: Border.all(
+                          color: colors.accent.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Icon(
+                            Icons.shield_outlined,
+                            color: colors.accentText,
+                            size: 18,
+                          ),
+                          SizedBox(width: v360.spacing.sm),
+                          Expanded(
+                            child: Text(
+                              'Dynamic markdowns recover up to 70% of cost on perishables before zero-value write-offs.',
+                              style: v360.text.caption.copyWith(
+                                color: colors.accentText,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   SizedBox(height: v360.spacing.xl),
                   const SectionLabel('Clear these first'),
                   SizedBox(height: v360.spacing.md),

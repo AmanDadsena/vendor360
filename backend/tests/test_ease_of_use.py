@@ -235,3 +235,33 @@ def test_tc_e03_an_empty_round_is_an_empty_sheet(client_dist):
     assert sheet["stop_count"] == 0
     assert sheet["legs"] == []
     assert sheet["to_collect"] == 0
+
+
+def test_wastage_summary_reports_losses_and_prevention_tips(
+    client_vendor, db, vendor, milk
+):
+    from app.core.db import utcnow
+    from app.models import Transaction
+
+    db.add(
+        Transaction(
+            vendor_id=vendor.id,
+            item_id=milk.id,
+            type="wastage",
+            qty=4.0,
+            unit_value=30.0,
+            source="manual",
+            occurred_at=utcnow(),
+        )
+    )
+    db.commit()
+
+    res = client_vendor.get("/inventory/wastage/summary")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_lost_value"] == 120.0
+    assert data["total_lost_units"] == 4.0
+    assert data["wastage_events_count"] == 1
+    assert data["top_spoilage_category"] == "dairy"
+    assert "dairy" in data["recovery_tip"]
+

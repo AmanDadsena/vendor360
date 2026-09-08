@@ -180,6 +180,10 @@ void main() {
     expect(find.text('Tomato'), findsOneWidget);
     expect(find.textContaining('VALUE AT RISK'), findsWidgets);
     expect(find.textContaining('50%'), findsWidgets);
+    expect(
+      find.textContaining('Dynamic markdowns recover up to 70%'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Pools show the group price against the base price',

@@ -20,6 +20,7 @@ from ...schemas import (
     MovementIn,
     StockAdviceOut,
     TransactionOut,
+    WastageSummaryOut,
 )
 from ...services.catalog import shelf_life_for
 from ...services.forecasting import forecast_item
@@ -255,6 +256,56 @@ def record_movement(
     db.commit()
 
     return TransactionOut.model_validate(txn)
+
+
+@router.get("/wastage/summary", response_model=WastageSummaryOut)
+def wastage_summary(
+    vendor: Vendor = Depends(current_vendor),
+    db: Session = Depends(get_db),
+    days: int = Query(30, ge=1, le=180),
+):
+    """Aggregate perishable loss metrics and loss prevention tips."""
+    since = utcnow() - timedelta(days=days)
+    wastage_txns = db.scalars(
+        select(Transaction).where(
+            Transaction.vendor_id == vendor.id,
+            Transaction.type == "wastage",
+            Transaction.occurred_at >= since,
+        )
+    ).all()
+
+    total_value = sum(t.qty * t.unit_value for t in wastage_txns)
+    total_units = sum(t.qty for t in wastage_txns)
+    count = len(wastage_txns)
+
+    cat_loss: dict[str, float] = defaultdict(float)
+    if wastage_txns:
+        item_ids = {t.item_id for t in wastage_txns}
+        items = {
+            i.id: i
+            for i in db.scalars(
+                select(InventoryItem).where(InventoryItem.id.in_(item_ids))
+            ).all()
+        }
+        for t in wastage_txns:
+            item = items.get(t.item_id)
+            if item:
+                cat_loss[item.category] += t.qty * t.unit_value
+
+    top_cat = max(cat_loss, key=cat_loss.get) if cat_loss else "dairy"
+    tip = (
+        f"Apply early 25%-40% markdowns on {top_cat} 24h before expiry to eliminate up to 70% of write-offs."
+        if total_value > 0
+        else "No spoilage recorded in this period. Great inventory discipline!"
+    )
+
+    return WastageSummaryOut(
+        total_lost_value=round(total_value, 2),
+        total_lost_units=round(total_units, 2),
+        wastage_events_count=count,
+        top_spoilage_category=top_cat,
+        recovery_tip=tip,
+    )
 
 
 @router.get("/{item_id}/transactions", response_model=list[TransactionOut])
