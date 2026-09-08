@@ -121,6 +121,17 @@ void main() {
     expect(items.map((i) => i.skuName), contains('Milk'));
   });
 
+  testWidgets('Inventory search filters items by SKU query', (tester) async {
+    await tester.pumpWidget(host(const InventoryScreen()));
+    await settle(tester);
+
+    expect(find.byType(TextField), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Rice');
+    await tester.pump();
+
+    expect(container.read(inventorySearchQueryProvider), 'Rice');
+  });
+
   testWidgets('Forecast leads with the recommendation, not the chart',
       (tester) async {
     await tester.pumpWidget(host(const ForecastScreen()));

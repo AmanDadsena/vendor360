@@ -253,6 +253,8 @@ class _Flag extends Notifier<bool> {
 
 final inventoryFilterProvider =
     NotifierProvider<_NullableString, String?>(_NullableString.new);
+final inventorySearchQueryProvider =
+    NotifierProvider<_NullableString, String?>(_NullableString.new);
 final lowOnlyProvider = NotifierProvider<_Flag, bool>(_Flag.new);
 
 final inventoryProvider = FutureProvider.autoDispose<List<InventoryItem>>(
@@ -261,6 +263,19 @@ final inventoryProvider = FutureProvider.autoDispose<List<InventoryItem>>(
         lowOnly: ref.watch(lowOnlyProvider),
       ),
 );
+
+final filteredInventoryProvider =
+    Provider.autoDispose<AsyncValue<List<InventoryItem>>>((ref) {
+  final asyncItems = ref.watch(inventoryProvider);
+  final query = ref.watch(inventorySearchQueryProvider)?.trim().toLowerCase();
+  if (query == null || query.isEmpty) return asyncItems;
+  return asyncItems.whenData(
+    (items) => items.where((item) {
+      return item.skuName.toLowerCase().contains(query) ||
+          item.category.toLowerCase().contains(query);
+    }).toList(),
+  );
+});
 
 final forecastsProvider = FutureProvider.autoDispose<List<Forecast>>(
   (ref) => ref.watch(repositoryProvider).forecasts(),

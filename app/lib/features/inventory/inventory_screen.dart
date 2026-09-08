@@ -22,7 +22,7 @@ class InventoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final v360 = context.v360;
     final s = ref.watch(stringsProvider);
-    final items = ref.watch(inventoryProvider);
+    final items = ref.watch(filteredInventoryProvider);
     final lowOnly = ref.watch(lowOnlyProvider);
     final category = ref.watch(inventoryFilterProvider);
 
@@ -74,7 +74,9 @@ class InventoryScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: v360.spacing.md),
+                  SizedBox(height: v360.spacing.sm),
+                  const _InventorySearchBar(),
+                  SizedBox(height: v360.spacing.sm),
                   _CategoryFilter(selected: category),
                 ],
               ),
@@ -98,15 +100,31 @@ class InventoryScreen extends ConsumerWidget {
                     onPressed: () => ref.invalidate(inventoryProvider),
                   ),
                 ),
-                data: (list) => list.isEmpty
-                    ? EmptyState(
-                        icon: Icons.inventory_2_outlined,
-                        title: lowOnly ? 'Nothing needs reordering' : s.noData,
-                        body: lowOnly
-                            ? 'Every item is above its reorder point.'
-                            : 'Log a sale or scan a receipt to get started.',
-                      )
-                    : RefreshIndicator(
+                data: (list) {
+                  final searchQ = ref.watch(inventorySearchQueryProvider);
+                  final isSearching = searchQ != null && searchQ.isNotEmpty;
+                  if (list.isEmpty) {
+                    return EmptyState(
+                      icon: Icons.inventory_2_outlined,
+                      title: isSearching
+                          ? 'No items matching "$searchQ"'
+                          : (lowOnly ? 'Nothing needs reordering' : s.noData),
+                      body: isSearching
+                          ? 'Try searching with a different name or reset filter.'
+                          : (lowOnly
+                              ? 'Every item is above its reorder point.'
+                              : 'Log a sale or scan a receipt to get started.'),
+                      action: isSearching
+                          ? V360Button.ghost(
+                              label: 'Clear search',
+                              onPressed: () => ref
+                                  .read(inventorySearchQueryProvider.notifier)
+                                  .value = null,
+                            )
+                          : null,
+                    );
+                  }
+                  return RefreshIndicator(
                         color: v360.colors.accent,
                         onRefresh: () async {
                           HapticFeedback.lightImpact();
@@ -126,7 +144,8 @@ class InventoryScreen extends ConsumerWidget {
                             child: _ItemRow(item: list[index], strings: s),
                           ),
                         ),
-                      ),
+                      );
+                },
               ),
             ),
           ],
@@ -523,6 +542,80 @@ class _QuickEditSheetState extends ConsumerState<_QuickEditSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InventorySearchBar extends ConsumerStatefulWidget {
+  const _InventorySearchBar();
+
+  @override
+  ConsumerState<_InventorySearchBar> createState() => _InventorySearchBarState();
+}
+
+class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: ref.read(inventorySearchQueryProvider) ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final query = ref.watch(inventorySearchQueryProvider);
+
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: v360.colors.surface,
+        borderRadius: BorderRadius.circular(V360Radius.md),
+        border: Border.all(color: v360.colors.hairline),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.search_rounded, size: 18, color: v360.colors.inkSubtle),
+          SizedBox(width: v360.spacing.sm),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              style: v360.text.body.copyWith(color: v360.colors.ink),
+              decoration: InputDecoration(
+                hintText: 'Search items (e.g. Milk, Atta)...',
+                hintStyle:
+                    v360.text.body.copyWith(color: v360.colors.inkSubtle),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (val) {
+                ref.read(inventorySearchQueryProvider.notifier).value =
+                    val.trim().isEmpty ? null : val.trim();
+              },
+            ),
+          ),
+          if (query != null && query.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                _controller.clear();
+                ref.read(inventorySearchQueryProvider.notifier).value = null;
+              },
+              child: Icon(Icons.close_rounded,
+                  size: 16, color: v360.colors.inkSubtle),
+            ),
+        ],
       ),
     );
   }
