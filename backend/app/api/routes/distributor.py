@@ -652,6 +652,7 @@ def demand(
                 packs_to_stock=line.packs_to_stock,
                 est_revenue=line.est_revenue,
                 confidence=line.confidence,
+                active_driver=line.active_driver,
             )
             for line in outlook.lines
         ],

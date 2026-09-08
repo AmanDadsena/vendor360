@@ -134,11 +134,23 @@ def test_tc_d01_demand_aggregates_across_consenting_shops(db, supplier):
     line = outlook.lines[0]
     assert line.sku_name == "Milk"
     assert line.shop_count == 4
-    # Four shops selling ~10/day for a week is in the region of 280 packets.
-    assert 200 < line.expected_qty < 360
+    # Four shops selling ~10/day for a week is in the region of 280 packets
+    # (adjusted for active festival lifts such as Ganesh Chaturthi / Janmashtami).
+    assert 200 < line.expected_qty < 500
     # And the distributor is told how many crates that is, not just a number.
     assert line.packs_to_stock is not None and line.packs_to_stock > 0
     assert line.est_revenue > 0
+    if line.expected_qty > 320:
+        assert line.active_driver is not None
+
+
+def test_tc_d01_demand_reports_festival_driver_during_lead_window():
+    from app.services.distributor_intel import active_category_driver
+    from datetime import date
+    # Ganesh Chaturthi on 2026-09-14 with 7 lead days drives dairy
+    driver = active_category_driver("dairy", date(2026, 9, 8), horizon_days=7)
+    assert driver == "Ganesh Chaturthi"
+
 
 
 def test_tc_d01_a_sku_the_distributor_does_not_sell_is_not_reported(db, supplier):

@@ -35,6 +35,7 @@ from ..models import (
 )
 from . import forecast_cache
 from .ordering import fill_rate
+from .signals import festival_intensity
 from .sourcing import daily_rate, days_of_cover, plan_packs
 
 # Aggregating a handful of shops would let a distributor read one shop's
@@ -43,6 +44,20 @@ from .sourcing import daily_rate, days_of_cover, plan_packs
 MIN_SHOPS_FOR_AGGREGATE = 3
 
 DEAD_LINE_DAYS = 30
+
+
+def active_category_driver(
+    category_key: str, start_day: date, horizon_days: int
+) -> str | None:
+    """Identify any prominent festival or seasonal event driving category demand."""
+    best_effect = 0.0
+    best_driver = None
+    for offset in range(horizon_days):
+        d = start_day + timedelta(days=offset)
+        effect, driver = festival_intensity(d, category_key)
+        if effect > best_effect:
+            best_effect, best_driver = effect, driver
+    return best_driver if best_effect >= 0.15 else None
 
 
 @dataclass
@@ -54,6 +69,7 @@ class DemandLine:
     shop_count: int
     entry: CatalogEntry | None = None
     confidence: str = "medium"
+    active_driver: str | None = None
 
     @property
     def packs_to_stock(self) -> float | None:
@@ -235,15 +251,18 @@ def demand_outlook(
         if shops < MIN_SHOPS_FOR_AGGREGATE:
             continue
         entry = listings.get(key)
+        cat = bucket["category"]
+        driver = active_category_driver(cat, today, horizon_days)
         outlook.lines.append(
             DemandLine(
                 sku_name=entry.sku_name if entry else key,
-                category=bucket["category"],
+                category=cat,
                 unit=bucket["unit"],
                 expected_qty=round(bucket["qty"], 2),
                 shop_count=shops,
                 entry=entry,
                 confidence="high" if shops >= 8 else "medium",
+                active_driver=driver,
             )
         )
 

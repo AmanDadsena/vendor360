@@ -670,6 +670,7 @@ class DemandLineOut(BaseModel):
     packs_to_stock: float | None
     est_revenue: float
     confidence: str
+    active_driver: str | None = None
 
 
 class AtRiskShopOut(BaseModel):
