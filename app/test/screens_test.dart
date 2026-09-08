@@ -197,7 +197,7 @@ void main() {
     expect(find.textContaining('Save '), findsWidgets);
   });
 
-  testWidgets('Voice screen offers the orb and the typed fallback',
+  testWidgets('Voice screen offers the orb, typed fallback, and quick phrases',
       (tester) async {
     await tester.pumpWidget(host(const VoiceScreen()));
     await settle(tester);
@@ -206,6 +206,12 @@ void main() {
     // Typing is the documented fallback when ASR struggles (PRD 7).
     expect(find.text('OR TYPE IT'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
+    expect(find.text('Quick action phrases'), findsOneWidget);
+    expect(find.textContaining('दूध'), findsWidgets);
+
+    await tester.tap(find.textContaining('दूध').first);
+    await tester.pump();
+    expect(find.textContaining('दूध'), findsWidgets);
   });
 
   testWidgets('Receipt screen offers sample captures', (tester) async {

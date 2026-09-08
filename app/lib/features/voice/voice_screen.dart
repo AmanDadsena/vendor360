@@ -67,6 +67,28 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
     ],
   };
 
+  /// Everyday quick-tap vernacular phrases for instant 1-tap logging.
+  static const Map<AppLanguage, List<String>> _quickPhrases = {
+    AppLanguage.hindi: <String>[
+      '20 दूध पैकेट आया',
+      'पांच किलो चावल बेचा',
+      'दो पैकेट ब्रेड खराब',
+      '12 अंडे बिके',
+    ],
+    AppLanguage.marathi: <String>[
+      'दहा किलो कांदा विकले',
+      'पाच लिटर तेल घेतला',
+      'वीस दूध पॅकेट विकले',
+      'दोन ब्रेड खराब',
+    ],
+    AppLanguage.english: <String>[
+      'restocked 20 milk packets',
+      'sold 5 kg rice',
+      '2 packets bread damaged',
+      'sold 12 eggs',
+    ],
+  };
+
   @override
   void dispose() {
     _transcript.dispose();
@@ -212,6 +234,68 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
                 controller: _transcript,
                 onSubmit: () => _parse(),
                 busy: _parsing,
+              ),
+              SizedBox(height: v360.spacing.lg),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Quick action phrases',
+                    style: v360.text.caption.copyWith(
+                      color: colors.inkMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: v360.spacing.sm),
+                  Wrap(
+                    spacing: v360.spacing.sm,
+                    runSpacing: v360.spacing.sm,
+                    children: <Widget>[
+                      for (final phrase in _quickPhrases[language] ??
+                          _quickPhrases[AppLanguage.hindi]!)
+                        InkWell(
+                          onTap: _parsing || _listening
+                              ? null
+                              : () {
+                                  HapticFeedback.selectionClick();
+                                  _transcript.text = phrase;
+                                  _parse();
+                                },
+                          borderRadius: BorderRadius.circular(V360Radius.pill),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: v360.spacing.md,
+                              vertical: v360.spacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              borderRadius:
+                                  BorderRadius.circular(V360Radius.pill),
+                              border: Border.all(color: colors.hairline),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.bolt_rounded,
+                                  size: 14,
+                                  color: colors.accent,
+                                ),
+                                SizedBox(width: v360.spacing.xs),
+                                Text(
+                                  phrase,
+                                  style: v360.text.caption.copyWith(
+                                    color: colors.ink,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
             ],
 

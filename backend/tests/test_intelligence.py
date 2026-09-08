@@ -359,6 +359,31 @@ class TestVoiceParsing:
         result = parse_utterance("2 chhata beche", known_skus=["Milk", "Rice"])
         assert result.lines == []
 
+    def test_quick_action_phrases_parse_cleanly(self):
+        # Restock
+        r1 = parse_utterance("20 doodh packet aaya")
+        assert r1.movement == "restock"
+        assert r1.lines[0].sku_name == "Milk"
+        assert r1.lines[0].qty == 20
+
+        # Sale
+        r2 = parse_utterance("5 kilo chawal becha")
+        assert r2.movement == "sale"
+        assert r2.lines[0].sku_name == "Rice"
+        assert r2.lines[0].qty == 5
+
+        # Wastage
+        r3 = parse_utterance("2 packet bread kharab")
+        assert r3.movement == "wastage"
+        assert r3.lines[0].sku_name == "Bread"
+        assert r3.lines[0].qty == 2
+
+        # English
+        r4 = parse_utterance("sold 12 eggs")
+        assert r4.movement == "sale"
+        assert r4.lines[0].sku_name == "Eggs"
+        assert r4.lines[0].qty == 12
+
 
 # ----------------------------------------------------------------- 3.2 ocr
 RECEIPT = """SHREE BALAJI TRADERS
