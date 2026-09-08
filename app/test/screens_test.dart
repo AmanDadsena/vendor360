@@ -194,6 +194,7 @@ void main() {
     expect(find.text('Umbrella'), findsOneWidget);
     expect(find.textContaining('stores in Kothrud'), findsOneWidget);
     expect(find.textContaining('₹176'), findsWidgets);
+    expect(find.textContaining('Save '), findsWidgets);
   });
 
   testWidgets('Voice screen offers the orb and the typed fallback',

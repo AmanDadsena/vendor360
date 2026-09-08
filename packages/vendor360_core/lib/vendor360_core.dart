@@ -17,6 +17,7 @@ export 'src/values/pack_quantity.dart';
 export 'src/values/money.dart';
 export 'src/values/confidence.dart';
 export 'src/values/shelf_life.dart';
+export 'src/values/pool_savings.dart';
 
 export 'src/entities/inventory_item.dart';
 export 'src/entities/stock_movement.dart';

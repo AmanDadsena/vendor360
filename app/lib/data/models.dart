@@ -357,9 +357,12 @@ class BargainPool {
   final bool joined;
   final DateTime? closesAt;
 
-  int get discountPct => baseUnitPrice.paise == 0
-      ? 0
-      : ((savingsPerUnit.paise / baseUnitPrice.paise) * 100).round();
+  PoolSavings get savings => PoolSavings(
+        baseUnitPrice: baseUnitPrice,
+        bulkUnitPrice: bulkUnitPrice,
+      );
+
+  int get discountPct => savings.discountPct;
 
   factory BargainPool.fromJson(Map<String, dynamic> j) => BargainPool(
         id: j['id'] as String,

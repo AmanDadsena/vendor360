@@ -428,4 +428,36 @@ void _approxTests() {
       expect(const Quantity(2.46, 'pc').display, '2.46 pc');
     });
   });
+
+  group('PoolSavings', () {
+    final savings = PoolSavings(
+      baseUnitPrice: Money.rupees(200),
+      bulkUnitPrice: Money.rupees(160),
+    );
+
+    test('computes savings per unit and discount percentage accurately', () {
+      expect(savings.savingsPerUnit, Money.rupees(40));
+      expect(savings.discountPct, 20);
+    });
+
+    test('calculates total saved on given volume', () {
+      expect(savings.totalSaved(10), Money.rupees(400));
+      expect(savings.totalSaved(0), Money.rupees(0));
+      expect(savings.totalSaved(2.5), Money.rupees(100));
+    });
+
+    test('formats human readable summary with unit', () {
+      expect(savings.formatSavingsBenefit('pc'), 'Save ₹40/pc (20% off)');
+    });
+
+    test('rejects bulk price exceeding base price', () {
+      expect(
+        () => PoolSavings(
+          baseUnitPrice: Money.rupees(100),
+          bulkUnitPrice: Money.rupees(120),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+  });
 }

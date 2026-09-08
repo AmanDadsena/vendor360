@@ -157,7 +157,39 @@ class _PoolCardState extends ConsumerState<_PoolCard> {
                   ),
               ],
             ),
-            SizedBox(height: v360.spacing.lg),
+            SizedBox(height: v360.spacing.md),
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: v360.spacing.sm,
+                vertical: v360.spacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: colors.accentSurface,
+                borderRadius: BorderRadius.circular(V360Radius.sm),
+                border: Border.all(
+                  color: colors.accent.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    Icons.trending_down_rounded,
+                    size: 14,
+                    color: colors.accentText,
+                  ),
+                  SizedBox(width: v360.spacing.xs),
+                  Text(
+                    pool.savings.formatSavingsBenefit(pool.unit),
+                    style: v360.text.caption.copyWith(
+                      color: colors.accentText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: v360.spacing.md),
 
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -248,7 +280,7 @@ class _PoolCardState extends ConsumerState<_PoolCard> {
               ),
               SizedBox(height: v360.spacing.sm),
               Text(
-                'You save ${(pool.savingsPerUnit * _qty).display} on this order',
+                'You save ${pool.savings.totalSaved(_qty).display} on this order',
                 style: v360.text.caption.copyWith(color: colors.accentText),
               ),
               SizedBox(height: v360.spacing.lg),
