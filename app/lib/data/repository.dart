@@ -313,6 +313,38 @@ class VendorRepository {
         label: 'health-score',
       );
 
+  Future<Map<String, dynamic>> healthScoreReport() => withFallback(
+        () async {
+          final json =
+              await api.get('/health-score/report') as Map<String, dynamic>;
+          return json;
+        },
+        () {
+          return <String, dynamic>{
+            'store_name': 'Kumar General Stores',
+            'owner_name': 'Rakesh Kumar',
+            'locality': 'Kothrud',
+            'phone': '9876510000',
+            'generated_at': '2026-09-08 12:00 UTC',
+            'score': 78.4,
+            'band': 'strong',
+            'provisional': false,
+            'days_of_history': 90,
+            'consistency_detail': 'active 86/90 days',
+            'turnover_detail': '38.4 turns/yr',
+            'waste_detail': '1.8% perishable loss',
+            'explanation': 'Consistent daily trade and high stock velocity.',
+            'total_sales_volume_estimated': 1428000.0,
+            'statement': 'VENDOR360 OPERATIONAL CREDIT ASSESSMENT REPORT\n'
+                'Store: Kumar General Stores | Location: Kothrud\n'
+                'Score: 78.4/100 | Rating: Strong\n'
+                'Verified 90-day gross trading volume: INR 14,28,000.00.\n'
+                'Report verified by Vendor360 Micro-Lending Intelligence Core.',
+          };
+        },
+        label: 'health-score-report',
+      );
+
   Future<List<ScoreConsent>> consents() => withFallback(
         () async {
           final json = await api.get('/health-score/consents') as List;

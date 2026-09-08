@@ -297,6 +297,19 @@ class TestHealthScore:
         )
         assert score.explanation.count("sales consistency") <= 1
 
+    def test_health_score_report_generates_lending_statement(
+        self, client_vendor, vendor
+    ):
+        res = client_vendor.get("/health-score/report")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["store_name"] == vendor.store_name
+        assert data["phone"] == vendor.phone
+        assert "VENDOR360 OPERATIONAL CREDIT ASSESSMENT REPORT" in data["statement"]
+        assert "score" in data
+        assert "band" in data
+        assert data["score"] >= 0
+
 
 # --------------------------------------------------------------- 3.1 voice
 class TestVoiceParsing:

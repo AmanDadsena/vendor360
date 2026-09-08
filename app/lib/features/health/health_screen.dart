@@ -175,11 +175,20 @@ class _Body extends ConsumerWidget {
             ),
           ),
         ),
+        V360Reveal(
+          delayIndex: 4,
+          child: V360Button.secondary(
+            label: 'View Credit Assessment Report',
+            leadingIcon: Icons.description_outlined,
+            expand: true,
+            onPressed: () => _showCreditReportModal(context, ref),
+          ),
+        ),
         SizedBox(height: v360.spacing.x3),
 
-        V360Reveal(delayIndex: 4, child: SectionLabel(strings.shareWithLender)),
+        V360Reveal(delayIndex: 5, child: SectionLabel(strings.shareWithLender)),
         SizedBox(height: v360.spacing.sm),
-        V360Reveal(delayIndex: 5, child: _ConsentList(strings: strings)),
+        V360Reveal(delayIndex: 6, child: _ConsentList(strings: strings)),
 
         SizedBox(height: v360.spacing.xl),
         V360Button.ghost(
@@ -269,4 +278,98 @@ class _ConsentList extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showCreditReportModal(BuildContext context, WidgetRef ref) {
+  final v360 = context.v360;
+  final reportAsync = ref.read(healthReportProvider);
+
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (modalContext) => Container(
+      padding: EdgeInsets.all(v360.spacing.gutter),
+      decoration: BoxDecoration(
+        color: v360.colors.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(V360Radius.xl),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(Icons.verified_user_rounded,
+                    color: v360.colors.accent, size: 22),
+                SizedBox(width: v360.spacing.sm),
+                Expanded(
+                  child: Text(
+                    'Operational Credit Report',
+                    style: v360.text.titleM.copyWith(color: v360.colors.ink),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.of(modalContext).pop(),
+                ),
+              ],
+            ),
+            SizedBox(height: v360.spacing.md),
+            reportAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Text(
+                'Report unavailable: $e',
+                style: v360.text.body.copyWith(color: v360.colors.dangerText),
+              ),
+              data: (rep) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(v360.spacing.md),
+                    decoration: BoxDecoration(
+                      color: v360.colors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(V360Radius.md),
+                      border: Border.all(color: v360.colors.hairline),
+                    ),
+                    child: SelectableText(
+                      rep['statement'] as String? ?? 'Assessment unavailable.',
+                      style: v360.text.code.copyWith(
+                        color: v360.colors.ink,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: v360.spacing.lg),
+                  V360Button.primary(
+                    label: 'Copy Credit Statement',
+                    leadingIcon: Icons.copy_rounded,
+                    expand: true,
+                    onPressed: () {
+                      final stmt = rep['statement'] as String? ?? '';
+                      Clipboard.setData(ClipboardData(text: stmt));
+                      HapticFeedback.mediumImpact();
+                      Navigator.of(modalContext).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Credit report copied to clipboard'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

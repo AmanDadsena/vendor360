@@ -285,6 +285,11 @@ final healthScoreProvider = FutureProvider.autoDispose<HealthScore>(
   (ref) => ref.watch(repositoryProvider).healthScore(),
 );
 
+final healthReportProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>(
+  (ref) => ref.watch(repositoryProvider).healthScoreReport(),
+);
+
 final consentsProvider = FutureProvider.autoDispose<List<ScoreConsent>>(
   (ref) => ref.watch(repositoryProvider).consents(),
 );

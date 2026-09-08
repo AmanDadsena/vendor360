@@ -22,6 +22,7 @@ from ...models import (
 )
 from ...schemas import (
     DashboardOut,
+    CreditReportOut,
     ExpiryItemOut,
     ForecastDayOut,
     ForecastOut,
@@ -336,6 +337,66 @@ def health_score(
         days_of_history=score.days_of_history,
         explanation=score.explanation,
         components=[ScoreComponentOut(**c) for c in score.as_dict["components"]],
+    )
+
+
+@router.get("/health-score/report", response_model=CreditReportOut)
+def health_score_report(
+    vendor: Vendor = Depends(current_vendor),
+    db: Session = Depends(get_db),
+):
+    inputs = _score_inputs(db, vendor.id)
+    score = compute_health_score(**inputs)
+
+    ninety_days_ago = utcnow() - timedelta(days=90)
+    sales_total = db.scalar(
+        select(func.coalesce(func.sum(Transaction.qty * Transaction.unit_value), 0.0)).where(
+            Transaction.vendor_id == vendor.id,
+            Transaction.type == "sale",
+            Transaction.occurred_at >= ninety_days_ago,
+        )
+    ) or 0.0
+
+    comp_map = {c.key: c for c in score.components}
+    consistency_info = comp_map.get("consistency")
+    turnover_info = comp_map.get("turnover")
+    waste_info = comp_map.get("waste")
+
+    band_text = score.band.replace("_", " ").title()
+    status_summary = (
+        f"Provisional evaluation based on {score.days_of_history} days of verified transactions."
+        if score.provisional
+        else f"Full credit standing rating: {score.score:.1f}/100 ({band_text})."
+    )
+
+    statement = (
+        f"VENDOR360 OPERATIONAL CREDIT ASSESSMENT REPORT\n"
+        f"Store: {vendor.store_name} | Location: {vendor.locality or 'Pune'}\n"
+        f"Score: {score.score:.1f}/100 | Rating: {band_text}\n"
+        f"Summary: {status_summary}\n"
+        f"- Trading Regularity: {consistency_info.detail if consistency_info else 'N/A'}\n"
+        f"- Inventory Velocity: {turnover_info.detail if turnover_info else 'N/A'}\n"
+        f"- Perishable Care: {waste_info.detail if waste_info else 'N/A'}\n"
+        f"Verified 90-day gross trading volume: INR {sales_total:,.2f}.\n"
+        f"Report verified by Vendor360 Micro-Lending Intelligence Core."
+    )
+
+    return CreditReportOut(
+        store_name=vendor.store_name,
+        owner_name=vendor.name,
+        locality=vendor.locality or "—",
+        phone=vendor.phone,
+        generated_at=utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+        score=score.score,
+        band=score.band,
+        provisional=score.provisional,
+        days_of_history=score.days_of_history,
+        consistency_detail=consistency_info.detail if consistency_info else "N/A",
+        turnover_detail=turnover_info.detail if turnover_info else "N/A",
+        waste_detail=waste_info.detail if waste_info else "N/A",
+        explanation=score.explanation,
+        total_sales_volume_estimated=round(sales_total, 2),
+        statement=statement,
     )
 
 

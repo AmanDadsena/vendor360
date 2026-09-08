@@ -291,6 +291,24 @@ class HealthScoreOut(BaseModel):
     components: list[ScoreComponentOut]
 
 
+class CreditReportOut(BaseModel):
+    store_name: str
+    owner_name: str
+    locality: str
+    phone: str
+    generated_at: str
+    score: float
+    band: str
+    provisional: bool
+    days_of_history: int
+    consistency_detail: str
+    turnover_detail: str
+    waste_detail: str
+    explanation: str
+    total_sales_volume_estimated: float
+    statement: str
+
+
 # --------------------------------------------------------------- pools
 class PoolOut(ORMModel):
     id: uuid.UUID
