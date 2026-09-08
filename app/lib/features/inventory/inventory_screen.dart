@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
+import '../../data/marketplace_models.dart';
 import '../orders/sourcing_sheet.dart';
 import '../../core/strings.dart';
 
@@ -269,6 +271,14 @@ class _ItemRow extends ConsumerWidget {
                         '${strings.reorderAt} ${item.reorderPoint.toStringAsFixed(0)} ${item.quantity.unit}',
                         style: v360.text.caption.copyWith(color: colors.inkSubtle),
                       ),
+                      if (state == StockState.low || state == StockState.out)
+                        Text(
+                          'Shortfall: ${(item.reorderPoint - item.quantity.amount).clamp(0, double.infinity).toStringAsFixed(0)} ${item.quantity.unit}',
+                          style: v360.text.caption.copyWith(
+                            color: colors.warningText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -325,15 +335,24 @@ class _ItemRow extends ConsumerWidget {
                     ),
                   if (item.quantity.amount > 0 && state != StockState.healthy)
                     SizedBox(width: v360.spacing.sm),
-                  if (state != StockState.healthy)
+                  if (state != StockState.healthy) ...<Widget>[
                     Expanded(
                       child: V360Button.secondary(
-                        label: 'Order',
+                        label: 'Options',
                         expand: true,
                         onPressed: () =>
                             showSourcingSheet(context, itemId: item.id),
                       ),
                     ),
+                    SizedBox(width: v360.spacing.sm),
+                    Expanded(
+                      child: V360Button.primary(
+                        label: '1-Tap Order',
+                        expand: true,
+                        onPressed: () => _quickReorder(context, ref),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -405,6 +424,57 @@ class _ItemRow extends ConsumerWidget {
           backgroundColor: context.v360.colors.danger,
         ),
       );
+    }
+  }
+
+  Future<void> _quickReorder(BuildContext context, WidgetRef ref) async {
+    try {
+      final sourcing = await ref.read(marketplaceProvider).sourcing(item.id);
+      if (sourcing.options.isEmpty) {
+        if (context.mounted) {
+          showSourcingSheet(context, itemId: item.id);
+        }
+        return;
+      }
+      final topOption = sourcing.options.first;
+      final plan = PackQuantity.forShortfall(
+        shortfall: sourcing.shortfall,
+        packSize: topOption.packSize,
+        unit: topOption.unit,
+        moqPacks: topOption.moqPacks,
+      );
+      final cart = ref.read(cartProvider.notifier);
+      if (cart.wouldReplace(topOption.supplierId)) {
+        if (context.mounted) {
+          showSourcingSheet(context, itemId: item.id);
+        }
+        return;
+      }
+      cart.add(
+        CartLine(
+          option: topOption,
+          itemId: item.id,
+          packs: plan.packs,
+        ),
+      );
+      HapticFeedback.mediumImpact();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Added ${plan.packDisplay} to order (${topOption.supplierName})',
+            ),
+            action: SnackBarAction(
+              label: 'View Cart',
+              onPressed: () => context.go('/cart'),
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        showSourcingSheet(context, itemId: item.id);
+      }
     }
   }
 

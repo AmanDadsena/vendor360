@@ -132,6 +132,14 @@ void main() {
     expect(container.read(inventorySearchQueryProvider), 'Rice');
   });
 
+  testWidgets('Inventory displays 1-Tap Order action on low stock items',
+      (tester) async {
+    await tester.pumpWidget(host(const InventoryScreen()));
+    await settle(tester);
+
+    expect(find.text('1-Tap Order'), findsWidgets);
+  });
+
   testWidgets('Forecast leads with the recommendation, not the chart',
       (tester) async {
     await tester.pumpWidget(host(const ForecastScreen()));
