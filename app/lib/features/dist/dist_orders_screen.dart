@@ -166,40 +166,10 @@ class _Chip extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final v360 = context.v360;
-    final colors = v360.colors;
-
-    return V360Pressable(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: MotionScope.of(context).base,
-        padding: EdgeInsets.symmetric(
-          horizontal: v360.spacing.lg,
-          vertical: v360.spacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: selected ? colors.ink : colors.surface,
-          borderRadius: BorderRadius.circular(V360Radius.sm),
-          border: Border.all(color: selected ? colors.ink : colors.hairline),
-        ),
-        child: Text(
-          label,
-          style: v360.text.label.copyWith(
-            color: selected ? colors.canvas : colors.ink,
-          ).weight(selected ? FontWeight.w700 : FontWeight.w600),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      V360Tab(label: label, active: selected, onTap: onTap);
 }
 
-
-/// Accept everything waiting, in full.
-///
-/// Offered only when several are waiting, and it confirms in full only —
-/// anything needing a part-fill is deliberately left alone, because the whole
-/// value of a part-fill is that it was a decision somebody made.
 class _BulkConfirm extends ConsumerStatefulWidget {
   const _BulkConfirm({required this.count});
 

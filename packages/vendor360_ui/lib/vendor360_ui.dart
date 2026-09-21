@@ -36,6 +36,7 @@ export 'src/components/surfaces/section_label.dart';
 export 'src/components/surfaces/pack_header.dart';
 export 'src/components/controls/v360_segmented.dart';
 export 'src/components/controls/v360_pressable.dart';
+export 'src/components/controls/v360_tab.dart';
 export 'src/components/data/capacity_bar.dart';
 export 'src/components/data/rolling_number.dart';
 export 'src/components/data/otp_boxes.dart';
