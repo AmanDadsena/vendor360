@@ -166,7 +166,7 @@ TOTAL                          1560.00''',
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.fromLTRB(
-            v360.spacing.gutter, 0, v360.spacing.gutter, v360.spacing.x5,
+            v360.spacing.gutter, v360.spacing.lg, v360.spacing.gutter, v360.spacing.x5,
           ),
           children: <Widget>[
             if (result == null) ...<Widget>[

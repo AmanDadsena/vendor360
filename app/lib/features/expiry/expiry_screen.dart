@@ -70,10 +70,15 @@ class ExpiryScreen extends ConsumerWidget {
               },
               child: ListView(
                 padding: EdgeInsets.fromLTRB(
-                  v360.spacing.gutter, 0, v360.spacing.gutter, v360.spacing.x5,
+                  v360.spacing.gutter,
+                  v360.spacing.lg,
+                  v360.spacing.gutter,
+                  v360.spacing.x5,
                 ),
                 children: <Widget>[
-                  Row(
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         Expanded(
                           child: StatTile(
@@ -88,56 +93,35 @@ class ExpiryScreen extends ConsumerWidget {
                         Expanded(
                           child: StatTile(
                             label: 'Expiring today',
-                            value: '${list.where((e) => e.daysLeft <= 0).length}',
+                            value:
+                                '${list.where((e) => e.daysLeft <= 0).length}',
                             caption: 'discount now to recover cost',
                             compact: true,
                           ),
                         ),
                       ],
                     ),
+                  ),
                   SizedBox(height: v360.spacing.lg),
-                  Container(
-                      padding: EdgeInsets.all(v360.spacing.md),
-                      decoration: BoxDecoration(
-                        color: colors.accentSurface,
-                        borderRadius: BorderRadius.circular(V360Radius.md),
-                        border: Border.all(
-                          color: colors.accent.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Icon(
-                            Icons.shield_outlined,
-                            color: colors.accentText,
-                            size: 18,
-                          ),
-                          SizedBox(width: v360.spacing.sm),
-                          Expanded(
-                            child: Text(
-                              'Dynamic markdowns recover up to 70% of cost on perishables before zero-value write-offs.',
-                              style: v360.text.caption.copyWith(
-                                color: colors.accentText,
-                              ).weight(FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  const V360Banner(
+                    icon: Icons.shield_outlined,
+                    title:
+                        'Dynamic markdowns recover up to 70% of cost on '
+                        'perishables before zero-value write-offs.',
+                  ),
                   SizedBox(height: v360.spacing.xl),
                   const SectionLabel('Clear these first'),
                   SizedBox(height: v360.spacing.md),
                   for (var i = 0; i < list.length; i++)
                     ExpiryRow(
-                        skuName: list[i].skuName,
-                        quantityLabel: list[i].quantity.display,
-                        daysLeft: list[i].daysLeft,
-                        valueAtRisk: list[i].valueAtRisk.display,
-                        suggestedDiscountPct: list[i].suggestedDiscountPct,
-                        onDiscount: () => _confirmDiscount(context, list[i]),
-                        onMarkWasted: () => _markWasted(context, ref, list[i]),
-                      ),
+                      skuName: list[i].skuName,
+                      quantityLabel: list[i].quantity.display,
+                      daysLeft: list[i].daysLeft,
+                      valueAtRisk: list[i].valueAtRisk.display,
+                      suggestedDiscountPct: list[i].suggestedDiscountPct,
+                      onDiscount: () => _confirmDiscount(context, list[i]),
+                      onMarkWasted: () => _markWasted(context, ref, list[i]),
+                    ),
                 ],
               ),
             );
@@ -159,7 +143,9 @@ class ExpiryScreen extends ConsumerWidget {
   }
 
   Future<void> _markWasted(
-    BuildContext context, WidgetRef ref, dynamic entry,
+    BuildContext context,
+    WidgetRef ref,
+    dynamic entry,
   ) async {
     HapticFeedback.selectionClick();
     final confirmed = await showDialog<bool>(
@@ -187,7 +173,9 @@ class ExpiryScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     HapticFeedback.mediumImpact();
-    await ref.read(repositoryProvider).recordMovement(
+    await ref
+        .read(repositoryProvider)
+        .recordMovement(
           itemId: entry.itemId as String,
           qty: (entry.quantity as Quantity).amount,
           movement: 'wastage',

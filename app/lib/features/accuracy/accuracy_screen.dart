@@ -37,7 +37,7 @@ class AccuracyScreen extends ConsumerWidget {
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.fromLTRB(
-            v360.spacing.gutter, 0, v360.spacing.gutter, v360.spacing.x5,
+            v360.spacing.gutter, v360.spacing.lg, v360.spacing.gutter, v360.spacing.x5,
           ),
           children: <Widget>[
             accuracy.when(
@@ -281,17 +281,10 @@ class _SignalsPanel extends StatelessWidget {
               padding: EdgeInsets.all(v360.spacing.lg),
               child: Row(
                 children: <Widget>[
-                  Container(
-                    padding: EdgeInsets.all(v360.spacing.sm),
-                    decoration: BoxDecoration(
-                      color: colors.voiceSurface,
-                      borderRadius: BorderRadius.circular(V360Radius.sm),
-                    ),
-                    child: Icon(
-                      Icons.celebration_outlined,
-                      size: 16,
-                      color: colors.voiceText,
-                    ),
+                  Icon(
+                    Icons.celebration_outlined,
+                    size: 20,
+                    color: colors.voiceText,
                   ),
                   SizedBox(width: v360.spacing.md),
                   Expanded(

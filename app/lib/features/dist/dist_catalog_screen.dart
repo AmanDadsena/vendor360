@@ -77,7 +77,7 @@ class DistCatalogScreen extends ConsumerWidget {
                   child: ListView(
                     padding: EdgeInsets.fromLTRB(
                       v360.spacing.gutter,
-                      0,
+                      v360.spacing.lg,
                       v360.spacing.gutter,
                       100,
                     ),

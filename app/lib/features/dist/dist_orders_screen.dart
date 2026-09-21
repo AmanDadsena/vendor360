@@ -48,6 +48,7 @@ class DistOrdersScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: <Widget>[
+            SizedBox(height: v360.spacing.md),
             SizedBox(
               height: 44,
               child: ListView(

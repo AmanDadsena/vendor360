@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
+import '../buttons/v360_button.dart';
 import 'stat_tile.dart';
 
 /// A countdown to spoilage.
@@ -136,27 +137,24 @@ class ExpiryRow extends StatelessWidget {
             children: <Widget>[
               if (onDiscount != null && !expired)
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: V360Button.tonal(
+                    label: 'Mark $suggestedDiscountPct% off',
+                    leadingIcon: Icons.sell_outlined,
+                    size: V360ButtonSize.md,
+                    expand: true,
                     onPressed: onDiscount,
-                    icon: const Icon(Icons.sell_outlined, size: 16),
-                    label: Text('Mark $suggestedDiscountPct% off'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                    ),
                   ),
                 ),
               if (onDiscount != null && onMarkWasted != null && !expired)
                 SizedBox(width: v360.spacing.sm),
               if (onMarkWasted != null)
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: TextButton.icon(
                     onPressed: onMarkWasted,
-                    icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
                     label: const Text('Record waste'),
-                    style: OutlinedButton.styleFrom(
+                    style: TextButton.styleFrom(
                       foregroundColor: colors.dangerText,
-                      side: BorderSide(color: colors.danger, width: 1.5),
-                      minimumSize: const Size(0, 44),
                     ),
                   ),
                 ),
