@@ -76,52 +76,52 @@ class ExpiryScreen extends ConsumerWidget {
                   v360.spacing.x5,
                 ),
                 children: <Widget>[
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Expanded(
-                          child: StatTile(
-                            label: 'Value at risk',
-                            value: totalAtRisk.display,
-                            caption: 'across ${list.length} items',
-                            tone: colors.danger,
-                            compact: true,
-                          ),
-                        ),
-                        SizedBox(width: v360.spacing.md),
-                        Expanded(
-                          child: StatTile(
-                            label: 'Expiring today',
-                            value:
-                                '${list.where((e) => e.daysLeft <= 0).length}',
-                            caption: 'discount now to recover cost',
-                            compact: true,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Value first, label beneath, with the window named: Home
+                  // counts only this week, so an unqualified total here would
+                  // look like it disagreed.
+                  DeclarationStrip(
+                    facts: <PackFact>[
+                      PackFact(
+                        totalAtRisk.display,
+                        'at risk, ${list.map((e) => e.daysLeft).fold<int>(0, (a, b) => b > a ? b : a)} days',
+                      ),
+                      PackFact('${list.length}', 'items'),
+                      PackFact(
+                        '${list.where((e) => e.daysLeft <= 0).length}',
+                        'expire today',
+                      ),
+                    ],
                   ),
-                  SizedBox(height: v360.spacing.lg),
-                  const V360Banner(
-                    icon: Icons.shield_outlined,
-                    title:
-                        'Dynamic markdowns recover up to 70% of cost on '
-                        'perishables before zero-value write-offs.',
+                  SizedBox(height: v360.spacing.md),
+                  Text(
+                    'Dynamic markdowns recover up to 70% of cost on '
+                    'perishables before zero-value write-offs.',
+                    style: v360.text.caption.copyWith(color: colors.inkMuted),
                   ),
                   SizedBox(height: v360.spacing.xl),
                   const SectionLabel('Clear these first'),
                   SizedBox(height: v360.spacing.md),
-                  for (var i = 0; i < list.length; i++)
-                    ExpiryRow(
-                      skuName: list[i].skuName,
-                      quantityLabel: list[i].quantity.display,
-                      daysLeft: list[i].daysLeft,
-                      valueAtRisk: list[i].valueAtRisk.display,
-                      suggestedDiscountPct: list[i].suggestedDiscountPct,
-                      onDiscount: () => _confirmDiscount(context, list[i]),
-                      onMarkWasted: () => _markWasted(context, ref, list[i]),
+                  V360Card(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: <Widget>[
+                        for (var i = 0; i < list.length; i++) ...<Widget>[
+                          if (i > 0) Divider(indent: v360.spacing.lg),
+                          ExpiryRow(
+                            skuName: list[i].skuName,
+                            quantityLabel: list[i].quantity.display,
+                            daysLeft: list[i].daysLeft,
+                            valueAtRisk: list[i].valueAtRisk.display,
+                            suggestedDiscountPct: list[i].suggestedDiscountPct,
+                            onDiscount: () =>
+                                _confirmDiscount(context, list[i]),
+                            onMarkWasted: () =>
+                                _markWasted(context, ref, list[i]),
+                          ),
+                        ],
+                      ],
                     ),
+                  ),
                 ],
               ),
             );

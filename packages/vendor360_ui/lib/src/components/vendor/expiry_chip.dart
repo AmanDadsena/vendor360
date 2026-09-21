@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
 import '../buttons/v360_button.dart';
+import '../feedback/status_mark.dart';
 import 'stat_tile.dart';
 
 /// A countdown to spoilage.
@@ -24,7 +24,11 @@ class ExpiryChip extends StatelessWidget {
       1 => ('1 day', PillTone.urgent, Icons.timer_outlined),
       <= 3 => ('$daysLeft days', PillTone.attention, Icons.schedule_rounded),
       <= 7 => ('$daysLeft days', PillTone.attention, Icons.schedule_rounded),
-      _ => ('$daysLeft days', PillTone.healthy, Icons.check_circle_outline_rounded),
+      _ => (
+        '$daysLeft days',
+        PillTone.healthy,
+        Icons.check_circle_outline_rounded,
+      ),
     };
 
     return StatusPill(label: label, tone: tone, icon: icon, dense: dense);
@@ -62,77 +66,87 @@ class ExpiryRow extends StatelessWidget {
     final colors = v360.colors;
     final expired = daysLeft < 0;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: v360.spacing.md),
-      padding: EdgeInsets.all(v360.spacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(V360Radius.lg),
-        border: Border.all(
-          color: expired
-              ? colors.danger
-              : daysLeft <= 3
-                  ? colors.warning
-                  : colors.hairline,
-        ),
+    final (String due, Color tone) = switch (daysLeft) {
+      < 0 => ('Expired', colors.danger),
+      0 => ('Today', colors.danger),
+      1 => ('1 day left', colors.danger),
+      <= 7 => ('$daysLeft days left', colors.warning),
+      _ => ('$daysLeft days left', colors.accent),
+    };
+
+    // One ruled row of a list, not a card: what it is, how long it has, what
+    // it is worth, and the two things to do about it.
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        v360.spacing.lg,
+        v360.spacing.md,
+        v360.spacing.md,
+        v360.spacing.xs,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(skuName, style: v360.text.titleS.copyWith(color: colors.ink)),
-                    SizedBox(height: v360.spacing.xs),
                     Text(
-                      quantityLabel,
-                      style: v360.text.caption.copyWith(color: colors.inkMuted),
+                      skuName,
+                      style: v360.text.titleS.copyWith(color: colors.ink),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: <Widget>[
+                        StatusMark(label: due, color: tone, dense: true),
+                        Flexible(
+                          child: Text(
+                            '  ·  $quantityLabel',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: v360.text.caption.copyWith(
+                              color: colors.inkMuted,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
+              SizedBox(width: v360.spacing.sm),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: <Widget>[
-                  ExpiryChip(daysLeft: daysLeft, dense: true),
-                  SizedBox(height: v360.spacing.xs),
                   Text(
-                    '$valueAtRisk at risk',
-                    style: v360.text.bodyStrong.copyWith(
-                      color: expired ? colors.dangerText : colors.ink,
-                    ),
+                    valueAtRisk,
+                    style: v360.text.titleS
+                        .copyWith(
+                          color: expired ? colors.dangerText : colors.ink,
+                        )
+                        .weight(FontWeight.w700)
+                        .narrow(86),
+                  ),
+                  Text(
+                    'at risk',
+                    style: v360.text.caption.copyWith(color: colors.inkMuted),
                   ),
                 ],
               ),
             ],
           ),
-          if (suggestedDiscountPct > 0) ...<Widget>[
-            SizedBox(height: v360.spacing.md),
-            Container(
-              padding: EdgeInsets.all(v360.spacing.md),
-              decoration: BoxDecoration(
-                color: colors.surfaceMuted,
-                borderRadius: BorderRadius.circular(V360Radius.sm),
-              ),
-              child: Row(
-                children: <Widget>[
-                  Icon(Icons.sell_outlined, size: 16, color: colors.voiceText),
-                  SizedBox(width: v360.spacing.sm),
-                  Expanded(
-                    child: Text(
-                      expired
-                          ? 'Past shelf life — record as waste to keep your score honest'
-                          : 'Discount $suggestedDiscountPct% to clear before spoilage',
-                      style: v360.text.caption.copyWith(color: colors.ink),
-                    ),
-                  ),
-                ],
-              ),
+          if (suggestedDiscountPct > 0 || expired) ...<Widget>[
+            SizedBox(height: v360.spacing.sm),
+            Text(
+              expired
+                  ? 'Past shelf life. Record it as waste to keep your score honest.'
+                  : 'Discount $suggestedDiscountPct% to clear it before it spoils.',
+              style: v360.text.caption.copyWith(color: colors.ink),
             ),
           ],
-          SizedBox(height: v360.spacing.md),
+          SizedBox(height: v360.spacing.sm),
           Row(
             children: <Widget>[
               if (onDiscount != null && !expired)
@@ -145,8 +159,6 @@ class ExpiryRow extends StatelessWidget {
                     onPressed: onDiscount,
                   ),
                 ),
-              if (onDiscount != null && onMarkWasted != null && !expired)
-                SizedBox(width: v360.spacing.sm),
               if (onMarkWasted != null)
                 Expanded(
                   child: TextButton.icon(

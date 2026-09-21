@@ -180,7 +180,7 @@ void main() {
     await settle(tester);
 
     expect(find.text('Tomato'), findsOneWidget);
-    expect(find.textContaining('Value at risk'), findsWidgets);
+    expect(find.textContaining('at risk, '), findsWidgets);
     expect(find.textContaining('50%'), findsWidgets);
     expect(
       find.textContaining('Dynamic markdowns recover up to 70%'),
