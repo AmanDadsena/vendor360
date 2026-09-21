@@ -83,7 +83,9 @@ class ExpiryScreen extends ConsumerWidget {
                     facts: <PackFact>[
                       PackFact(
                         totalAtRisk.display,
-                        'at risk, ${list.map((e) => e.daysLeft).fold<int>(0, (a, b) => b > a ? b : a)} days',
+                        // The board's window: the server lists stock expiring
+                        // within seven days.
+                        'at risk, next 7 days',
                       ),
                       PackFact('${list.length}', 'items'),
                       PackFact(

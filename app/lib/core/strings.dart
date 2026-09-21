@@ -150,10 +150,12 @@ class Strings {
   String get bulkDeals => _pick('Bulk deals', 'थोक सौदे', 'घाऊक सौदे');
   String get accuracy =>
       _pick('Forecast accuracy', 'अनुमान की सटीकता', 'अंदाजाची अचूकता');
-  String get expiringThisWeek => _pick(
-        'expiring this week',
-        'इस हफ़्ते खराब होंगे',
-        'या आठवड्यात संपणार',
+  /// Matches the server's window: the dashboard counts stock that expires
+  /// within three days, so the label says three days, not "this week".
+  String get expiringSoonWindow => _pick(
+        'expiring in 3 days',
+        '3 दिन में खराब होंगे',
+        '3 दिवसांत संपणार',
       );
 }
 

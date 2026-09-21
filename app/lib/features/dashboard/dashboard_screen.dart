@@ -308,7 +308,7 @@ class _ExpiringRow extends StatelessWidget {
 
     return V360Card(
       onTap: () => context.go('/expiry'),
-      semanticLabel: '${data.expiringSoonCount} ${strings.expiringThisWeek}, '
+      semanticLabel: '${data.expiringSoonCount} ${strings.expiringSoonWindow}, '
           '${data.valueAtRisk.display} ${strings.atRisk}',
       padding: EdgeInsets.symmetric(
         horizontal: v360.spacing.lg,
@@ -326,7 +326,7 @@ class _ExpiringRow extends StatelessWidget {
                     text: '${data.expiringSoonCount} ',
                     style: v360.text.bodyStrong.weight(FontWeight.w700),
                   ),
-                  TextSpan(text: '${strings.expiringThisWeek} · '),
+                  TextSpan(text: '${strings.expiringSoonWindow} · '),
                   TextSpan(
                     text: data.valueAtRisk.display,
                     style: v360.text.bodyStrong

@@ -181,20 +181,28 @@ class DemoData {
     ];
   }
 
-  static DashboardSnapshot get dashboard => DashboardSnapshot(
+  /// Counted from the same seeded lists the other screens show, so the
+  /// offline Home can never disagree with the offline Stock and Expiry
+  /// screens. Expiring means within three days, as the server counts it.
+  static DashboardSnapshot get dashboard {
+    final soon = expiring.where((e) => e.daysLeft <= 3).toList();
+    return DashboardSnapshot(
     vendor: vendor,
     todaySalesValue: Money.rupees(12012),
     todayTransactionCount: 16,
     weekSalesValue: Money.rupees(176205),
-    lowStockCount: 3,
-    expiringSoonCount: 5,
-    valueAtRisk: Money.rupees(9840),
+    lowStockCount: items.where((i) => i.isLow).length,
+    expiringSoonCount: soon.length,
+    valueAtRisk: Money.rupees(
+      soon.fold<double>(0, (sum, e) => sum + e.valueAtRisk.rupees),
+    ),
     healthScore: 86.8,
     healthBand: 'strong',
     topSignal: 'Ganesh Chaturthi in 16 days',
     topSignalDetail: 'Expect ~130% more demand for sweets',
     pendingPools: 1,
   );
+  }
 
   static HealthScore get healthScore => const HealthScore(
     score: 86.8,
