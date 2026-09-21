@@ -3,20 +3,23 @@ import 'package:flutter/material.dart';
 import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
 import '../data/rolling_number.dart';
+import '../feedback/status_mark.dart';
 
-/// A single glanceable figure.
+/// One figure, laid out like a line of a pack's small-print panel: what it
+/// is, then how much.
 ///
-/// The UI/UX guide requires key numbers to be readable "in under two seconds,
-/// in bright sunlight, at arm's length", so the value is set in the display
-/// style and the label is deliberately smaller — the opposite of the usual
-/// dashboard habit of equal-weight label and value.
+/// The key numbers must read "in under two seconds, in bright sunlight, at
+/// arm's length", so the value is set large and narrow in ink and the label
+/// is small and plain above it — in the case it was written, not tracked-out
+/// uppercase, and with no icon box. When the figure needs attention, [tone]
+/// prints a small square of colour before the label; the number itself stays
+/// ink, because amber digits are the first thing to wash out in daylight.
 class StatTile extends StatelessWidget {
   const StatTile({
     super.key,
     required this.label,
     required this.value,
     this.caption,
-    this.icon,
     this.tone,
     this.onTap,
     this.animateFrom,
@@ -26,10 +29,8 @@ class StatTile extends StatelessWidget {
   final String label;
   final String value;
   final String? caption;
-  final IconData? icon;
 
-  /// Overrides the value colour for alert states. Pass a token, never a
-  /// literal.
+  /// The status colour for this figure, as a token. Null when all is well.
   final Color? tone;
 
   final VoidCallback? onTap;
@@ -43,7 +44,11 @@ class StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final v360 = context.v360;
     final colors = v360.colors;
-    final valueColor = tone ?? colors.ink;
+    final valueStyle = v360.text.figure.copyWith(
+      color: colors.ink,
+      height: 1.0,
+      fontSize: compact ? 26 : null,
+    );
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,18 +56,19 @@ class StatTile extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            if (icon != null) ...<Widget>[
-              Icon(icon, size: 14, color: tone ?? colors.inkSubtle),
-              SizedBox(width: v360.spacing.xs),
-            ],
             Expanded(
-              child: Text(
-                label.toUpperCase(),
-                style: v360.text.label.copyWith(color: colors.inkSubtle),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: tone == null
+                  ? Text(
+                      label,
+                      style: v360.text.caption.copyWith(color: colors.inkMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : StatusMark(label: label, color: tone!, emphasis: false),
             ),
+            if (onTap != null)
+              Icon(Icons.chevron_right_rounded,
+                  size: 18, color: colors.inkSubtle),
           ],
         ),
         SizedBox(height: v360.spacing.sm),
@@ -70,16 +76,8 @@ class StatTile extends StatelessWidget {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: animateFrom == null
-              ? Text(
-                  value,
-                  style: (compact ? v360.text.titleL : v360.text.display)
-                      .copyWith(color: valueColor, height: 1.0),
-                )
-              : RollingNumber(
-                  value: animateFrom!,
-                  style: (compact ? v360.text.titleL : v360.text.display)
-                      .copyWith(color: valueColor, height: 1.0),
-                ),
+              ? Text(value, style: valueStyle)
+              : RollingNumber(value: animateFrom!, style: valueStyle),
         ),
         if (caption != null) ...<Widget>[
           SizedBox(height: v360.spacing.xs),
@@ -93,51 +91,37 @@ class StatTile extends StatelessWidget {
       ],
     );
 
-    return Container(
-      padding: EdgeInsets.all(compact ? v360.spacing.lg : v360.spacing.xl),
-      decoration: BoxDecoration(
-        color: colors.surface,
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(V360Radius.lg),
-        border: v360.isDark ? Border.all(color: colors.hairline) : null,
-        boxShadow: v360.isDark
-            ? null
-            : <BoxShadow>[
-                BoxShadow(
-                  color: colors.ink.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        side: BorderSide(color: colors.hairline),
       ),
+      clipBehavior: Clip.antiAlias,
       // The label, value and caption are three separate Text widgets, so a
       // screen reader would otherwise announce them as three unrelated
       // fragments — "overdue", "₹3,200" — with nothing tying them together.
       // Merging into one node reads them as the single fact they are.
       child: Semantics(
         button: onTap != null,
-        label: <String>[
-          label,
-          value,
-          ?caption,
-        ].join(', '),
+        label: <String>[label, value, ?caption].join(', '),
         excludeSemantics: true,
-        child: onTap == null
-            ? content
-            : InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(V360Radius.lg),
-                child: content,
-              ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 14 : v360.spacing.lg),
+            child: content,
+          ),
+        ),
       ),
     );
   }
 }
 
-/// A status pill.
+/// A status tag: a [StatusMark] in a small ruled box, for the end of a row.
 ///
-/// Colour is never the only signal — the guide requires an icon or label
-/// alongside it for colour-blind users, so [icon] pairs with every tone and
-/// the text is always present.
+/// Colour is never the only signal — the word is always printed, and the
+/// colour lives only in the square (or in [icon], when one is given).
 class StatusPill extends StatelessWidget {
   const StatusPill({
     super.key,
@@ -157,56 +141,25 @@ class StatusPill extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    final (Color fill, Color text, IconData fallback) = switch (tone) {
-      PillTone.healthy => (
-          colors.accentSurface,
-          colors.accentText,
-          Icons.check_circle_outline_rounded
-        ),
-      PillTone.attention => (
-          colors.warningSurface,
-          colors.warningText,
-          Icons.error_outline_rounded
-        ),
-      PillTone.urgent => (
-          colors.dangerSurface,
-          colors.dangerText,
-          Icons.priority_high_rounded
-        ),
-      PillTone.neutral => (
-          colors.surfaceMuted,
-          colors.inkMuted,
-          Icons.circle_outlined
-        ),
-      PillTone.voice => (
-          colors.voiceSurface,
-          colors.voiceText,
-          Icons.mic_none_rounded
-        ),
+    final color = switch (tone) {
+      PillTone.healthy => colors.accent,
+      PillTone.attention => colors.warning,
+      PillTone.urgent => colors.danger,
+      PillTone.neutral => colors.inkSubtle,
+      PillTone.voice => colors.voice,
     };
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: dense ? v360.spacing.sm : v360.spacing.md,
-        vertical: dense ? 2 : v360.spacing.xs,
+        horizontal: dense ? 6 : v360.spacing.sm,
+        vertical: dense ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(V360Radius.pill),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(V360Radius.sm),
+        border: Border.all(color: colors.hairline),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon ?? fallback, size: dense ? 11 : 13, color: text),
-          SizedBox(width: v360.spacing.xs),
-          Text(
-            label,
-            style: (dense ? v360.text.label : v360.text.caption).copyWith(
-              color: text,
-            ).weight(FontWeight.w600),
-          ),
-        ],
-      ),
+      child: StatusMark(label: label, color: color, icon: icon, dense: dense),
     );
   }
 }

@@ -38,6 +38,7 @@ export 'src/components/data/capacity_bar.dart';
 export 'src/components/data/rolling_number.dart';
 export 'src/components/data/otp_boxes.dart';
 export 'src/components/feedback/v360_banner.dart';
+export 'src/components/feedback/status_mark.dart';
 export 'src/components/feedback/v360_skeleton.dart';
 export 'src/components/feedback/sync_badge.dart';
 export 'src/components/nav/v360_bottom_nav.dart';

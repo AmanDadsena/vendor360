@@ -5,11 +5,11 @@ import '../../tokens/v360_theme.dart';
 
 enum V360BannerTone { info, success, warning, danger }
 
-/// A tinted informational banner.
+/// A boxed notice, the way a pack boxes its "Caution" or "Storage" note.
 ///
-/// Note each tone pairs a *surface* colour with a distinct *text* colour.
-/// The fill colours (`danger`, `warning`) fail contrast as text on their own
-/// tinted backgrounds, which is why `dangerText` and `warningText` exist.
+/// White, with a one-pixel rule in the tone's colour all the way round and
+/// the icon in that colour; the words stay ink. A tinted wash with coloured
+/// text was the old treatment, and coloured text is what washes out first.
 class V360Banner extends StatelessWidget {
   const V360Banner({
     super.key,
@@ -31,60 +31,61 @@ class V360Banner extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    final (Color surface, Color content) = switch (tone) {
-      V360BannerTone.info => (colors.surfaceMuted, colors.inkMuted),
-      V360BannerTone.success => (colors.accentSurface, colors.accentText),
-      V360BannerTone.warning => (colors.warningSurface, colors.warningText),
-      V360BannerTone.danger => (colors.dangerSurface, colors.dangerText),
+    final (Color rule, Color mark) = switch (tone) {
+      V360BannerTone.info => (colors.hairline, colors.inkMuted),
+      V360BannerTone.success => (colors.accent, colors.accent),
+      V360BannerTone.warning => (colors.warning, colors.warningText),
+      V360BannerTone.danger => (colors.danger, colors.dangerText),
     };
 
-    final banner = Container(
-      padding: EdgeInsets.all(v360.spacing.lg),
-      decoration: BoxDecoration(
-        color: surface,
+    return Material(
+      color: tone == V360BannerTone.info ? colors.surfaceMuted : colors.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(V360Radius.lg),
+        side: BorderSide(color: rule),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(icon, size: 20, color: content),
-          SizedBox(width: v360.spacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: v360.text.bodyStrong.copyWith(color: content),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(v360.spacing.md + 2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(icon, size: 20, color: mark),
+              SizedBox(width: v360.spacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: v360.text.bodyStrong.copyWith(color: colors.ink),
+                    ),
+                    if (body != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        body!,
+                        style:
+                            v360.text.caption.copyWith(color: colors.inkMuted),
+                      ),
+                    ],
+                  ],
                 ),
-                if (body != null) ...<Widget>[
-                  SizedBox(height: v360.spacing.xs),
-                  Text(
-                    body!,
-                    style: v360.text.caption.copyWith(color: colors.inkMuted),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    );
-
-    if (onTap == null) return banner;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: banner,
     );
   }
 }
 
-/// A pale pill showing a supplier's rating — "4.6 ★ · 2-day lead".
+/// A supplier's rating — "4.6 · 2-day lead" behind a drawn star.
 ///
-/// Inherited from the CarryO operator badge; in Vendor360 it rates the
-/// distributors and mandis surfaced beside the demand heatmap.
+/// The star is an icon, not a text glyph: Anek has no star, and a glyph
+/// borrowed from a fallback font never matches the line it sits in.
 class TrustBadge extends StatelessWidget {
   const TrustBadge({super.key, required this.rating, required this.countLabel});
 
@@ -94,21 +95,19 @@ class TrustBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: v360.spacing.md,
-        vertical: v360.spacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: v360.colors.accentSurface,
-        borderRadius: BorderRadius.circular(V360Radius.pill),
-      ),
-      child: Text(
-        '${rating.toStringAsFixed(1)} ★ · $countLabel',
-        style: v360.text.caption.copyWith(
-          color: v360.colors.accentText,
-        ).weight(FontWeight.w600),
-      ),
+    final colors = v360.colors;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(Icons.star_rounded, size: 15, color: colors.voice),
+        const SizedBox(width: 3),
+        Text(
+          '${rating.toStringAsFixed(1)} · $countLabel',
+          style: v360.text.caption
+              .copyWith(color: colors.ink)
+              .weight(FontWeight.w600),
+        ),
+      ],
     );
   }
 }

@@ -48,6 +48,8 @@ class V360Colors {
     required this.onVoice,
     required this.voiceText,
     required this.voiceSurface,
+    required this.flash,
+    required this.onFlash,
     required this.warning,
     required this.warningText,
     required this.warningSurface,
@@ -131,6 +133,12 @@ class V360Colors {
   final Color voiceText;
   final Color voiceSurface;
 
+  /// The flash — the spot-colour burst a pack uses for "20% extra". Here it
+  /// carries a heads-up worth acting on: a festival coming, a surge nearby.
+  /// A flat band with [onFlash] ink on it; never a tint, never a gradient.
+  final Color flash;
+  final Color onFlash;
+
   /// Attention — low stock, approaching expiry, pending sync. A marker and
   /// fill colour; [warningText] carries readable text.
   final Color warning;
@@ -165,6 +173,8 @@ class V360Colors {
         onVoice: Color(0xFF10201C),
         voiceText: Color(0xFF8A5300),
         voiceSurface: Color(0xFFFDF0D5),
+        flash: Color(0xFFF5B216),
+        onFlash: Color(0xFF10201C),
         warning: Color(0xFFE39A00),
         warningText: Color(0xFF7F4C00),
         warningSurface: Color(0xFFFCF0D6),
@@ -199,6 +209,8 @@ class V360Colors {
         onVoice: Color(0xFF10201C),
         voiceText: Color(0xFFF7C66A),
         voiceSurface: Color(0xFF33260E),
+        flash: Color(0xFFE0A516),
+        onFlash: Color(0xFF10201C),
         warning: Color(0xFFF0A928),
         warningText: Color(0xFFF6C56A),
         warningSurface: Color(0xFF332710),
@@ -242,6 +254,8 @@ class V360Colors {
         onVoice: onVoice,
         voiceText: voiceText,
         voiceSurface: voiceSurface,
+        flash: flash,
+        onFlash: onFlash,
         warning: warning,
         warningText: warningText,
         warningSurface: warningSurface,
@@ -275,6 +289,8 @@ class V360Colors {
       onVoice: l(onVoice, other.onVoice),
       voiceText: l(voiceText, other.voiceText),
       voiceSurface: l(voiceSurface, other.voiceSurface),
+      flash: l(flash, other.flash),
+      onFlash: l(onFlash, other.onFlash),
       warning: l(warning, other.warning),
       warningText: l(warningText, other.warningText),
       warningSurface: l(warningSurface, other.warningSurface),

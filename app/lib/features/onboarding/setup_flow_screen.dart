@@ -87,7 +87,7 @@ class _SetupFlowScreenState extends ConsumerState<SetupFlowScreen> {
             children: <Widget>[
               Text(
                 'What do you sell?',
-                style: v360.text.display.copyWith(color: colors.ink),
+                style: v360.text.figure.copyWith(color: colors.ink),
               ),
               SizedBox(height: v360.spacing.sm),
               Text(

@@ -367,14 +367,14 @@ void main() {
     expect(find.text('Market Yard Wholesale'), findsOneWidget);
     expect(find.text('2 orders waiting'), findsOneWidget);
     // StatTile uppercases its label.
-    expect(find.text('TO ANSWER'), findsOneWidget);
+    expect(find.text('To answer'), findsOneWidget);
     expect(find.text('₹14,108'), findsOneWidget);
     expect(find.text('₹3,200'), findsOneWidget);
 
     // The book section sits below the fold in the test viewport, so it has to
     // be scrolled to rather than assumed rendered.
-    await tester.scrollUntilVisible(find.text('RUNNING OUT'), 200);
-    expect(find.text('RUNNING OUT'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Running out'), 200);
+    expect(find.text('Running out'), findsOneWidget);
   });
 
   // =================================================== distributor: orders

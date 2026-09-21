@@ -580,7 +580,7 @@ class _QuickEditSheetState extends ConsumerState<_QuickEditSheet> {
                   children: <Widget>[
                     Text(
                       _qty.toStringAsFixed(0),
-                      style: v360.text.display.copyWith(color: colors.ink),
+                      style: v360.text.figure.copyWith(color: colors.ink),
                     ),
                     Text(
                       widget.item.quantity.unit,

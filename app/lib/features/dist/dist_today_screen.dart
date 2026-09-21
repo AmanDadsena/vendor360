@@ -119,7 +119,6 @@ class DistTodayScreen extends ConsumerWidget {
                       child: StatTile(
                         label: 'To answer',
                         value: '${data.needsAction}',
-                        icon: Icons.inbox_rounded,
                         tone: data.needsAction > 0 ? colors.voiceText : null,
                         onTap: () => context.go('/dist/orders'),
                       ),
@@ -130,7 +129,6 @@ class DistTodayScreen extends ConsumerWidget {
                         label: 'To send out',
                         value: '${data.toDispatch}',
                         caption: data.toDispatch > 0 ? "see today's round" : null,
-                        icon: Icons.local_shipping_outlined,
                         onTap: () => showDispatch(context),
                       ),
                     ),
@@ -143,7 +141,6 @@ class DistTodayScreen extends ConsumerWidget {
                       child: StatTile(
                         label: 'In transit',
                         value: '${data.inTransit}',
-                        icon: Icons.route_outlined,
                       ),
                     ),
                     SizedBox(width: v360.spacing.md),
@@ -152,7 +149,6 @@ class DistTodayScreen extends ConsumerWidget {
                         label: 'Delivered this week',
                         value: '${data.deliveredThisWeek}',
                         caption: data.revenue.display,
-                        icon: Icons.check_circle_outline_rounded,
                       ),
                     ),
                   ],
@@ -167,7 +163,6 @@ class DistTodayScreen extends ConsumerWidget {
                       child: StatTile(
                         label: 'Owed to you',
                         value: data.outstandingMoney.display,
-                        icon: Icons.account_balance_wallet_outlined,
                         onTap: () => showModalBottomSheet<void>(
                           context: context,
                           isScrollControlled: true,
@@ -183,7 +178,6 @@ class DistTodayScreen extends ConsumerWidget {
                         label: 'Overdue',
                         value: data.overdueMoney.display,
                         tone: data.overdue > 0 ? colors.dangerText : null,
-                        icon: Icons.schedule_rounded,
                       ),
                     ),
                   ],
@@ -198,7 +192,6 @@ class DistTodayScreen extends ConsumerWidget {
                       child: StatTile(
                         label: 'Shops',
                         value: '${data.connectedShops}',
-                        icon: Icons.storefront_outlined,
                         onTap: () => context.go('/dist/shops'),
                       ),
                     ),
@@ -209,7 +202,6 @@ class DistTodayScreen extends ConsumerWidget {
                         value: '${data.atRiskCount}',
                         caption: 'before you can reach them',
                         tone: data.atRiskCount > 0 ? colors.warningText : null,
-                        icon: Icons.priority_high_rounded,
                         onTap: () => context.go('/dist/demand'),
                       ),
                     ),

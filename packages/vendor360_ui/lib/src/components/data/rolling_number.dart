@@ -37,7 +37,7 @@ class RollingNumber extends StatelessWidget {
     final v360 = context.v360;
     final motion = MotionScope.of(context);
     final effective =
-        style ?? v360.text.display.copyWith(color: v360.colors.ink);
+        style ?? v360.text.figure.copyWith(color: v360.colors.ink);
     // Every glyph animates, commas and separators included, so a grouped
     // figure still rolls as one number rather than jumping.
     final digits = (format?.call(value) ?? value.toString()).split('');
@@ -117,17 +117,17 @@ class MetricTile extends StatelessWidget {
         // Ellipsised here so a long label cannot overflow a narrow metric
         // card at any call site.
         Text(
-          label.toUpperCase(),
+          label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: v360.text.label.copyWith(color: v360.colors.inkSubtle),
+          style: v360.text.caption.copyWith(color: v360.colors.inkMuted),
         ),
         SizedBox(height: v360.spacing.sm),
         RollingNumber(
           value: value,
           prefix: prefix ?? '',
           suffix: unit ?? '',
-          style: v360.text.display.copyWith(
+          style: v360.text.figure.copyWith(
             color: valueColor ?? v360.colors.ink,
           ),
         ),

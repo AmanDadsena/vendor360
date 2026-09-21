@@ -66,12 +66,12 @@ class ExpiryRow extends StatelessWidget {
       padding: EdgeInsets.all(v360.spacing.lg),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(V360Radius.md),
+        borderRadius: BorderRadius.circular(V360Radius.lg),
         border: Border.all(
           color: expired
-              ? colors.danger.withValues(alpha: 0.4)
+              ? colors.danger
               : daysLeft <= 3
-                  ? colors.warning.withValues(alpha: 0.35)
+                  ? colors.warning
                   : colors.hairline,
         ),
       ),
@@ -112,7 +112,7 @@ class ExpiryRow extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(v360.spacing.md),
               decoration: BoxDecoration(
-                color: colors.voiceSurface,
+                color: colors.surfaceMuted,
                 borderRadius: BorderRadius.circular(V360Radius.sm),
               ),
               child: Row(
@@ -124,7 +124,7 @@ class ExpiryRow extends StatelessWidget {
                       expired
                           ? 'Past shelf life — record as waste to keep your score honest'
                           : 'Discount $suggestedDiscountPct% to clear before spoilage',
-                      style: v360.text.caption.copyWith(color: colors.voiceText),
+                      style: v360.text.caption.copyWith(color: colors.ink),
                     ),
                   ),
                 ],
@@ -141,11 +141,7 @@ class ExpiryRow extends StatelessWidget {
                     icon: const Icon(Icons.sell_outlined, size: 16),
                     label: Text('Mark $suggestedDiscountPct% off'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.accentText,
-                      side: BorderSide(color: colors.hairline),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(V360Radius.pill),
-                      ),
+                      minimumSize: const Size(0, 44),
                     ),
                   ),
                 ),
@@ -159,10 +155,8 @@ class ExpiryRow extends StatelessWidget {
                     label: const Text('Record waste'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.dangerText,
-                      side: BorderSide(color: colors.danger.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(V360Radius.pill),
-                      ),
+                      side: BorderSide(color: colors.danger, width: 1.5),
+                      minimumSize: const Size(0, 44),
                     ),
                   ),
                 ),

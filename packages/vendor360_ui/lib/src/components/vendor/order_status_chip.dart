@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
+import '../feedback/status_mark.dart';
 
 /// How an order's stage should read, independent of what it is called.
 ///
@@ -46,40 +47,26 @@ class OrderStatusChip extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    final (Color fill, Color text) = switch (tone) {
-      // Saffron: something is owed to the shop and nobody has answered.
-      OrderTone.pending => (colors.voiceSurface, colors.voiceText),
-      OrderTone.active => (colors.accentSurface, colors.accentText),
-      OrderTone.done => (colors.surfaceMuted, colors.inkMuted),
-      OrderTone.cancelled => (colors.dangerSurface, colors.dangerText),
-      OrderTone.draft => (colors.surfaceMuted, colors.inkSubtle),
+    final color = switch (tone) {
+      // Marigold: something is owed to the shop and nobody has answered.
+      OrderTone.pending => colors.warning,
+      OrderTone.active => colors.accent,
+      OrderTone.done => colors.inkSubtle,
+      OrderTone.cancelled => colors.danger,
+      OrderTone.draft => colors.hairline,
     };
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: dense ? v360.spacing.sm : v360.spacing.md,
-        vertical: dense ? 2 : v360.spacing.xs,
+        horizontal: dense ? 6 : v360.spacing.sm,
+        vertical: dense ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(V360Radius.pill),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(V360Radius.sm),
+        border: Border.all(color: colors.hairline),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (icon != null) ...<Widget>[
-            Icon(icon, size: dense ? 11 : 13, color: text),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: v360.text.label.copyWith(
-              color: text,
-              fontSize: dense ? 10 : null,
-            ).weight(FontWeight.w700),
-          ),
-        ],
-      ),
+      child: StatusMark(label: label, color: color, icon: icon, dense: dense),
     );
   }
 }

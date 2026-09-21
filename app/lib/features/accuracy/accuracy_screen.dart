@@ -134,7 +134,7 @@ class _AccuracySummary extends StatelessWidget {
             children: <Widget>[
               Text(
                 mape == null ? '—' : mape.toStringAsFixed(1),
-                style: v360.text.display.copyWith(color: tone),
+                style: v360.text.figure.copyWith(color: tone),
               ),
               if (mape != null)
                 Text('%', style: v360.text.titleM.copyWith(color: tone)),

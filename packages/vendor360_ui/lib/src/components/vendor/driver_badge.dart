@@ -17,11 +17,8 @@ class DriverBadge extends StatelessWidget {
     this.compact = false,
   });
 
-  /// The named signal — a festival, or a weather condition.
   final String driver;
 
-  /// Signed magnitude. Negative signals matter as much as positive ones: rain
-  /// suppresses cold drinks, and over-ordering on a wet week is waste.
   final double effect;
 
   final bool compact;
@@ -37,35 +34,42 @@ class DriverBadge extends StatelessWidget {
     final colors = v360.colors;
 
     final rising = effect >= 0;
-    final fill = rising ? colors.voiceSurface : colors.accentSurface;
-    final text = rising ? colors.voiceText : colors.accentText;
+    final figure = rising ? colors.voiceText : colors.accentText;
 
     final icon = _isWeather
         ? (rising ? Icons.water_drop_outlined : Icons.wb_cloudy_outlined)
         : Icons.celebration_outlined;
 
     final magnitude = '${rising ? '+' : ''}${(effect * 100).round()}%';
+    final style = compact ? v360.text.label : v360.text.caption;
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? v360.spacing.sm : v360.spacing.md,
-        vertical: compact ? 3 : v360.spacing.xs,
+        horizontal: compact ? 6 : v360.spacing.sm,
+        vertical: compact ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(V360Radius.pill),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(V360Radius.sm),
+        border: Border.all(color: colors.hairline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: compact ? 12 : 14, color: text),
+          Icon(icon, size: compact ? 12 : 14, color: colors.inkMuted),
           SizedBox(width: v360.spacing.xs),
           Text(
-            compact ? '$magnitude $driver' : '$magnitude · $driver',
-            style: (compact ? v360.text.label : v360.text.caption).copyWith(
-              color: text,
-            ).weight(FontWeight.w600),
-            overflow: TextOverflow.ellipsis,
+            magnitude,
+            style: style.copyWith(color: figure).weight(FontWeight.w700),
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              driver,
+              style: style.copyWith(color: colors.ink),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
           ),
         ],
       ),
@@ -73,17 +77,18 @@ class DriverBadge extends StatelessWidget {
   }
 }
 
-/// The forward-looking headline on the dashboard.
+/// The heads-up worth acting on — a festival coming, a surge nearby — as a
+/// flat marigold band, the way a pack prints its "20% extra" flash.
 ///
-/// One sentence, one action. The guide asks for a two-second read, so this
-/// deliberately carries a single signal rather than a feed of them — a vendor
-/// mid-transaction will read one line, not five.
+/// Flat, full-width and ink on marigold: no gradient, no icon in a tinted
+/// square, no border. It is meant to be the one loud thing below the band,
+/// so a screen should carry at most one.
 class SignalBanner extends StatelessWidget {
   const SignalBanner({
     super.key,
     required this.title,
     required this.detail,
-    this.icon = Icons.insights_rounded,
+    this.icon = Icons.trending_up_rounded,
     this.onTap,
   });
 
@@ -97,50 +102,46 @@ class SignalBanner extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    return InkWell(
-      onTap: onTap,
+    return Material(
+      color: colors.flash,
       borderRadius: BorderRadius.circular(V360Radius.lg),
-      child: Container(
-        padding: EdgeInsets.all(v360.spacing.xl),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[colors.accentSurfaceStrong, colors.accentSurface],
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            v360.spacing.lg,
+            v360.spacing.md,
+            v360.spacing.sm,
+            v360.spacing.md,
           ),
-          borderRadius: BorderRadius.circular(V360Radius.lg),
-          border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
-        ),
-        child: Row(
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.all(v360.spacing.md),
-              decoration: BoxDecoration(
-                color: colors.accent,
-                borderRadius: BorderRadius.circular(V360Radius.sm),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, size: 22, color: colors.onFlash),
+              SizedBox(width: v360.spacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: v360.text.bodyStrong
+                          .copyWith(color: colors.onFlash)
+                          .weight(FontWeight.w700),
+                    ),
+                    if (detail.isNotEmpty)
+                      Text(
+                        detail,
+                        style: v360.text.caption
+                            .copyWith(color: colors.onFlash),
+                      ),
+                  ],
+                ),
               ),
-              child: Icon(icon, size: 20, color: Colors.white),
-            ),
-            SizedBox(width: v360.spacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    title,
-                    style: v360.text.titleS.copyWith(color: colors.accentText),
-                  ),
-                  SizedBox(height: v360.spacing.xs),
-                  Text(
-                    detail,
-                    style: v360.text.caption.copyWith(color: colors.inkMuted),
-                  ),
-                ],
-              ),
-            ),
-            if (onTap != null)
-              Icon(Icons.chevron_right_rounded, color: colors.accentText),
-          ],
+              if (onTap != null)
+                Icon(Icons.chevron_right_rounded, color: colors.onFlash),
+            ],
+          ),
         ),
       ),
     );

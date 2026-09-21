@@ -42,7 +42,8 @@ void main() {
   });
 
   group('V360Banner', () {
-    testWidgets('danger uses dangerText, not the danger fill', (tester) async {
+    testWidgets('danger keeps the words in ink and rules the box in red',
+        (tester) async {
       await tester.pumpWidget(carryHarness(
         const V360Banner(
           icon: Icons.warning_amber_rounded,
@@ -53,11 +54,19 @@ void main() {
       final style = tester
           .widget<Text>(find.text('Say the code only at the counter'))
           .style!;
-      expect(style.color, V360Colors.light().dangerText);
-      expect(style.color, isNot(light.danger));
+      // Coloured text is what washes out first in daylight.
+      expect(style.color, light.ink);
+      final material = tester.widget<Material>(find
+          .descendant(
+            of: find.byType(V360Banner),
+            matching: find.byType(Material),
+          )
+          .first);
+      final shape = material.shape! as RoundedRectangleBorder;
+      expect(shape.side.color, light.danger);
     });
 
-    testWidgets('success uses accentSurface and accentText', (tester) async {
+    testWidgets('the icon carries the tone', (tester) async {
       await tester.pumpWidget(carryHarness(
         const V360Banner(
           icon: Icons.check_circle,
@@ -65,10 +74,8 @@ void main() {
           tone: V360BannerTone.success,
         ),
       ));
-      expect(
-        tester.widget<Text>(find.text('Loaded in boot')).style!.color,
-        V360Colors.light().accentText,
-      );
+      final icon = tester.widget<Icon>(find.byIcon(Icons.check_circle));
+      expect(icon.color, light.accent);
     });
 
     testWidgets('renders an optional body line', (tester) async {
@@ -89,16 +96,20 @@ void main() {
         const StatusPill(label: 'In stock', tone: PillTone.healthy),
       ));
       expect(find.text('In stock'), findsOneWidget);
-      // Colour is never the only status signal — the guide requires an icon
-      // or label alongside it for colour-blind users.
-      expect(find.byType(Icon), findsOneWidget);
+      // Colour is never the only status signal: the word is always printed,
+      // and the colour lives in a small square beside it, not in the text.
+      expect(find.byType(StatusMark), findsOneWidget);
+      final style = tester.widget<Text>(find.text('In stock')).style!;
+      expect(style.color, light.ink);
     });
 
     testWidgets('TrustBadge formats rating and count', (tester) async {
       await tester.pumpWidget(carryHarness(
         const TrustBadge(rating: 4.6, countLabel: '2-day lead'),
       ));
-      expect(find.text('4.6 ★ · 2-day lead'), findsOneWidget);
+      expect(find.text('4.6 · 2-day lead'), findsOneWidget);
+      // Anek has no star glyph, so the star is drawn as an icon.
+      expect(find.byIcon(Icons.star_rounded), findsOneWidget);
     });
   });
 
@@ -127,11 +138,11 @@ void main() {
       expect(find.text('3'), findsOneWidget);
     });
 
-    testWidgets('MetricTile uppercases its label', (tester) async {
+    testWidgets('MetricTile keeps its label in the case it was given', (tester) async {
       await tester.pumpWidget(carryHarness(
         const MetricTile(label: 'parcels moved', value: 18),
       ));
-      expect(find.text('PARCELS MOVED'), findsOneWidget);
+      expect(find.text('parcels moved'), findsOneWidget);
     });
   });
 

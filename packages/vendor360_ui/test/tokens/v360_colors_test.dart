@@ -68,6 +68,7 @@ void main() {
         expect(contrast(c.onActionFill, c.actionFill),
             greaterThanOrEqualTo(4.5));
         expect(contrast(c.onVoice, c.voice), greaterThanOrEqualTo(4.5));
+        expect(contrast(c.onFlash, c.flash), greaterThanOrEqualTo(4.5));
         expect(contrast(c.onFill, c.danger), greaterThanOrEqualTo(3.0),
             reason: 'badge counts are bold and large enough for 3:1');
       });

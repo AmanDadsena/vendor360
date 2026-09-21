@@ -102,7 +102,6 @@ class _DashboardBody extends ConsumerWidget {
                           caption: data.lowStockCount == 0
                               ? 'Everything above its reorder point'
                               : 'below reorder point',
-                          icon: Icons.trending_down_rounded,
                           tone: data.lowStockCount > 0 ? colors.warning : null,
                           compact: true,
                           onTap: () => context.go('/inventory'),
@@ -114,7 +113,6 @@ class _DashboardBody extends ConsumerWidget {
                           label: strings.expiringSoon,
                           value: '${data.expiringSoonCount}',
                           caption: '${data.valueAtRisk.display} ${strings.atRisk}',
-                          icon: Icons.schedule_rounded,
                           tone: data.expiringSoonCount > 0 ? colors.danger : null,
                           compact: true,
                           onTap: () => context.go('/expiry'),
@@ -498,7 +496,7 @@ class _ScoreCard extends StatelessWidget {
                   children: <Widget>[
                     RollingNumber(
                       value: score ?? 0,
-                      style: v360.text.display.copyWith(color: colors.ink),
+                      style: v360.text.figure.copyWith(color: colors.ink),
                     ),
                     SizedBox(width: v360.spacing.xs),
                     Text(

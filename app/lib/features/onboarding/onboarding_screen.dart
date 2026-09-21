@@ -256,7 +256,7 @@ class _BrandmarkState extends State<_Brandmark> with SingleTickerProviderStateMi
         SizedBox(height: v360.spacing.lg),
         Text(
           'Vendor360',
-          style: v360.text.display.copyWith(color: colors.ink, fontSize: 30),
+          style: v360.text.figure.copyWith(color: colors.ink),
         ),
         Text(
           'PREDICTIVE INTELLIGENCE FOR LOCAL VENDORS',
@@ -487,7 +487,7 @@ class _CodeStep extends StatelessWidget {
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.digitsOnly,
           ],
-          style: v360.text.display.copyWith(color: colors.ink, letterSpacing: 8),
+          style: v360.text.figure.copyWith(color: colors.ink, letterSpacing: 8),
           decoration: InputDecoration(
             counterText: '',
             filled: true,
