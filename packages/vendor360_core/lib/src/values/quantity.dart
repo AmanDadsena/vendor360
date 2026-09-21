@@ -45,7 +45,7 @@ class Quantity {
   /// magnitude-based because that is where the meaning changes — below ten
   /// units the fraction is real stock, above it it is noise.
   String get approx {
-    if (amount >= 10) return '${amount.round()} $unit';
+    if (amount >= 10 || isCountable) return '${amount.round()} $unit';
     final rounded = (amount * 10).round() / 10;
     final text = rounded == rounded.roundToDouble()
         ? rounded.toStringAsFixed(0)
@@ -53,8 +53,25 @@ class Quantity {
     return '$text $unit';
   }
 
+  /// Units a shop counts rather than weighs or pours.
+  ///
+  /// Stock of these can drift fractional — an average sale of 1.4 packets a
+  /// day, drawn down in the demo or merged from two devices — but a shelf
+  /// never holds 33.1 eggs, and printing it says the app does not know what
+  /// it is counting.
+  static const Set<String> countableUnits = <String>{
+    'pc', 'pcs', 'pkt', 'btl', 'box', 'can', 'jar', 'tin', 'bag', 'nos',
+  };
+
+  bool get isCountable => countableUnits.contains(unit.toLowerCase());
+
   /// Trims a trailing `.0` so "5 kg" does not render as "5.0 kg".
+  ///
+  /// Countable units print whole, rounded *down*: "33 left" when 33.9 are
+  /// recorded is the conservative claim, and on a reorder screen the
+  /// generous one is the one that lets a shop run out.
   String get display {
+    if (isCountable) return '${amount.floor()} $unit';
     final rounded = (amount * 100).round() / 100;
     final text = rounded == rounded.roundToDouble()
         ? rounded.toStringAsFixed(0)

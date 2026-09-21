@@ -413,8 +413,8 @@ void _approxTests() {
     });
 
     test('keeps one decimal below ten, where the fraction is real', () {
-      expect(const Quantity(2.46, 'pc').approx, '2.5 pc');
-      expect(const Quantity(6.49, 'pc').approx, '6.5 pc');
+      expect(const Quantity(2.46, 'kg').approx, '2.5 kg');
+      expect(const Quantity(6.49, 'l').approx, '6.5 l');
       expect(const Quantity(0.4, 'kg').approx, '0.4 kg');
     });
 
@@ -424,8 +424,8 @@ void _approxTests() {
     });
 
     test('leaves the precise display alone', () {
-      // The shelf-count case still gets its two decimals.
-      expect(const Quantity(2.46, 'pc').display, '2.46 pc');
+      // Weighed shelf stock still gets its two decimals.
+      expect(const Quantity(2.46, 'kg').display, '2.46 kg');
     });
   });
 
@@ -458,6 +458,25 @@ void _approxTests() {
         ),
         throwsA(isA<AssertionError>()),
       );
+    });
+  });
+
+  group('Quantity display', () {
+    test('countable stock prints whole, rounded down', () {
+      expect(const Quantity(33.1, 'pc').display, '33 pc');
+      expect(const Quantity(10.9, 'pkt').display, '10 pkt');
+      expect(const Quantity(2, 'btl').display, '2 btl');
+    });
+
+    test('weighed and poured stock keeps its fraction', () {
+      expect(const Quantity(2.5, 'kg').display, '2.5 kg');
+      expect(const Quantity(5, 'kg').display, '5 kg');
+      expect(const Quantity(1.25, 'l').display, '1.25 l');
+    });
+
+    test('an approximate count of pieces is a whole number', () {
+      expect(const Quantity(4.6, 'pc').approx, '5 pc');
+      expect(const Quantity(4.6, 'kg').approx, '4.6 kg');
     });
   });
 }
