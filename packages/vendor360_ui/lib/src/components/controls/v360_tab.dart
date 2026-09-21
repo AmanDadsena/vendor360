@@ -63,6 +63,7 @@ class V360Tab extends StatelessWidget {
                   style: v360.text.caption
                       .copyWith(color: active ? colors.canvas : colors.ink)
                       .weight(FontWeight.w600),
+                  strutStyle: v360Strut(v360.text.caption),
                 ),
               ],
             ),

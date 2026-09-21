@@ -160,6 +160,23 @@ class V360Typography {
       );
 }
 
+/// A strut taken from the Latin face, for a label that may be set in either
+/// script.
+///
+/// Anek Devanagari is the fallback, and its vertical metrics are taller than
+/// Anek Latin's to hold the matras. A line set entirely in Devanagari takes
+/// its line box from the fallback's metrics, so a Hindi label and an English
+/// one beside it sit on different baselines — the Hindi rides about 3dp high.
+/// Forcing both onto the Latin face's strut puts them on one baseline.
+StrutStyle v360Strut(TextStyle style) => StrutStyle(
+      fontFamily: V360Typography.family,
+      package: V360Typography.package,
+      fontSize: style.fontSize,
+      height: style.height,
+      leadingDistribution: TextLeadingDistribution.even,
+      forceStrutHeight: true,
+    );
+
 /// Axis-aware adjustments to a [V360Typography] style.
 extension V360TextStyleX on TextStyle {
   /// Changes weight on both `fontWeight` and the `wght` axis, keeping width.

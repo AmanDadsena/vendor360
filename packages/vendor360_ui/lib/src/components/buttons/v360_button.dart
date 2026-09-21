@@ -239,6 +239,7 @@ class _V360ButtonState extends State<V360Button> {
                 child: Text(
                   widget.label,
                   maxLines: 1,
+                  strutStyle: v360Strut(v360.text.bodyStrong),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: v360.text.bodyStrong.copyWith(

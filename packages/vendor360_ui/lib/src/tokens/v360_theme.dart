@@ -8,7 +8,7 @@ import 'v360_typography.dart';
 
 // Every widget that reads `context.v360` also adjusts styles, so the
 // axis-aware helpers travel with the theme import.
-export 'v360_typography.dart' show V360TextStyleX;
+export 'v360_typography.dart' show V360TextStyleX, v360Strut;
 
 /// All Vendor360 design tokens, carried on [ThemeData.extensions].
 ///

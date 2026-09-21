@@ -125,6 +125,9 @@ class _Chip<T> extends StatelessWidget {
                   Text(
                     segment.label,
                     style: v360.text.bodyStrong.copyWith(color: content),
+                    // Endonyms mix scripts in one row; one strut keeps
+                    // हिन्दी on the same line as English.
+                    strutStyle: v360Strut(v360.text.bodyStrong),
                   ),
                 ],
               ),
