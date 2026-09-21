@@ -7,7 +7,7 @@ import '../../tokens/v360_theme.dart';
 /// Heights for the three button sizes.
 enum V360ButtonSize { sm, md, lg }
 
-enum V360ButtonVariant { primary, secondary, ghost, danger }
+enum V360ButtonVariant { primary, secondary, tonal, ghost, danger }
 
 /// The Vendor360 button.
 ///
@@ -66,6 +66,30 @@ class V360Button extends StatefulWidget {
          label: label,
          onPressed: onPressed,
          variant: V360ButtonVariant.secondary,
+         size: size,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         loading: loading,
+         expand: expand,
+       );
+
+  /// Pale teal with a teal label — Android's tonal button. For an action
+  /// that repeats down a list ("Reorder" on every row), where a keyline on
+  /// each would turn the list into a column of black boxes.
+  const V360Button.tonal({
+    Key? key,
+    required String label,
+    required VoidCallback? onPressed,
+    V360ButtonSize size = V360ButtonSize.lg,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool loading = false,
+    bool expand = false,
+  }) : this._(
+         key: key,
+         label: label,
+         onPressed: onPressed,
+         variant: V360ButtonVariant.tonal,
          size: size,
          leadingIcon: leadingIcon,
          trailingIcon: trailingIcon,
@@ -164,6 +188,9 @@ class _V360ButtonState extends State<V360Button> {
         fill = colors.surface;
         content = colors.ink;
         border = Border.all(color: colors.keyline, width: 1.5);
+      case V360ButtonVariant.tonal:
+        fill = colors.accentSurface;
+        content = colors.accentText;
       case V360ButtonVariant.ghost:
         fill = const Color(0x00000000);
         content = colors.accentText;

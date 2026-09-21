@@ -105,6 +105,17 @@ void main() {
       expect(border.top.color, V360Colors.light().keyline);
     });
 
+    testWidgets('tonal is pale teal with a teal label', (tester) async {
+      await tester.pumpWidget(carryHarness(
+        V360Button.tonal(label: 'Reorder', onPressed: () {}),
+      ));
+      expect(_decorationOf(tester).color, V360Colors.light().accentSurface);
+      expect(
+        tester.widget<Text>(find.text('Reorder')).style!.color,
+        V360Colors.light().accentText,
+      );
+    });
+
     testWidgets('ghost uses accentText, the readable teal', (tester) async {
       await tester.pumpWidget(carryHarness(
         V360Button.ghost(label: 'Custom dimensions', onPressed: () {}),
