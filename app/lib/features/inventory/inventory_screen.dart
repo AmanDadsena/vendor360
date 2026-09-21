@@ -39,32 +39,16 @@ class InventoryScreen extends ConsumerWidget {
             subtitle: count == null
                 ? null
                 : lowOnly
-                    ? '$count ${s.runningOut.toLowerCase()}'
-                    : '$count items',
+                ? '$count ${s.runningOut.toLowerCase()}'
+                : '$count items',
             bottom: const _InventorySearchBar(),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              v360.spacing.gutter,
-              v360.spacing.md,
-              v360.spacing.gutter,
-              v360.spacing.sm,
-            ),
-            child: Row(
-              children: <Widget>[
-                V360Segmented<bool>(
-                  value: lowOnly,
-                  onChanged: (value) =>
-                      ref.read(lowOnlyProvider.notifier).value = value,
-                  segments: <V360Segment<bool>>[
-                    V360Segment<bool>(value: false, label: s.allItems),
-                    V360Segment<bool>(value: true, label: s.runningOut),
-                  ],
-                ),
-              ],
-            ),
+          SizedBox(height: v360.spacing.sm),
+          _CategoryFilter(
+            selected: category,
+            lowOnly: lowOnly,
+            runningOutLabel: s.runningOut,
           ),
-          _CategoryFilter(selected: category),
           const Divider(),
           Expanded(
             child: items.when(
@@ -97,14 +81,18 @@ class InventoryScreen extends ConsumerWidget {
                     body: isSearching
                         ? 'Try a different name, or clear the search.'
                         : (lowOnly
-                            ? s.allAboveReorder
-                            : 'Log a sale or scan a receipt to get started.'),
+                              ? s.allAboveReorder
+                              : 'Log a sale or scan a receipt to get started.'),
                     action: isSearching
                         ? V360Button.ghost(
                             label: 'Clear search',
-                            onPressed: () => ref
-                                .read(inventorySearchQueryProvider.notifier)
-                                .value = null,
+                            onPressed: () =>
+                                ref
+                                        .read(
+                                          inventorySearchQueryProvider.notifier,
+                                        )
+                                        .value =
+                                    null,
                           )
                         : null,
                   );
@@ -137,24 +125,34 @@ class InventoryScreen extends ConsumerWidget {
   }
 }
 
+/// One row of printed tabs: "Running out" first, as a toggle, then the
+/// categories. One selector rather than a toggle stacked on a second row of
+/// tabs, which showed "All" twice in two different styles.
 class _CategoryFilter extends ConsumerWidget {
-  const _CategoryFilter({required this.selected});
+  const _CategoryFilter({
+    required this.selected,
+    required this.lowOnly,
+    required this.runningOutLabel,
+  });
 
   final String? selected;
+  final bool lowOnly;
+  final String runningOutLabel;
 
-  static const List<({String? key, String label})> _categories = <({String? key, String label})>[
-    (key: null, label: 'All'),
-    (key: 'dairy', label: 'Dairy'),
-    (key: 'produce', label: 'Produce'),
-    (key: 'staples', label: 'Staples'),
-    (key: 'snacks', label: 'Snacks'),
-    (key: 'beverages', label: 'Drinks'),
-    (key: 'sweets', label: 'Sweets'),
-    (key: 'household', label: 'Household'),
-    (key: 'personal_care', label: 'Personal'),
-    (key: 'monsoon', label: 'Monsoon'),
-    (key: 'bakery', label: 'Bakery'),
-  ];
+  static const List<({String? key, String label})> _categories =
+      <({String? key, String label})>[
+        (key: null, label: 'All'),
+        (key: 'dairy', label: 'Dairy'),
+        (key: 'produce', label: 'Produce'),
+        (key: 'staples', label: 'Staples'),
+        (key: 'snacks', label: 'Snacks'),
+        (key: 'beverages', label: 'Drinks'),
+        (key: 'sweets', label: 'Sweets'),
+        (key: 'household', label: 'Household'),
+        (key: 'personal_care', label: 'Personal'),
+        (key: 'monsoon', label: 'Monsoon'),
+        (key: 'bakery', label: 'Bakery'),
+      ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -168,46 +166,96 @@ class _CategoryFilter extends ConsumerWidget {
           vertical: v360.spacing.xs + 2,
         ),
         scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        separatorBuilder: (_, _) => SizedBox(width: v360.spacing.xs + 2),
+        itemCount: _categories.length + 1,
+        separatorBuilder: (_, index) => index == 0
+            // A rule between the toggle and the categories: it filters on a
+            // different axis, and says so.
+            ? Padding(
+                padding: EdgeInsets.symmetric(horizontal: v360.spacing.sm),
+                child: VerticalDivider(width: 1, color: v360.colors.hairline),
+              )
+            : SizedBox(width: v360.spacing.xs + 2),
         itemBuilder: (context, index) {
-          final category = _categories[index];
-          final active = category.key == selected;
-
-          return Semantics(
-            button: true,
-            selected: active,
-            label: category.label,
-            excludeSemantics: true,
-            child: V360Pressable(
+          if (index == 0) {
+            return _Tab(
+              label: runningOutLabel,
+              active: lowOnly,
+              marker: v360.colors.warning,
               onTap: () {
                 HapticFeedback.selectionClick();
-                ref.read(inventoryFilterProvider.notifier).value =
-                    category.key;
+                ref.read(lowOnlyProvider.notifier).value = !lowOnly;
               },
-              borderRadius: BorderRadius.circular(V360Radius.sm),
-              child: Container(
-                alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
-                decoration: BoxDecoration(
-                  color: active ? v360.colors.ink : v360.colors.surface,
-                  borderRadius: BorderRadius.circular(V360Radius.sm),
-                  border: Border.all(
-                    color: active ? v360.colors.ink : v360.colors.hairline,
-                  ),
-                ),
-                child: Text(
-                  category.label,
-                  style: v360.text.caption
-                      .copyWith(
-                        color: active ? v360.colors.canvas : v360.colors.ink,
-                      )
-                      .weight(FontWeight.w600),
-                ),
-              ),
-            ),
+            );
+          }
+          final category = _categories[index - 1];
+          final active = category.key == selected;
+
+          return _Tab(
+            label: category.label,
+            active: active,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              ref.read(inventoryFilterProvider.notifier).value = category.key;
+            },
           );
         },
+      ),
+    );
+  }
+}
+
+class _Tab extends StatelessWidget {
+  const _Tab({
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.marker,
+  });
+
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  /// A status square printed before the label while the tab is off.
+  final Color? marker;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final colors = v360.colors;
+
+    return Semantics(
+      button: true,
+      selected: active,
+      label: label,
+      excludeSemantics: true,
+      child: V360Pressable(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(V360Radius.sm),
+        child: Container(
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
+          decoration: BoxDecoration(
+            color: active ? colors.ink : colors.surface,
+            borderRadius: BorderRadius.circular(V360Radius.sm),
+            border: Border.all(color: active ? colors.ink : colors.hairline),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (marker != null && !active) ...<Widget>[
+                Container(width: 7, height: 7, color: marker),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: v360.text.caption
+                    .copyWith(color: active ? colors.canvas : colors.ink)
+                    .weight(FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -273,8 +321,9 @@ class _ItemRow extends ConsumerWidget {
                               '${item.quantity.unit}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: v360.text.caption
-                                  .copyWith(color: colors.inkMuted),
+                              style: v360.text.caption.copyWith(
+                                color: colors.inkMuted,
+                              ),
                             ),
                           ),
                         ],
@@ -367,7 +416,9 @@ class _ItemRow extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(repositoryProvider).recordMovement(
+      await ref
+          .read(repositoryProvider)
+          .recordMovement(
             itemId: item.id,
             qty: remaining.amount,
             movement: 'sale',
@@ -422,13 +473,7 @@ class _ItemRow extends ConsumerWidget {
         }
         return;
       }
-      cart.add(
-        CartLine(
-          option: topOption,
-          itemId: item.id,
-          packs: plan.packs,
-        ),
-      );
+      cart.add(CartLine(option: topOption, itemId: item.id, packs: plan.packs));
       HapticFeedback.mediumImpact();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -478,11 +523,9 @@ class _QuickEditSheetState extends ConsumerState<_QuickEditSheet> {
   Future<void> _save() async {
     HapticFeedback.mediumImpact();
     setState(() => _saving = true);
-    await ref.read(repositoryProvider).recordMovement(
-          itemId: widget.item.id,
-          qty: _qty,
-          movement: _movement,
-        );
+    await ref
+        .read(repositoryProvider)
+        .recordMovement(itemId: widget.item.id, qty: _qty, movement: _movement);
     ref.read(syncProvider.notifier).refresh();
     ref.invalidate(inventoryProvider);
     ref.invalidate(dashboardProvider);
@@ -499,7 +542,9 @@ class _QuickEditSheetState extends ConsumerState<_QuickEditSheet> {
       padding: EdgeInsets.all(v360.spacing.xxl),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(V360Radius.xl)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(V360Radius.xl),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -593,7 +638,8 @@ class _InventorySearchBar extends ConsumerStatefulWidget {
   const _InventorySearchBar();
 
   @override
-  ConsumerState<_InventorySearchBar> createState() => _InventorySearchBarState();
+  ConsumerState<_InventorySearchBar> createState() =>
+      _InventorySearchBarState();
 }
 
 class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
@@ -636,8 +682,9 @@ class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
               style: v360.text.body.copyWith(color: v360.colors.ink),
               decoration: InputDecoration(
                 hintText: 'Search stock: milk, atta…',
-                hintStyle:
-                    v360.text.body.copyWith(color: v360.colors.inkSubtle),
+                hintStyle: v360.text.body.copyWith(
+                  color: v360.colors.inkSubtle,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -657,8 +704,11 @@ class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
                 _controller.clear();
                 ref.read(inventorySearchQueryProvider.notifier).value = null;
               },
-              child: Icon(Icons.close_rounded,
-                  size: 16, color: v360.colors.inkSubtle),
+              child: Icon(
+                Icons.close_rounded,
+                size: 16,
+                color: v360.colors.inkSubtle,
+              ),
             ),
         ],
       ),
