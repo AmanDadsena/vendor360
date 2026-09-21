@@ -270,7 +270,8 @@ ThemeData buildV360Theme(Brightness brightness, {bool distributor = false}) {
       surfaceTintColor: const Color(0x00000000),
       elevation: 0,
       modalElevation: 0,
-      showDragHandle: true,
+      // Off: the app's sheets draw their own handle inside their own
+      // surface, and a themed one would print a second handle above it.
       dragHandleColor: colors.hairline,
       dragHandleSize: const Size(36, 4),
       shape: const RoundedRectangleBorder(

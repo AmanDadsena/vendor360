@@ -125,7 +125,7 @@ class HeatmapScreen extends ConsumerWidget {
       context: context,
       backgroundColor: v360.colors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(V360Radius.xl)),
       ),
       builder: (_) => Padding(
         padding: EdgeInsets.all(v360.spacing.xxl),

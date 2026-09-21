@@ -521,7 +521,7 @@ class _QuickEditSheetState extends ConsumerState<_QuickEditSheet> {
       padding: EdgeInsets.all(v360.spacing.xxl),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(V360Radius.xl)),
       ),
       child: SafeArea(
         top: false,
@@ -661,6 +661,9 @@ class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
                 hintStyle:
                     v360.text.body.copyWith(color: v360.colors.inkSubtle),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
