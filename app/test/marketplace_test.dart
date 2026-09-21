@@ -550,7 +550,7 @@ void main() {
     await tester.pumpWidget(host(const DemoBanner()));
     await settle(tester);
 
-    expect(find.textContaining('DEMO'), findsNothing);
+    expect(find.textContaining('Demo mode'), findsNothing);
   });
 
   testWidgets('the demo banner says so loudly while the pulse runs',
@@ -570,7 +570,7 @@ void main() {
 
     // The pulse writes real transactions, so the numbers moving on screen
     // describe events that did not happen. Saying so is the whole point.
-    expect(find.text('DEMO MODE · simulated activity'), findsOneWidget);
+    expect(find.text('Demo mode · these sales are simulated'), findsOneWidget);
   });
 
   testWidgets('an unreachable server does not claim a demo is running',
@@ -582,7 +582,7 @@ void main() {
     await tester.pumpWidget(host(const DemoBanner()));
     await settle(tester);
 
-    expect(find.textContaining('DEMO'), findsNothing);
+    expect(find.textContaining('Demo mode'), findsNothing);
   });
 
   // ================================================================ theme

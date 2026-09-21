@@ -9,8 +9,8 @@ import '../../app/providers.dart';
 /// The demo pulse writes real transactions — it has to, or the heatmap would
 /// not move — which means the numbers changing in front of someone describe
 /// events that did not happen. That is fine for a demonstration and dishonest
-/// without a label, so this is deliberately hard to miss: full width, saffron,
-/// pinned above the content rather than tucked into a corner.
+/// without a label, so this is deliberately hard to miss: the full-width
+/// marigold flash, pinned above the content rather than tucked into a corner.
 ///
 /// It renders nothing at all when the pulse is off, which is every case except
 /// a machine that was explicitly started with `DEMO_MODE=1`.
@@ -31,7 +31,7 @@ class DemoBanner extends ConsumerWidget {
       excludeSemantics: true,
       child: Container(
         width: double.infinity,
-        color: colors.voice,
+        color: colors.flash,
         padding: EdgeInsets.symmetric(
           horizontal: v360.spacing.md,
           vertical: v360.spacing.xs,
@@ -41,14 +41,13 @@ class DemoBanner extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(Icons.science_outlined, size: 13, color: colors.onFill),
+              Icon(Icons.science_outlined, size: 15, color: colors.onFlash),
               SizedBox(width: v360.spacing.xs),
               Text(
-                'DEMO MODE · simulated activity',
-                style: v360.text.label.copyWith(
-                  color: colors.onFill,
-                  letterSpacing: 0.6,
-                ).weight(FontWeight.w800),
+                'Demo mode · these sales are simulated',
+                style: v360.text.caption
+                    .copyWith(color: colors.onFlash)
+                    .weight(FontWeight.w700),
               ),
             ],
           ),
