@@ -73,6 +73,10 @@ class V360Typography {
         fontWeight: weight,
         letterSpacing: letterSpacing,
         fontFeatures: _features,
+        // Devanagari's matras rise above the Latin cap height; even leading
+        // centres both scripts in the same line box, so a Hindi label sits
+        // on the same line as an English one beside it.
+        leadingDistribution: TextLeadingDistribution.even,
         fontVariations: <FontVariation>[
           FontVariation('wght', axisWeight ?? weight.value.toDouble()),
           FontVariation('wdth', width),

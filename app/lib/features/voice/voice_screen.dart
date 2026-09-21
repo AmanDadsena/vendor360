@@ -446,7 +446,7 @@ class _TranscriptField extends StatelessWidget {
         ),
         SizedBox(height: v360.spacing.md),
         V360Button.secondary(
-          label: 'Read this',
+          label: 'Check entry',
           expand: true,
           loading: busy,
           onPressed: onSubmit,

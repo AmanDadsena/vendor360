@@ -312,10 +312,16 @@ class _MicItem extends StatelessWidget {
               child: Container(
                 width: _disc,
                 height: _disc,
+                // On the Speak tab the ring prints in ink: the bar says
+                // "you are here" instead of offering a second, identical
+                // trigger beside the big mic on the page.
                 decoration: BoxDecoration(
                   color: colors.voice,
                   shape: BoxShape.circle,
-                  border: Border.all(color: colors.surface, width: 4),
+                  border: Border.all(
+                    color: selected ? colors.ink : colors.surface,
+                    width: selected ? 3 : 4,
+                  ),
                 ),
                 child: Icon(Icons.mic_rounded, size: 28, color: colors.onVoice),
               ),
