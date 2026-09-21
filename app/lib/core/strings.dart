@@ -126,6 +126,34 @@ class Strings {
   String get retry => _pick('Retry', 'फिर से', 'पुन्हा');
   String get loading => _pick('Loading…', 'लोड हो रहा है…', 'लोड होत आहे…');
   String get noData => _pick('Nothing here yet', 'अभी कुछ नहीं', 'अजून काही नाही');
+  String get seeAll => _pick('See all', 'सभी देखें', 'सर्व पहा');
+
+  // Home
+  String get runningOut => _pick('Running out', 'खत्म हो रहा है', 'संपत आहे');
+  String get reorder => _pick('Reorder', 'मंगाएँ', 'मागवा');
+  String get left => _pick('left', 'बचा', 'शिल्लक');
+  String get entries => _pick('entries', 'एंट्री', 'नोंदी');
+  String get noSalesYet => _pick(
+        'Nothing logged yet today. Tap the mic to add a sale.',
+        'आज अभी कुछ दर्ज नहीं हुआ। बिक्री जोड़ने के लिए माइक दबाएँ।',
+        'आज अजून काही नोंदवले नाही. विक्री जोडण्यासाठी माइक दाबा.',
+      );
+  String get allAboveReorder => _pick(
+        'Everything is above its reorder point.',
+        'सब कुछ दोबारा मंगाने के स्तर से ऊपर है।',
+        'सर्व काही पुन्हा मागवण्याच्या पातळीच्या वर आहे.',
+      );
+  String get orders => _pick('Orders', 'ऑर्डर', 'ऑर्डर');
+  String get suppliers => _pick('Suppliers', 'सप्लायर', 'पुरवठादार');
+  String get demandMap => _pick('Demand map', 'मांग नक्शा', 'मागणी नकाशा');
+  String get bulkDeals => _pick('Bulk deals', 'थोक सौदे', 'घाऊक सौदे');
+  String get accuracy =>
+      _pick('Forecast accuracy', 'अनुमान की सटीकता', 'अंदाजाची अचूकता');
+  String get expiringThisWeek => _pick(
+        'expiring this week',
+        'इस हफ़्ते खराब होंगे',
+        'या आठवड्यात संपणार',
+      );
 }
 
 /// Strings for the currently selected language.

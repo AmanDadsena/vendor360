@@ -16,9 +16,13 @@ import '../../data/live_connection.dart';
 /// animating dot in the corner of every screen is a distraction, and on
 /// reduce-motion it is worse than that.
 class LiveDot extends ConsumerWidget {
-  const LiveDot({super.key, this.showLabel = false});
+  const LiveDot({super.key, this.showLabel = false, this.onBand = false});
 
   final bool showLabel;
+
+  /// Printed on the teal band: white when live, so the dot does not vanish
+  /// into the colour it would otherwise be drawn in.
+  final bool onBand;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,9 +31,15 @@ class LiveDot extends ConsumerWidget {
     final status = ref.watch(liveStatusProvider).value ?? LiveStatus.offline;
 
     final (Color tint, String label) = switch (status) {
-      LiveStatus.live => (colors.accent, 'Live'),
-      LiveStatus.reconnecting => (colors.warning, 'Reconnecting'),
-      LiveStatus.offline => (colors.inkSubtle, 'Not live'),
+      LiveStatus.live => (onBand ? colors.onBand : colors.accent, 'Live'),
+      LiveStatus.reconnecting => (
+          onBand ? colors.flash : colors.warning,
+          'Reconnecting',
+        ),
+      LiveStatus.offline => (
+          onBand ? colors.onBandMuted : colors.inkSubtle,
+          'Not live',
+        ),
     };
 
     return Semantics(
@@ -48,7 +58,9 @@ class LiveDot extends ConsumerWidget {
             SizedBox(width: v360.spacing.xs),
             Text(
               label,
-              style: v360.text.label.copyWith(color: colors.inkMuted),
+              style: v360.text.label.copyWith(
+                color: onBand ? colors.onBandMuted : colors.inkMuted,
+              ),
             ),
           ],
         ],
@@ -109,21 +121,14 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
       animation: _controller,
       builder: (context, _) {
         final t = 0.45 + (_controller.value * 0.55);
+        // No glow: a coloured halo is decoration. The breathing opacity is
+        // the whole signal.
         return Container(
           width: 8,
           height: 8,
           decoration: BoxDecoration(
             color: widget.tint.withValues(alpha: t),
             shape: BoxShape.circle,
-            boxShadow: widget.animate
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: widget.tint.withValues(alpha: 0.35 * t),
-                      blurRadius: 6,
-                      spreadRadius: 1.5,
-                    ),
-                  ]
-                : null,
           ),
         );
       },
@@ -138,9 +143,12 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
 /// chrome just to hold a bell would cost vertical space on every screen to
 /// serve one.
 class AlertBell extends ConsumerWidget {
-  const AlertBell({super.key, required this.onTap});
+  const AlertBell({super.key, required this.onTap, this.onBand = false});
 
   final VoidCallback onTap;
+
+  /// Printed on the teal band.
+  final bool onBand;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -158,14 +166,16 @@ class AlertBell extends ConsumerWidget {
           clipBehavior: Clip.none,
           children: <Widget>[
             SizedBox(
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               child: Icon(
                 unread > 0
                     ? Icons.notifications_active_rounded
                     : Icons.notifications_none_rounded,
                 size: 22,
-                color: unread > 0 ? colors.voiceText : colors.inkMuted,
+                color: onBand
+                    ? colors.onBand
+                    : (unread > 0 ? colors.voiceText : colors.inkMuted),
               ),
             ),
             if (unread > 0)
@@ -177,15 +187,17 @@ class AlertBell extends ConsumerWidget {
                       const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
                     color: colors.danger,
-                    borderRadius: BorderRadius.circular(V360Radius.pill),
-                    border: Border.all(color: colors.surface, width: 1.5),
+                    borderRadius: BorderRadius.circular(V360Radius.sm),
+                    border: Border.all(
+                      color: onBand ? colors.band : colors.surface,
+                      width: 1.5,
+                    ),
                   ),
                   child: Text(
                     unread > 9 ? '9+' : '$unread',
-                    style: v360.text.label.copyWith(
-                      color: colors.onFill,
-                      fontSize: 9,
-                    ),
+                    style: v360.text.label
+                        .copyWith(color: colors.onFill, fontSize: 10)
+                        .weight(FontWeight.w700),
                   ),
                 ),
               ),

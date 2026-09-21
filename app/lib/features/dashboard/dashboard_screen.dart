@@ -2,20 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
 import '../../app/providers.dart';
-import '../alerts/alerts_sheet.dart';
-import '../alerts/live_dot.dart';
 import '../../core/strings.dart';
 import '../../data/models.dart';
+import '../alerts/alerts_sheet.dart';
+import '../alerts/live_dot.dart';
+import '../orders/sourcing_sheet.dart';
 
 /// Home — the two-second read on "how is my store doing right now".
 ///
-/// Ordered by what a vendor mid-transaction actually needs: today's money
-/// first, then anything demanding action, then the forward-looking signal.
-/// The voice button is reachable without navigating away, because logging a
-/// sale is the highest-frequency action in the product (UI/UX 5.1).
+/// The top of the phone is the front of the pack: today's money printed
+/// large on the teal band, qualified by a ruled strip of the facts behind
+/// it. Below, on white, only what asks for action — the one heads-up worth
+/// acting on, the items about to run out with a way to reorder each, and
+/// what is about to expire. Then the places to go.
+///
+/// Logging a sale is the highest-frequency action in the product, so it is
+/// the marigold disc in the bottom bar, reachable from every tab, rather
+/// than another tile here (UI/UX 5.1).
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -24,7 +31,6 @@ class DashboardScreen extends ConsumerWidget {
     final v360 = context.v360;
     final s = ref.watch(stringsProvider);
     final snapshot = ref.watch(dashboardProvider);
-    final sync = ref.watch(syncProvider);
 
     return Scaffold(
       backgroundColor: v360.colors.canvas,
@@ -32,7 +38,9 @@ class DashboardScreen extends ConsumerWidget {
         onRefresh: () async {
           HapticFeedback.lightImpact();
           await ref.read(syncProvider.notifier).flush();
-          ref.invalidate(dashboardProvider);
+          ref
+            ..invalidate(dashboardProvider)
+            ..invalidate(runningOutProvider);
         },
         color: v360.colors.accent,
         child: snapshot.when(
@@ -41,361 +49,390 @@ class DashboardScreen extends ConsumerWidget {
             message: '$error',
             onRetry: () => ref.invalidate(dashboardProvider),
           ),
-          data: (data) => _DashboardBody(data: data, strings: s, queued: sync.queued),
+          data: (data) => _DashboardBody(data: data, strings: s),
         ),
       ),
     );
   }
 }
 
-class _DashboardBody extends ConsumerWidget {
-  const _DashboardBody({
-    required this.data,
-    required this.strings,
-    required this.queued,
-  });
+class _DashboardBody extends StatelessWidget {
+  const _DashboardBody({required this.data, required this.strings});
 
   final DashboardSnapshot data;
   final Strings strings;
-  final int queued;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final gap = SizedBox(height: v360.spacing.x3);
+
+    return CustomScrollView(
+      // Always scrollable so pull-to-refresh works even when the content fits.
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: <Widget>[
+        SliverToBoxAdapter(child: _Front(data: data, strings: strings)),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            v360.spacing.gutter,
+            v360.spacing.xl,
+            v360.spacing.gutter,
+            v360.spacing.x5,
+          ),
+          sliver: SliverList.list(
+            children: <Widget>[
+              if (data.topSignal != null) ...<Widget>[
+                SignalBanner(
+                  title: data.topSignal!,
+                  detail: data.topSignalDetail ?? '',
+                  onTap: () => context.go('/forecast'),
+                ),
+                gap,
+              ],
+              _RunningOut(strings: strings, lowCount: data.lowStockCount),
+              if (data.expiringSoonCount > 0) ...<Widget>[
+                SizedBox(height: v360.spacing.md),
+                _ExpiringRow(data: data, strings: strings),
+              ],
+              gap,
+              SectionLabel(strings.quickActions),
+              SizedBox(height: v360.spacing.md),
+              _Places(strings: strings, data: data),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The band: who, today's money, and the ruled facts behind it.
+class _Front extends ConsumerWidget {
+  const _Front({required this.data, required this.strings});
+
+  final DashboardSnapshot data;
+  final Strings strings;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v360 = context.v360;
     final colors = v360.colors;
     final sync = ref.watch(syncProvider);
+    final vendor = data.vendor;
+    final quiet = data.todayTransactionCount == 0;
 
-    return CustomScrollView(
-      // Always scrollable so pull-to-refresh works even when the content fits.
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: <Widget>[
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              v360.spacing.gutter,
-              v360.spacing.xxl,
-              v360.spacing.gutter,
-              0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _Greeting(vendor: data.vendor, queued: queued, syncing: sync.syncing),
-                SizedBox(height: v360.spacing.xxl),
-
-                // Today's money, given the most visual weight on the screen.
-                _TodayCard(data: data, strings: strings),
-                SizedBox(height: v360.spacing.lg),
-
-                // Things demanding action.
-                Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: StatTile(
-                          label: strings.lowStock,
-                          value: '${data.lowStockCount}',
-                          caption: data.lowStockCount == 0
-                              ? 'Everything above its reorder point'
-                              : 'below reorder point',
-                          tone: data.lowStockCount > 0 ? colors.warning : null,
-                          compact: true,
-                          onTap: () => context.go('/inventory'),
-                        ),
-                      ),
-                      SizedBox(width: v360.spacing.md),
-                      Expanded(
-                        child: StatTile(
-                          label: strings.expiringSoon,
-                          value: '${data.expiringSoonCount}',
-                          caption: '${data.valueAtRisk.display} ${strings.atRisk}',
-                          tone: data.expiringSoonCount > 0 ? colors.danger : null,
-                          compact: true,
-                          onTap: () => context.go('/expiry'),
-                        ),
-                      ),
-                    ],
-                  ),
-                SizedBox(height: v360.spacing.lg),
-
-                // The forward-looking signal — the thing that makes this
-                // different from a ledger app.
-                if (data.topSignal != null)
-                  SignalBanner(
-                      title: data.topSignal!,
-                      detail: data.topSignalDetail ?? '',
-                      onTap: () => context.go('/forecast'),
-                    ),
-                SizedBox(height: v360.spacing.xxl),
-
-                SectionLabel(strings.quickActions),
-                SizedBox(height: v360.spacing.md),
-                _QuickActions(strings: strings, data: data),
-                SizedBox(height: v360.spacing.xxl),
-
-                _ScoreCard(
-                    score: data.healthScore,
-                    band: data.healthBand,
-                    strings: strings,
-                  ),
-                SizedBox(height: v360.spacing.x5),
-              ],
-            ),
-          ),
+    return PackHeader(
+      title: vendor.storeName,
+      subtitle: vendor.locality ?? vendor.city,
+      actions: <Widget>[
+        // Sync says whether *your* writes have landed; live says whether you
+        // are being told about anyone else's. Adjacent because they answer
+        // the same question — how current is this screen.
+        SyncBadge(queued: sync.queued, syncing: sync.syncing),
+        const LiveDot(onBand: true),
+        AlertBell(onBand: true, onTap: () => showAlerts(context)),
+        V360IconButton(
+          icon: v360.isDark
+              ? Icons.light_mode_outlined
+              : Icons.dark_mode_outlined,
+          color: colors.onBand,
+          onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+          semanticLabel: 'Switch theme',
+        ),
+      ],
+      figure: RollingNumber(
+        value: data.todaySalesValue.rupees,
+        // Money.display carries the rupee symbol and the lakh grouping;
+        // passing the raw number would render ₹12012.0 on the most-read
+        // figure in the product.
+        format: (_) => data.todaySalesValue.display,
+        style: v360.text.display.copyWith(color: colors.onBand),
+      ),
+      figureCaption: quiet ? strings.noSalesYet : strings.todaySales,
+      facts: <PackFact>[
+        PackFact('${data.todayTransactionCount}', strings.entries),
+        PackFact(data.weekSalesValue.display, strings.thisWeek),
+        PackFact(
+          data.healthScore == null ? '—' : '${data.healthScore!.round()}',
+          strings.healthScore,
+          onTap: () => context.go('/health'),
         ),
       ],
     );
   }
 }
 
-class _Greeting extends ConsumerWidget {
-  const _Greeting({required this.vendor, required this.queued, required this.syncing});
+/// The items closest to running out, each with a way to reorder it.
+class _RunningOut extends ConsumerWidget {
+  const _RunningOut({required this.strings, required this.lowCount});
 
-  final dynamic vendor;
-  final int queued;
-  final bool syncing;
+  final Strings strings;
+  final int lowCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v360 = context.v360;
     final colors = v360.colors;
+    final items = ref.watch(runningOutProvider);
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: colors.accentSurface,
-            borderRadius: BorderRadius.circular(V360Radius.sm),
-          ),
-          child: Text(
-            vendor.initials as String,
-            style: v360.text.titleS.copyWith(color: colors.accentText),
-          ),
+        SectionLabel(
+          lowCount > 0
+              ? '${strings.runningOut} · $lowCount'
+              : strings.runningOut,
+          action: lowCount > 0
+              ? TextButton(
+                  onPressed: () {
+                    ref.read(lowOnlyProvider.notifier).value = true;
+                    context.go('/inventory');
+                  },
+                  child: Text(strings.seeAll),
+                )
+              : null,
         ),
-        SizedBox(width: v360.spacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                vendor.storeName as String,
-                style: v360.text.titleM.copyWith(color: colors.ink),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                '${vendor.locality ?? vendor.city}',
-                style: v360.text.caption.copyWith(color: colors.inkMuted),
-              ),
-            ],
-          ),
-        ),
-        // Sync says whether *your* writes have landed; live says whether you
-        // are being told about anyone else's. Adjacent because they answer the
-        // same underlying question — how current is this screen.
-        SyncBadge(queued: queued, syncing: syncing),
-        SizedBox(width: v360.spacing.xs),
-        const LiveDot(),
-        SizedBox(width: v360.spacing.xs),
-        AlertBell(onTap: () => showAlerts(context)),
-        V360IconButton(
-          icon: v360.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-          onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
-          semanticLabel: 'Switch theme',
+        SizedBox(height: v360.spacing.sm),
+        items.when(
+          loading: () => const V360Skeleton(height: 132),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (list) => list.isEmpty
+              ? Padding(
+                  padding: EdgeInsets.symmetric(vertical: v360.spacing.sm),
+                  child: StatusMark(
+                    label: strings.allAboveReorder,
+                    color: colors.accent,
+                    emphasis: false,
+                  ),
+                )
+              : V360Card(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: <Widget>[
+                      for (var i = 0; i < list.length; i++) ...<Widget>[
+                        if (i > 0) Divider(indent: v360.spacing.lg),
+                        _RunningOutRow(item: list[i], strings: strings),
+                      ],
+                    ],
+                  ),
+                ),
         ),
       ],
     );
   }
 }
 
-class _TodayCard extends StatelessWidget {
-  const _TodayCard({required this.data, required this.strings});
+class _RunningOutRow extends StatelessWidget {
+  const _RunningOutRow({required this.item, required this.strings});
 
-  final DashboardSnapshot data;
+  final InventoryItem item;
   final Strings strings;
 
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
     final colors = v360.colors;
+    final out = item.isOut;
+    final unit = item.quantity.unit;
 
-    return Container(
-      padding: EdgeInsets.all(v360.spacing.xxl),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[colors.accent, colors.accent.withValues(alpha: 0.82)],
-        ),
-        borderRadius: BorderRadius.circular(V360Radius.xl),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: colors.accent.withValues(alpha: 0.28),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        v360.spacing.lg,
+        v360.spacing.md,
+        v360.spacing.md,
+        v360.spacing.md,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(V360Radius.xl),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -24,
-              top: -24,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.onFill.withValues(alpha: 0.1),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 48,
-              bottom: -48,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.onFill.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-            Column(
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  strings.todaySales.toUpperCase(),
-                  style: v360.text.label.copyWith(
-                    color: colors.onFill.withValues(alpha: 0.85),
-                  ),
+                  item.skuName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: v360.text.titleS.copyWith(color: colors.ink),
                 ),
-                SizedBox(height: v360.spacing.sm),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: RollingNumber(
-                    value: data.todaySalesValue.rupees,
-                    // Money.display carries the rupee symbol and the lakh
-                    // grouping; passing the raw number here would render
-                    // ₹12012.0 on the most-read figure in the product.
-                    format: (_) => data.todaySalesValue.display,
-                    style: v360.text.display.copyWith(
-                      color: colors.onFill,
-                      fontSize: 42,
-                      height: 1.0,
-                    ),
-                  ),
-                ),
-                SizedBox(height: v360.spacing.md),
+                const SizedBox(height: 3),
                 Row(
                   children: <Widget>[
-                    Icon(
-                      Icons.receipt_long_outlined,
-                      size: 14,
-                      color: colors.onFill.withValues(alpha: 0.85),
+                    StatusMark(
+                      label: out
+                          ? strings.outOfStock
+                          : '${item.quantity.display} ${strings.left}',
+                      color: out ? colors.danger : colors.warning,
+                      dense: true,
                     ),
-                    SizedBox(width: v360.spacing.xs),
-                    Text(
-                      '${data.todayTransactionCount} entries',
-                      style: v360.text.caption.copyWith(
-                        color: colors.onFill.withValues(alpha: 0.85),
-                      ),
-                    ),
-                    SizedBox(width: v360.spacing.lg),
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      size: 14,
-                      color: colors.onFill.withValues(alpha: 0.85),
-                    ),
-                    SizedBox(width: v360.spacing.xs),
-                    Expanded(
+                    Flexible(
                       child: Text(
-                        '${strings.thisWeek}: ${data.weekSalesValue.display}',
-                        style: v360.text.caption.copyWith(
-                          color: colors.onFill.withValues(alpha: 0.85),
-                        ),
+                        '  ·  ${strings.reorderAt} '
+                        '${item.reorderPoint.toStringAsFixed(0)} $unit',
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style:
+                            v360.text.caption.copyWith(color: colors.inkMuted),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          SizedBox(width: v360.spacing.sm),
+          V360Button.tonal(
+            label: strings.reorder,
+            size: V360ButtonSize.sm,
+            onPressed: () => showSourcingSheet(context, itemId: item.id),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.strings, required this.data});
+/// What is about to expire, and what it is worth — one ruled line.
+class _ExpiringRow extends StatelessWidget {
+  const _ExpiringRow({required this.data, required this.strings});
+
+  final DashboardSnapshot data;
+  final Strings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final colors = v360.colors;
+
+    return V360Card(
+      onTap: () => context.go('/expiry'),
+      semanticLabel: '${data.expiringSoonCount} ${strings.expiringThisWeek}, '
+          '${data.valueAtRisk.display} ${strings.atRisk}',
+      padding: EdgeInsets.symmetric(
+        horizontal: v360.spacing.lg,
+        vertical: v360.spacing.md,
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.hourglass_bottom_rounded, size: 20, color: colors.danger),
+          SizedBox(width: v360.spacing.md),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: <InlineSpan>[
+                  TextSpan(
+                    text: '${data.expiringSoonCount} ',
+                    style: v360.text.bodyStrong.weight(FontWeight.w700),
+                  ),
+                  TextSpan(text: '${strings.expiringThisWeek} · '),
+                  TextSpan(
+                    text: data.valueAtRisk.display,
+                    style: v360.text.bodyStrong
+                        .copyWith(color: colors.dangerText),
+                  ),
+                  TextSpan(text: ' ${strings.atRisk}'),
+                ],
+              ),
+              style: v360.text.body.copyWith(color: colors.ink),
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: colors.inkSubtle),
+        ],
+      ),
+    );
+  }
+}
+
+/// The places to go, as a ruled grid — the back-panel table of a pack, not
+/// a wrap of pill chips.
+class _Places extends StatelessWidget {
+  const _Places({required this.strings, required this.data});
 
   final Strings strings;
   final DashboardSnapshot data;
 
   @override
   Widget build(BuildContext context) {
-    final v360 = context.v360;
+    final colors = context.v360.colors;
 
-    final actions = <({IconData icon, String label, String route, int? badge})>[
-      (icon: Icons.mic_rounded, label: strings.speak, route: '/voice', badge: null),
+    final places = <({IconData icon, String label, String route, int? badge})>[
       (
         icon: Icons.document_scanner_outlined,
         label: strings.scanReceipt,
         route: '/receipt',
-        badge: null
+        badge: null,
+      ),
+      (
+        icon: Icons.receipt_long_outlined,
+        label: strings.orders,
+        route: '/orders',
+        badge: null,
+      ),
+      (
+        icon: Icons.local_shipping_outlined,
+        label: strings.suppliers,
+        route: '/distributors',
+        badge: null,
       ),
       (
         icon: Icons.map_outlined,
-        label: 'Demand map',
+        label: strings.demandMap,
         route: '/heatmap',
-        badge: null
+        badge: null,
       ),
       (
         icon: Icons.groups_outlined,
-        label: 'Bulk deals',
+        label: strings.bulkDeals,
         route: '/pools',
-        badge: data.pendingPools > 0 ? data.pendingPools : null
+        badge: data.pendingPools > 0 ? data.pendingPools : null,
       ),
       (
-        icon: Icons.hourglass_bottom_rounded,
-        label: 'Expiry',
-        route: '/expiry',
-        badge: data.expiringSoonCount > 0 ? data.expiringSoonCount : null
-      ),
-      (
-        icon: Icons.analytics_outlined,
-        label: 'Accuracy',
+        icon: Icons.query_stats_rounded,
+        label: strings.accuracy,
         route: '/accuracy',
-        badge: null
+        badge: null,
       ),
     ];
 
-    return Wrap(
-      spacing: v360.spacing.md,
-      runSpacing: v360.spacing.md,
-      children: <Widget>[
-        for (final action in actions)
-          _ActionChip(
-            icon: action.icon,
-            label: action.label,
-            badge: action.badge,
-            onTap: () => context.go(action.route),
+    const columns = 3;
+    final rows = <Widget>[];
+    for (var r = 0; r * columns < places.length; r++) {
+      if (r > 0) rows.add(const Divider());
+      final cells = <Widget>[];
+      for (var c = 0; c < columns; c++) {
+        final i = r * columns + c;
+        if (c > 0) cells.add(Container(width: 1, color: colors.hairline));
+        cells.add(
+          Expanded(
+            child: i < places.length
+                ? _Place(
+                    icon: places[i].icon,
+                    label: places[i].label,
+                    badge: places[i].badge,
+                    onTap: () => context.go(places[i].route),
+                  )
+                : const SizedBox.shrink(),
           ),
-      ],
+        );
+      }
+      rows.add(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: cells,
+          ),
+        ),
+      );
+    }
+
+    return V360Card(
+      padding: EdgeInsets.zero,
+      child: Column(children: rows),
     );
   }
 }
 
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
+class _Place extends StatelessWidget {
+  const _Place({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -412,99 +449,58 @@ class _ActionChip extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    return V360Pressable(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(V360Radius.md),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: v360.spacing.lg,
-          vertical: v360.spacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(V360Radius.md),
-          border: Border.all(color: colors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 18, color: colors.accentText),
-            SizedBox(width: v360.spacing.sm),
-            Text(label, style: v360.text.bodyStrong.copyWith(color: colors.ink)),
-            if (badge != null) ...<Widget>[
-              SizedBox(width: v360.spacing.sm),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: colors.warningSurface,
-                  borderRadius: BorderRadius.circular(V360Radius.pill),
-                ),
-                child: Text(
-                  '$badge',
-                  style: v360.text.label.copyWith(color: colors.warningText),
-                ),
+    return Semantics(
+      button: true,
+      label: badge == null ? label : '$label, $badge new',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: v360.spacing.sm,
+            vertical: v360.spacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Stack(
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  Icon(icon, size: 26, color: colors.accentText),
+                  if (badge != null)
+                    Positioned(
+                      right: -12,
+                      top: -6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: colors.warning,
+                          borderRadius: BorderRadius.circular(V360Radius.sm),
+                        ),
+                        child: Text(
+                          '$badge',
+                          style: v360.text.label
+                              .copyWith(color: colors.onVoice, fontSize: 10)
+                              .weight(FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: v360.spacing.sm),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: v360.text.caption
+                    .copyWith(color: colors.ink)
+                    .weight(FontWeight.w600),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ScoreCard extends StatelessWidget {
-  const _ScoreCard({
-    required this.score,
-    required this.band,
-    required this.strings,
-  });
-
-  final double? score;
-  final String? band;
-  final Strings strings;
-
-  @override
-  Widget build(BuildContext context) {
-    final v360 = context.v360;
-    final colors = v360.colors;
-
-    return V360Card(
-      onTap: () => context.go('/health'),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                SectionLabel(strings.healthScore),
-                SizedBox(height: v360.spacing.sm),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: <Widget>[
-                    RollingNumber(
-                      value: score ?? 0,
-                      style: v360.text.figure.copyWith(color: colors.ink),
-                    ),
-                    SizedBox(width: v360.spacing.xs),
-                    Text(
-                      '/ 100',
-                      style: v360.text.body.copyWith(color: colors.inkSubtle),
-                    ),
-                  ],
-                ),
-                SizedBox(height: v360.spacing.xs),
-                Text(
-                  band == 'provisional'
-                      ? 'Provisional — more history needed'
-                      : 'Ready to share with a lender',
-                  style: v360.text.caption.copyWith(color: colors.inkMuted),
-                ),
-              ],
-            ),
           ),
-          Icon(Icons.chevron_right_rounded, color: colors.inkSubtle),
-        ],
+        ),
       ),
     );
   }
@@ -517,21 +513,23 @@ class _DashboardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final v360 = context.v360;
     return ListView(
-      padding: EdgeInsets.all(v360.spacing.gutter),
+      padding: EdgeInsets.zero,
       children: <Widget>[
-        const V360Skeleton(height: 44, width: 220),
-        SizedBox(height: v360.spacing.xxl),
-        const V360Skeleton(height: 148),
-        SizedBox(height: v360.spacing.lg),
-        Row(
-          children: <Widget>[
-            const Expanded(child: V360Skeleton(height: 108)),
-            SizedBox(width: v360.spacing.md),
-            const Expanded(child: V360Skeleton(height: 108)),
-          ],
+        // The band is drawn at once so the screen keeps its shape while the
+        // numbers load, instead of flashing white and then filling with teal.
+        Container(height: 260, color: v360.colors.band),
+        Padding(
+          padding: EdgeInsets.all(v360.spacing.gutter),
+          child: Column(
+            children: <Widget>[
+              const V360Skeleton(height: 64),
+              SizedBox(height: v360.spacing.lg),
+              const V360Skeleton(height: 132),
+              SizedBox(height: v360.spacing.lg),
+              const V360Skeleton(height: 180),
+            ],
+          ),
         ),
-        SizedBox(height: v360.spacing.lg),
-        const V360Skeleton(height: 92),
       ],
     );
   }

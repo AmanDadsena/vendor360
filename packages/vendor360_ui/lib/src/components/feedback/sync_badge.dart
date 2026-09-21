@@ -68,7 +68,7 @@ class _SyncBadgeState extends State<SyncBadge>
         ),
         decoration: BoxDecoration(
           color: colors.warningSurface,
-          borderRadius: BorderRadius.circular(V360Radius.pill),
+          borderRadius: BorderRadius.circular(V360Radius.sm),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -267,6 +267,22 @@ final inventoryProvider = FutureProvider.autoDispose<List<InventoryItem>>(
       ),
 );
 
+/// The few items closest to running out, for Home.
+///
+/// Its own read rather than a view of [inventoryProvider], which carries the
+/// Stock screen's category and low-only filters — Home must not change what
+/// it shows because someone left a filter set on another tab.
+final runningOutProvider =
+    FutureProvider.autoDispose<List<InventoryItem>>((ref) async {
+  final items = await ref.watch(repositoryProvider).inventory(lowOnly: true);
+  double cover(InventoryItem i) =>
+      i.reorderPoint <= 0 ? 1 : i.quantity.amount / i.reorderPoint;
+  return (<InventoryItem>[...items]
+        ..sort((a, b) => cover(a).compareTo(cover(b))))
+      .take(4)
+      .toList();
+});
+
 final filteredInventoryProvider =
     Provider.autoDispose<AsyncValue<List<InventoryItem>>>((ref) {
   final asyncItems = ref.watch(inventoryProvider);
@@ -586,6 +602,7 @@ final liveRefreshProvider = Provider<void>((ref) {
       case 'anomaly':
         ref
           ..invalidate(inventoryProvider)
+          ..invalidate(runningOutProvider)
           ..invalidate(dashboardProvider)
           ..invalidate(distDemandProvider)
           ..invalidate(distSummaryProvider);
