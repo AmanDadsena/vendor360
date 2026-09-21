@@ -277,10 +277,10 @@ final runningOutProvider =
   final items = await ref.watch(repositoryProvider).inventory(lowOnly: true);
   double cover(InventoryItem i) =>
       i.reorderPoint <= 0 ? 1 : i.quantity.amount / i.reorderPoint;
-  return (<InventoryItem>[...items]
-        ..sort((a, b) => cover(a).compareTo(cover(b))))
-      .take(4)
-      .toList();
+  // The whole list, closest to empty first. Home shows the first few, but
+  // counts all of them, so its header and its rows come from one read.
+  return <InventoryItem>[...items]
+    ..sort((a, b) => cover(a).compareTo(cover(b)));
 });
 
 final filteredInventoryProvider =

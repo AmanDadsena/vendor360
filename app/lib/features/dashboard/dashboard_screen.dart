@@ -176,15 +176,16 @@ class _RunningOut extends ConsumerWidget {
     final v360 = context.v360;
     final colors = v360.colors;
     final items = ref.watch(runningOutProvider);
+    // Counted from the same read the rows come from, so the header can never
+    // say three over four rows.
+    final count = items.value?.length ?? lowCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         SectionLabel(
-          lowCount > 0
-              ? '${strings.runningOut} · $lowCount'
-              : strings.runningOut,
-          action: lowCount > 0
+          count > 0 ? '${strings.runningOut} · $count' : strings.runningOut,
+          action: count > 0
               ? TextButton(
                   onPressed: () {
                     ref.read(lowOnlyProvider.notifier).value = true;
@@ -211,7 +212,7 @@ class _RunningOut extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: <Widget>[
-                      for (var i = 0; i < list.length; i++) ...<Widget>[
+                      for (var i = 0; i < list.length && i < 4; i++) ...<Widget>[
                         if (i > 0) Divider(indent: v360.spacing.lg),
                         _RunningOutRow(item: list[i], strings: strings),
                       ],
@@ -284,7 +285,7 @@ class _RunningOutRow extends StatelessWidget {
           SizedBox(width: v360.spacing.sm),
           V360Button.tonal(
             label: strings.reorder,
-            size: V360ButtonSize.sm,
+            size: V360ButtonSize.md,
             onPressed: () => showSourcingSheet(context, itemId: item.id),
           ),
         ],
