@@ -16,6 +16,13 @@
       "cwd": "app",
       "port": 5501,
       "url": "http://127.0.0.1:5501"
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--port", "8010"],
+      "cwd": "backend",
+      "port": 8010
     }
   ]
 }
