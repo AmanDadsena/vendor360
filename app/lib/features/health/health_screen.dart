@@ -25,35 +25,45 @@ class HealthScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: v360.colors.canvas,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: v360.colors.accent,
-          onRefresh: () async {
-            HapticFeedback.lightImpact();
-            ref.invalidate(healthScoreProvider);
-            ref.invalidate(consentsProvider);
-          },
-          child: score.when(
-            loading: () => ListView(
-              padding: EdgeInsets.all(v360.spacing.gutter),
-              children: <Widget>[
-                const V360Skeleton(height: 220),
-                SizedBox(height: v360.spacing.xl),
-                const V360Skeleton(height: 260),
-              ],
-            ),
-            error: (error, _) => EmptyState(
-              icon: Icons.cloud_off_rounded,
-              title: 'Could not load your score',
-              body: '$error',
-              action: V360Button.primary(
-                label: s.retry,
-                onPressed: () => ref.invalidate(healthScoreProvider),
+      body: Column(
+        children: <Widget>[
+          PackHeader(
+            title: s.healthScore,
+            subtitle: score.value == null
+                ? null
+                : 'From ${score.value!.daysOfHistory} days of your own sales',
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              color: v360.colors.accent,
+              onRefresh: () async {
+                HapticFeedback.lightImpact();
+                ref.invalidate(healthScoreProvider);
+                ref.invalidate(consentsProvider);
+              },
+              child: score.when(
+                loading: () => ListView(
+                  padding: EdgeInsets.all(v360.spacing.gutter),
+                  children: <Widget>[
+                    const V360Skeleton(height: 220),
+                    SizedBox(height: v360.spacing.xl),
+                    const V360Skeleton(height: 260),
+                  ],
+                ),
+                error: (error, _) => EmptyState(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Could not load your score',
+                  body: '$error',
+                  action: V360Button.primary(
+                    label: s.retry,
+                    onPressed: () => ref.invalidate(healthScoreProvider),
+                  ),
+                ),
+                data: (data) => _Body(score: data, strings: s),
               ),
             ),
-            data: (data) => _Body(score: data, strings: s),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -78,101 +88,81 @@ class _Body extends ConsumerWidget {
         v360.spacing.x5,
       ),
       children: <Widget>[
-        Text(
-          strings.healthScore,
-          style: v360.text.titleL.copyWith(color: colors.ink),
-        ),
-        SizedBox(height: v360.spacing.xxl),
-
+        SizedBox(height: v360.spacing.md),
         Center(
-            child: HealthDial(
-              score: score.score,
-              provisional: score.provisional,
-              bandLabel: score.band.label,
-            ),
+          child: HealthDial(
+            score: score.score,
+            provisional: score.provisional,
+            bandLabel: score.band.label,
           ),
+        ),
         SizedBox(height: v360.spacing.xl),
 
-        Container(
-            padding: EdgeInsets.all(v360.spacing.lg),
-            decoration: BoxDecoration(
-              color: score.provisional ? colors.warningSurface : colors.accentSurface,
-              borderRadius: BorderRadius.circular(V360Radius.md),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Icon(
-                  score.provisional
-                      ? Icons.hourglass_bottom_rounded
-                      : Icons.insights_rounded,
-                  size: 18,
-                  color: score.provisional ? colors.warningText : colors.accentText,
-                ),
-                SizedBox(width: v360.spacing.sm),
-                Expanded(
-                  child: Text(
-                    score.explanation,
-                    style: v360.text.body.copyWith(
-                      color: score.provisional
-                          ? colors.warningText
-                          : colors.accentText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        // What the number means, boxed like a pack's note: amber when the
+        // score is still provisional, teal when it is ready to share.
+        V360Banner(
+          icon: score.provisional
+              ? Icons.hourglass_bottom_rounded
+              : Icons.verified_outlined,
+          title: score.explanation,
+          tone: score.provisional
+              ? V360BannerTone.warning
+              : V360BannerTone.success,
+        ),
         SizedBox(height: v360.spacing.x3),
 
         const SectionLabel('How this is calculated'),
         SizedBox(height: v360.spacing.sm),
 
         V360Card(
-            child: Column(
-              children: <Widget>[
-                for (var i = 0; i < score.components.length; i++) ...<Widget>[
-                  ScoreFactorBar(
-                    label: score.components[i].label,
-                    value: score.components[i].value,
-                    weight: score.components[i].weight,
-                    contribution: score.components[i].contribution,
-                    detail: score.components[i].detail,
-                    delayIndex: i,
-                  ),
-                  if (i < score.components.length - 1)
-                    Divider(color: colors.hairline, height: 1),
-                ],
-                Divider(color: colors.hairline, height: v360.spacing.xl),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        'Total',
-                        style: v360.text.bodyStrong.copyWith(color: colors.ink),
-                      ),
-                    ),
-                    Text(
-                      score.score.toStringAsFixed(1),
-                      style: v360.text.titleM.copyWith(color: colors.accentText),
-                    ),
-                  ],
+          child: Column(
+            children: <Widget>[
+              for (var i = 0; i < score.components.length; i++) ...<Widget>[
+                ScoreFactorBar(
+                  label: score.components[i].label,
+                  value: score.components[i].value,
+                  weight: score.components[i].weight,
+                  contribution: score.components[i].contribution,
+                  detail: score.components[i].detail,
+                  delayIndex: i,
                 ),
-                SizedBox(height: v360.spacing.sm),
-                Text(
-                  'Based on ${score.daysOfHistory} days of your own activity. '
-                  'Nothing else is used.',
-                  style: v360.text.caption.copyWith(color: colors.inkSubtle),
-                ),
+                if (i < score.components.length - 1)
+                  Divider(color: colors.hairline, height: 1),
               ],
-            ),
+              Divider(color: colors.hairline, height: v360.spacing.xl),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'Total',
+                      style: v360.text.bodyStrong.copyWith(color: colors.ink),
+                    ),
+                  ),
+                  Text(
+                    score.score.toStringAsFixed(1),
+                    style: v360.text.titleM
+                        .copyWith(color: colors.ink)
+                        .weight(FontWeight.w700)
+                        .narrow(86),
+                  ),
+                ],
+              ),
+              SizedBox(height: v360.spacing.sm),
+              Text(
+                'Based on ${score.daysOfHistory} days of your own activity. '
+                'Nothing else is used.',
+                style: v360.text.caption.copyWith(color: colors.inkMuted),
+              ),
+            ],
           ),
+        ),
+        SizedBox(height: v360.spacing.md),
         V360Button.secondary(
-            label: 'View Credit Assessment Report',
-            leadingIcon: Icons.description_outlined,
-            expand: true,
-            onPressed: () => _showCreditReportModal(context, ref),
-          ),
+          label: 'View credit assessment report',
+          leadingIcon: Icons.description_outlined,
+          expand: true,
+          onPressed: () => _showCreditReportModal(context, ref),
+        ),
         SizedBox(height: v360.spacing.x3),
 
         SectionLabel(strings.shareWithLender),
@@ -252,7 +242,11 @@ class _ConsentList extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Icon(Icons.lock_outline_rounded, size: 14, color: colors.inkSubtle),
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 14,
+                  color: colors.inkSubtle,
+                ),
                 SizedBox(width: v360.spacing.xs),
                 Expanded(
                   child: Text(
@@ -292,8 +286,11 @@ void _showCreditReportModal(BuildContext context, WidgetRef ref) {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Icon(Icons.verified_user_rounded,
-                    color: v360.colors.accent, size: 22),
+                Icon(
+                  Icons.verified_user_rounded,
+                  color: v360.colors.accent,
+                  size: 22,
+                ),
                 SizedBox(width: v360.spacing.sm),
                 Expanded(
                   child: Text(

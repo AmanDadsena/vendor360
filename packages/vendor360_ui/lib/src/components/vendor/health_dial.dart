@@ -80,7 +80,7 @@ class HealthDial extends StatelessWidget {
                 if (bandLabel != null) ...<Widget>[
                   SizedBox(height: v360.spacing.sm),
                   Text(
-                    bandLabel!.toUpperCase(),
+                    bandLabel!,
                     style: v360.text.label.copyWith(
                       color: provisional ? colors.inkSubtle : tone,
                     ),
