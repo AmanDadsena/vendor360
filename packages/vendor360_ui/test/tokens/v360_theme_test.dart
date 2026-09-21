@@ -82,4 +82,39 @@ void main() {
     );
     expect(motion.base, const Duration(milliseconds: 220));
   });
+
+  group('stock Material widgets print in the same inks', () {
+    for (final brightness in Brightness.values) {
+      final theme = buildV360Theme(brightness);
+      final c = theme.extension<V360ThemeData>()!.colors;
+
+      test('$brightness: an AppBar is the band', () {
+        expect(theme.appBarTheme.backgroundColor, c.band);
+        expect(theme.appBarTheme.foregroundColor, c.onBand);
+        expect(theme.appBarTheme.elevation, 0);
+      });
+
+      test('$brightness: no tonal tint on raised surfaces', () {
+        expect(theme.colorScheme.surfaceTint.a, 0);
+      });
+
+      test('$brightness: primary is teal, secondary is the mic', () {
+        expect(theme.colorScheme.primary, c.accent);
+        expect(theme.colorScheme.secondary, c.voice);
+      });
+
+      test('$brightness: snackbars are ink with a marigold action', () {
+        expect(theme.snackBarTheme.backgroundColor, c.ink);
+        expect(theme.snackBarTheme.actionTextColor, c.voice);
+      });
+    }
+
+    test('the distributor theme prints on the deeper band', () {
+      final shop = buildV360Theme(Brightness.light);
+      final dist = buildV360Theme(Brightness.light, distributor: true);
+      expect(dist.appBarTheme.backgroundColor,
+          isNot(shop.appBarTheme.backgroundColor));
+      expect(dist.colorScheme.primary, shop.colorScheme.primary);
+    });
+  });
 }

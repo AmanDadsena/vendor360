@@ -39,8 +39,11 @@ final marketplaceProvider = Provider<MarketplaceRepository>(
 
 // ------------------------------------------------------------------- theme
 class ThemeModeNotifier extends Notifier<ThemeMode> {
+  /// Light by default, whatever the phone is set to. The app is used at a
+  /// shop counter in daylight, where a dark screen is the harder one to read;
+  /// dark stays one tap away for the evening.
   @override
-  ThemeMode build() => ThemeMode.system;
+  ThemeMode build() => ThemeMode.light;
 
   void toggle() => state = switch (state) {
         ThemeMode.light => ThemeMode.dark,
