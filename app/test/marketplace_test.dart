@@ -166,8 +166,8 @@ void main() {
     await tester.pumpWidget(host(const DistributorsScreen()));
     await settle(tester);
 
-    expect(find.text('YOU BUY FROM'), findsOneWidget);
-    expect(find.text('NEAR YOU'), findsOneWidget);
+    expect(find.text('You buy from'), findsOneWidget);
+    expect(find.text('Near you'), findsOneWidget);
     expect(find.text('Balaji Distributors'), findsOneWidget);
     expect(find.text('Pune Dairy Supply'), findsOneWidget);
 
@@ -443,7 +443,7 @@ void main() {
     await tester.pumpWidget(host(const DistDemandScreen()));
     await settle(tester);
 
-    expect(find.text('CALL THESE SHOPS'), findsOneWidget);
+    expect(find.text('Call these shops'), findsOneWidget);
     expect(find.text('Sai Kirana'), findsOneWidget);
     // The whole argument in one line: cover against lead time.
     expect(find.text('2.1d left · 3d to reach them'), findsOneWidget);

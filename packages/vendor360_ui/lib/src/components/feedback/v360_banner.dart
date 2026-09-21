@@ -113,7 +113,12 @@ class TrustBadge extends StatelessWidget {
   }
 }
 
-/// Placeholder shown when a list has nothing in it.
+/// What a list says when it has nothing in it.
+///
+/// Left-aligned and small, like a note on the page rather than a poster in
+/// the middle of it: a shopkeeper reading "No orders yet" should see what to
+/// do next, not a large grey icon. The [body] is where a screen teaches —
+/// say what will appear here and how it gets there.
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
@@ -131,33 +136,34 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(v360.spacing.x3),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 40, color: v360.colors.inkSubtle),
-            SizedBox(height: v360.spacing.lg),
+    final colors = v360.colors;
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: v360.spacing.gutter,
+        vertical: v360.spacing.x3,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, size: 28, color: colors.inkSubtle),
+          SizedBox(height: v360.spacing.md),
+          Text(
+            title,
+            style: v360.text.titleS.copyWith(color: colors.ink),
+          ),
+          if (body != null) ...<Widget>[
+            SizedBox(height: v360.spacing.xs),
             Text(
-              title,
-              textAlign: TextAlign.center,
-              style: v360.text.titleS.copyWith(color: v360.colors.ink),
+              body!,
+              style: v360.text.body.copyWith(color: colors.inkMuted),
             ),
-            if (body != null) ...<Widget>[
-              SizedBox(height: v360.spacing.sm),
-              Text(
-                body!,
-                textAlign: TextAlign.center,
-                style: v360.text.body.copyWith(color: v360.colors.inkMuted),
-              ),
-            ],
-            if (action != null) ...<Widget>[
-              SizedBox(height: v360.spacing.xxl),
-              action!,
-            ],
           ],
-        ),
+          if (action != null) ...<Widget>[
+            SizedBox(height: v360.spacing.lg),
+            action!,
+          ],
+        ],
       ),
     );
   }

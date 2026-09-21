@@ -57,12 +57,12 @@ void main() {
       expect(dark.border, isNotNull);
     });
 
-    testWidgets('default radius is V360Radius.xl', (tester) async {
+    testWidgets('default radius is V360Radius.lg', (tester) async {
       await tester.pumpWidget(
         carryHarness(const V360Card(child: Text('x'))),
       );
       final r = _cardDecoration(tester).borderRadius! as BorderRadius;
-      expect(r.topLeft.x, V360Radius.xl);
+      expect(r.topLeft.x, V360Radius.lg);
     });
 
     testWidgets('fires onTap when given one', (tester) async {
@@ -112,17 +112,37 @@ void main() {
   });
 
   group('SectionLabel', () {
-    testWidgets('uppercases its input', (tester) async {
-      await tester.pumpWidget(carryHarness(const SectionLabel('from')));
-      expect(find.text('FROM'), findsOneWidget);
-      expect(find.text('from'), findsNothing);
+    testWidgets('keeps the case it was given', (tester) async {
+      await tester.pumpWidget(carryHarness(const SectionLabel('Running out')));
+      expect(find.text('Running out'), findsOneWidget);
+      expect(find.text('RUNNING OUT'), findsNothing);
     });
 
-    testWidgets('uses the label style and inkSubtle', (tester) async {
-      await tester.pumpWidget(carryHarness(const SectionLabel('departs')));
-      final style = tester.widget<Text>(find.text('DEPARTS')).style!;
-      expect(style.color, V360Colors.light().inkSubtle);
-      expect(style.fontSize, const V360Typography().label.fontSize);
+    testWidgets('reads as a heading in ink, not a grey eyebrow',
+        (tester) async {
+      await tester.pumpWidget(carryHarness(const SectionLabel('Today')));
+      final style = tester.widget<Text>(find.text('Today')).style!;
+      expect(style.color, V360Colors.light().ink);
+      expect(style.fontWeight, FontWeight.w700);
+      expect(style.letterSpacing ?? 0, lessThan(0.5));
+    });
+
+    testWidgets('is announced as a header', (tester) async {
+      await tester.pumpWidget(carryHarness(const SectionLabel('Today')));
+      expect(
+        tester.getSemantics(find.text('Today')),
+        matchesSemantics(isHeader: true, label: 'Today'),
+      );
+    });
+
+    testWidgets('puts an action at the end of the row', (tester) async {
+      await tester.pumpWidget(carryHarness(
+        SectionLabel('Orders', action: TextButton(
+          onPressed: () {},
+          child: const Text('See all'),
+        )),
+      ));
+      expect(find.text('See all'), findsOneWidget);
     });
   });
 

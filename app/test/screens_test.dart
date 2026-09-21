@@ -204,7 +204,7 @@ void main() {
 
     expect(find.byType(VoiceOrb), findsOneWidget);
     // Typing is the documented fallback when ASR struggles (PRD 7).
-    expect(find.text('OR TYPE IT'), findsOneWidget);
+    expect(find.text('Or type it'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
     expect(find.text('Quick action phrases'), findsOneWidget);
     expect(find.textContaining('दूध'), findsWidgets);
@@ -227,7 +227,7 @@ void main() {
     await tester.pumpWidget(host(const AccuracyScreen()));
     await settle(tester);
 
-    expect(find.textContaining('MEAN ABSOLUTE PERCENTAGE ERROR'), findsOneWidget);
+    expect(find.textContaining('Mean absolute percentage error'), findsOneWidget);
     expect(find.textContaining('14.6'), findsWidgets);
   });
 

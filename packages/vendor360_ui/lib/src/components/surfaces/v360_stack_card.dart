@@ -12,7 +12,7 @@ class V360StackCard extends StatelessWidget {
   const V360StackCard({
     super.key,
     required this.rows,
-    this.rowPadding = const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    this.rowPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   });
 
   final List<Widget> rows;

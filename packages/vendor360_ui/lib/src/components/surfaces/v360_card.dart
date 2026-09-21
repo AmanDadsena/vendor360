@@ -14,7 +14,7 @@ class V360Card extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.radius = V360Radius.xl,
+    this.radius = V360Radius.lg,
     this.onTap,
     this.color,
     this.semanticLabel,
@@ -39,7 +39,7 @@ class V360Card extends StatelessWidget {
     final colors = v360.colors;
 
     final card = Container(
-      padding: padding ?? EdgeInsets.all(v360.spacing.xl),
+      padding: padding ?? EdgeInsets.all(v360.spacing.lg),
       decoration: BoxDecoration(
         color: color ?? colors.surface,
         borderRadius: BorderRadius.circular(radius),

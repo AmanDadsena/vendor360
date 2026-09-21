@@ -85,7 +85,7 @@ class _V360SkeletonState extends State<V360Skeleton>
                     end: Alignment(1 - (_sweep.value * 2), 0),
                     colors: <Color>[
                       const Color(0x00000000),
-                      colors.accent.withValues(alpha: 0.14),
+                      colors.surface.withValues(alpha: 0.7),
                       const Color(0x00000000),
                     ],
                   ).createShader(rect),
