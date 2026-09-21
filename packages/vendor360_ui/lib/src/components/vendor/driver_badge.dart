@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
 
 /// The reason a forecast moved.
@@ -43,36 +42,27 @@ class DriverBadge extends StatelessWidget {
     final magnitude = '${rising ? '+' : ''}${(effect * 100).round()}%';
     final style = compact ? v360.text.label : v360.text.caption;
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 6 : v360.spacing.sm,
-        vertical: compact ? 2 : 4,
-      ),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(V360Radius.sm),
-        border: Border.all(color: colors.hairline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: compact ? 12 : 14, color: colors.inkMuted),
-          SizedBox(width: v360.spacing.xs),
-          Text(
-            magnitude,
-            style: style.copyWith(color: figure).weight(FontWeight.w700),
+    // A plain reason line in ink — icon, the lift, the cause — rather than an
+    // outlined chip: it explains the number, it is not a control.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(icon, size: compact ? 13 : 15, color: colors.inkMuted),
+        SizedBox(width: v360.spacing.xs),
+        Text(
+          magnitude,
+          style: style.copyWith(color: figure).weight(FontWeight.w700),
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            driver,
+            style: style.copyWith(color: colors.ink),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              driver,
-              style: style.copyWith(color: colors.ink),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -102,9 +92,18 @@ class SignalBanner extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
+    // One corner cut away, the way a pack's "20% extra" flash is cut, rather
+    // than another rounded rectangle.
     return Material(
       color: colors.flash,
-      borderRadius: BorderRadius.circular(V360Radius.lg),
+      shape: const BeveledRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(14),
+          bottomLeft: Radius.circular(2),
+          topLeft: Radius.circular(2),
+          bottomRight: Radius.circular(2),
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

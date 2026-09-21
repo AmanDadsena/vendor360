@@ -75,7 +75,10 @@ class ForecastSpark extends StatelessWidget {
                 progress: t,
                 line: v360.colors.accent,
                 band: v360.colors.accent.withValues(alpha: 0.14),
-                signal: v360.colors.voice,
+                // Marigold is kept for the mic and the flash; the days the
+                // recommendation is about are marked in ink.
+                signal: v360.colors.ink,
+                paper: v360.colors.surface,
                 grid: v360.colors.hairline,
               ),
             ),
@@ -93,9 +96,9 @@ class ForecastSpark extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: v360.text.label.copyWith(
                       color: p.hasSignal
-                          ? v360.colors.voiceText
-                          : v360.colors.inkSubtle,
-                    ),
+                          ? v360.colors.ink
+                          : v360.colors.inkMuted,
+                    ).weight(p.hasSignal ? FontWeight.w700 : FontWeight.w500),
                   ),
                 ),
             ],
@@ -113,6 +116,7 @@ class _SparkPainter extends CustomPainter {
     required this.line,
     required this.band,
     required this.signal,
+    required this.paper,
     required this.grid,
   });
 
@@ -121,6 +125,7 @@ class _SparkPainter extends CustomPainter {
   final Color line;
   final Color band;
   final Color signal;
+  final Color paper;
   final Color grid;
 
   @override
@@ -177,8 +182,8 @@ class _SparkPainter extends CustomPainter {
         ..color = line,
     );
 
-    // Markers. Signal days are filled in saffron and drawn larger, so the day
-    // the recommendation refers to is findable at a glance.
+    // Markers. Signal days are filled in ink and drawn larger, so the day the
+    // recommendation refers to is findable at a glance.
     for (var i = 0; i < shown; i++) {
       final point = points[i];
       final centre = Offset(x(i), y(point.value));
@@ -190,7 +195,7 @@ class _SparkPainter extends CustomPainter {
           Paint()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 2
-            ..color = Colors.white.withValues(alpha: 0.85),
+            ..color = paper,
         );
       } else {
         canvas.drawCircle(centre, 3, Paint()..color = line);
