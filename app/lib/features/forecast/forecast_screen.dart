@@ -25,73 +25,58 @@ class ForecastScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: v360.colors.canvas,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: v360.colors.accent,
-          onRefresh: () async {
-            HapticFeedback.lightImpact();
-            ref.invalidate(forecastsProvider);
-          },
-          child: forecasts.when(
-            loading: () => ListView.builder(
-              padding: EdgeInsets.all(v360.spacing.gutter),
-              itemCount: 3,
-              itemBuilder: (_, _) => Padding(
-                padding: EdgeInsets.only(bottom: v360.spacing.lg),
-                child: const V360Skeleton(height: 250),
-              ),
-            ),
-            error: (error, _) => EmptyState(
-              icon: Icons.cloud_off_rounded,
-              title: 'Could not load forecasts',
-              body: '$error',
-              action: V360Button.primary(
-                label: s.retry,
-                onPressed: () => ref.invalidate(forecastsProvider),
-              ),
-            ),
-            data: (list) => list.isEmpty
-                ? EmptyState(
-                    icon: Icons.trending_up_rounded,
-                    title: 'No forecasts yet',
-                    body: 'Log a few days of sales and predictions appear here.',
-                  )
-                : ListView.builder(
-                    padding: EdgeInsets.fromLTRB(
-                      v360.spacing.gutter,
-                      v360.spacing.lg,
-                      v360.spacing.gutter,
-                      v360.spacing.x5,
-                    ),
-                    itemCount: list.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: v360.spacing.lg),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                s.comingDays,
-                                style: v360.text.titleL
-                                    .copyWith(color: v360.colors.ink),
-                              ),
-                              SizedBox(height: v360.spacing.xs),
-                              Text(
-                                'Ordered by how strong the signal is, '
-                                'not by how much you sell.',
-                                style: v360.text.caption
-                                    .copyWith(color: v360.colors.inkMuted),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      return _ForecastCard(forecast: list[index - 1]);
-                    },
-                  ),
+      body: Column(
+        children: <Widget>[
+          PackHeader(
+            title: s.forecast,
+            subtitle: '${s.comingDays} · strongest signal first',
           ),
-        ),
+          Expanded(
+            child: RefreshIndicator(
+              color: v360.colors.accent,
+              onRefresh: () async {
+                HapticFeedback.lightImpact();
+                ref.invalidate(forecastsProvider);
+              },
+              child: forecasts.when(
+                loading: () => ListView.builder(
+                  padding: EdgeInsets.all(v360.spacing.gutter),
+                  itemCount: 3,
+                  itemBuilder: (_, _) => Padding(
+                    padding: EdgeInsets.only(bottom: v360.spacing.lg),
+                    child: const V360Skeleton(height: 250),
+                  ),
+                ),
+                error: (error, _) => EmptyState(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Could not load forecasts',
+                  body: '$error',
+                  action: V360Button.primary(
+                    label: s.retry,
+                    onPressed: () => ref.invalidate(forecastsProvider),
+                  ),
+                ),
+                data: (list) => list.isEmpty
+                    ? EmptyState(
+                        icon: Icons.trending_up_rounded,
+                        title: 'No forecasts yet',
+                        body: 'Log a few days of sales and predictions appear here.',
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.fromLTRB(
+                          v360.spacing.gutter,
+                          v360.spacing.lg,
+                          v360.spacing.gutter,
+                          v360.spacing.x5,
+                        ),
+                        itemCount: list.length,
+                        itemBuilder: (context, index) =>
+                            _ForecastCard(forecast: list[index]),
+                      ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -120,7 +105,9 @@ class _ForecastCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     forecast.skuName,
-                    style: v360.text.titleM.copyWith(color: colors.ink),
+                    style: v360.text.titleM
+                        .copyWith(color: colors.ink)
+                        .weight(FontWeight.w700),
                   ),
                 ),
                 if (forecast.usedFallback)
@@ -138,31 +125,15 @@ class _ForecastCard extends StatelessWidget {
                   ),
               ],
             ),
-            SizedBox(height: v360.spacing.md),
+            SizedBox(height: v360.spacing.xs),
 
-            // The recommendation, in the vendor's terms.
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(v360.spacing.lg),
-              decoration: BoxDecoration(
-                color: colors.accentSurface,
-                borderRadius: BorderRadius.circular(V360Radius.md),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Icon(Icons.lightbulb_outline_rounded, size: 18, color: colors.accentText),
-                  SizedBox(width: v360.spacing.sm),
-                  Expanded(
-                    child: Text(
-                      forecast.headline,
-                      style: v360.text.bodyStrong.copyWith(color: colors.accentText),
-                    ),
-                  ),
-                ],
-              ),
+            // The recommendation, in the vendor's terms, as the card's lead
+            // sentence — the thing to do, before the chart that explains it.
+            Text(
+              forecast.headline,
+              style: v360.text.body.copyWith(color: colors.ink),
             ),
-            SizedBox(height: v360.spacing.xl),
+            SizedBox(height: v360.spacing.lg),
 
             ForecastSpark(
               points: <SparkPoint>[
@@ -178,17 +149,13 @@ class _ForecastCard extends StatelessWidget {
             ),
             SizedBox(height: v360.spacing.lg),
 
-            Row(
-              children: <Widget>[
-                _Metric(
-                  label: 'Next 7 days',
-                  value: forecast.total.toStringAsFixed(0),
-                ),
-                SizedBox(width: v360.spacing.xl),
+            DeclarationStrip(
+              facts: <PackFact>[
+                PackFact(forecast.total.toStringAsFixed(0), 'next 7 days'),
                 if (peak != null)
-                  _Metric(
-                    label: 'Busiest day',
-                    value: DateFormat('E d MMM').format(peak.on),
+                  PackFact(
+                    DateFormat('E d MMM').format(peak.on),
+                    'busiest day',
                   ),
               ],
             ),
@@ -198,32 +165,12 @@ class _ForecastCard extends StatelessWidget {
               Text(
                 'Not enough history for this item yet — this is its category '
                 'average, and will sharpen as you log more sales.',
-                style: v360.text.caption.copyWith(color: colors.inkSubtle),
+                style: v360.text.caption.copyWith(color: colors.inkMuted),
               ),
             ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final v360 = context.v360;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        SectionLabel(label),
-        SizedBox(height: 2),
-        Text(value, style: v360.text.titleS.copyWith(color: v360.colors.ink)),
-      ],
     );
   }
 }
