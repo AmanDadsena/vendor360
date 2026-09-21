@@ -177,7 +177,7 @@ class _CategoryFilter extends ConsumerWidget {
             : SizedBox(width: v360.spacing.xs + 2),
         itemBuilder: (context, index) {
           if (index == 0) {
-            return _Tab(
+            return V360Tab(
               label: runningOutLabel,
               active: lowOnly,
               marker: v360.colors.warning,
@@ -190,7 +190,7 @@ class _CategoryFilter extends ConsumerWidget {
           final category = _categories[index - 1];
           final active = category.key == selected;
 
-          return _Tab(
+          return V360Tab(
             label: category.label,
             active: active,
             onTap: () {
@@ -199,63 +199,6 @@ class _CategoryFilter extends ConsumerWidget {
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class _Tab extends StatelessWidget {
-  const _Tab({
-    required this.label,
-    required this.active,
-    required this.onTap,
-    this.marker,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  /// A status square printed before the label while the tab is off.
-  final Color? marker;
-
-  @override
-  Widget build(BuildContext context) {
-    final v360 = context.v360;
-    final colors = v360.colors;
-
-    return Semantics(
-      button: true,
-      selected: active,
-      label: label,
-      excludeSemantics: true,
-      child: V360Pressable(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(V360Radius.sm),
-        child: Container(
-          alignment: Alignment.center,
-          padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
-          decoration: BoxDecoration(
-            color: active ? colors.ink : colors.surface,
-            borderRadius: BorderRadius.circular(V360Radius.sm),
-            border: Border.all(color: active ? colors.ink : colors.hairline),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (marker != null && !active) ...<Widget>[
-                Container(width: 7, height: 7, color: marker),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: v360.text.caption
-                    .copyWith(color: active ? colors.canvas : colors.ink)
-                    .weight(FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -273,14 +216,19 @@ class _ItemRow extends ConsumerWidget {
     final colors = v360.colors;
     final state = item.state(DateTime.now());
 
+    // Stock speaks about stock: MRP red only when there is nothing to sell
+    // (out, or expired), marigold when it is low — the same inks Home uses
+    // for the same items. How soon something spoils is the Expiry screen's
+    // job, so "use today" is not said here.
     final (Color tone, String label) = switch (state) {
       StockState.expired => (colors.danger, 'Expired'),
       StockState.out => (colors.danger, strings.outOfStock),
-      StockState.expiringSoon => (colors.danger, 'Use today'),
-      StockState.low => (colors.warning, strings.reorderNow),
-      StockState.healthy => (colors.accent, strings.inStock),
+      _ when item.isLow => (colors.warning, strings.lowStock),
+      _ => (colors.accent, strings.inStock),
     };
-    final needsAction = state != StockState.healthy;
+    final needsAction = state == StockState.expired ||
+        state == StockState.out ||
+        item.isLow;
 
     // Fill relative to twice the reorder point, so a healthy item sits around
     // half rather than pinned at 100% and telling the vendor nothing.
@@ -362,7 +310,7 @@ class _ItemRow extends ConsumerWidget {
                   if (item.quantity.amount > 0)
                     TextButton(
                       onPressed: () => _markSoldOut(context, ref),
-                      child: const Text('Sold out'),
+                      child: const Text('Mark sold out'),
                     ),
                   TextButton(
                     onPressed: () =>
@@ -372,7 +320,7 @@ class _ItemRow extends ConsumerWidget {
                   const Spacer(),
                   V360Button.tonal(
                     label: '1-tap order',
-                    size: V360ButtonSize.sm,
+                    size: V360ButtonSize.md,
                     onPressed: () => _quickReorder(context, ref),
                   ),
                 ],
