@@ -338,6 +338,15 @@ class _HeatPainter extends CustomPainter {
     // would land on another is left off rather than printed over it — a
     // printed map chooses which names to set; it never stacks them.
     if (progress > 0.9) {
+      // Every disc is an obstacle to every label but its own, so a name is
+      // never printed across a neighbouring zone.
+      final discs = <(Offset, double)>[
+        for (final cell in ordered)
+          (
+            bounds.project(cell.lat, cell.lon, size),
+            maxRadius * (0.32 + 0.68 * math.sqrt(cell.intensity)),
+          ),
+      ];
       // Pins are reserved first, so no label is ever printed over one.
       final placed = <Rect>[
         for (final pin in suppliers)
@@ -349,12 +358,22 @@ class _HeatPainter extends CustomPainter {
       ];
       for (final pin in suppliers) {
         final at = bounds.project(pin.lat, pin.lon, size);
-        // Above the pin if there is room, otherwise below it.
-        // Clear of the pin's own reserved box either way.
-        if (!_paintLabel(canvas, size, pin.name, Offset(at.dx, at.dy - 31),
-            pinStyle, placed)) {
-          _paintLabel(canvas, size, pin.name, Offset(at.dx, at.dy + 14),
-              pinStyle, placed);
+        // A pin sitting inside a disc may label over that disc, but no other.
+        final home = discs
+            .where((d) => (d.$1 - at).distance <= d.$2)
+            .map((d) => d.$1)
+            .toList();
+        // Above, below, then to either side — clear of the pin's own box.
+        for (final spot in <Offset>[
+          Offset(at.dx, at.dy - 31),
+          Offset(at.dx, at.dy + 14),
+          Offset(at.dx + 70, at.dy - 8),
+          Offset(at.dx - 70, at.dy - 8),
+        ]) {
+          if (_paintLabel(canvas, size, pin.name, spot, pinStyle, placed,
+              discs: discs, owners: home)) {
+            break;
+          }
         }
       }
       for (final cell in ordered) {
@@ -362,7 +381,8 @@ class _HeatPainter extends CustomPainter {
         final centre = bounds.project(cell.lat, cell.lon, size);
         final radius = maxRadius * (0.32 + 0.68 * math.sqrt(cell.intensity));
         _paintLabel(canvas, size, cell.topSku!,
-            Offset(centre.dx, centre.dy + radius + 3), labelStyle, placed);
+            Offset(centre.dx, centre.dy + radius + 3), labelStyle, placed,
+            discs: discs, owners: <Offset>[centre]);
       }
     }
   }
@@ -405,8 +425,10 @@ class _HeatPainter extends CustomPainter {
     String text,
     Offset at,
     TextStyle style,
-    List<Rect> placed,
-  ) {
+    List<Rect> placed, {
+    List<(Offset, double)> discs = const <(Offset, double)>[],
+    List<Offset> owners = const <Offset>[],
+  }) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
@@ -425,6 +447,15 @@ class _HeatPainter extends CustomPainter {
       painter.height + 2,
     );
     if (placed.any((r) => r.overlaps(box.inflate(2)))) return false;
+    for (final (centre, radius) in discs) {
+      if (owners.contains(centre)) continue;
+      // Nearest point of the label box to the disc's centre.
+      final nearest = Offset(
+        centre.dx.clamp(box.left, box.right),
+        centre.dy.clamp(box.top, box.bottom),
+      );
+      if ((nearest - centre).distance < radius) return false;
+    }
     placed.add(box);
 
     // A paper plate behind the label, like a printed map's label knock-out,
