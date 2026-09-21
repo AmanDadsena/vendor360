@@ -31,6 +31,7 @@ export 'src/components/surfaces/v360_card.dart';
 export 'src/components/surfaces/v360_stack_card.dart';
 export 'src/components/surfaces/v360_phone_frame.dart';
 export 'src/components/surfaces/section_label.dart';
+export 'src/components/surfaces/pack_header.dart';
 export 'src/components/controls/v360_segmented.dart';
 export 'src/components/controls/v360_pressable.dart';
 export 'src/components/data/capacity_bar.dart';
