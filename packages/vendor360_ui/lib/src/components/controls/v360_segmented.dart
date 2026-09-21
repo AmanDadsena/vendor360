@@ -22,10 +22,13 @@ class V360Segment<T> {
   final IconData? icon;
 }
 
-/// A row of pill chips with single selection.
+/// A row of printed choices with single selection — the language switcher,
+/// a horizon picker.
 ///
-/// The selected chip uses `actionFill`, so it is black in light mode and
-/// mint in dark mode — the same inversion as the primary button.
+/// Each choice is a small ruled block with the pack's tight corners; the
+/// chosen one fills with `actionFill` (teal) like the primary button.
+/// Labels share the Latin face's strut, so an endonym in Devanagari sits on
+/// the same baseline as one in English.
 class V360Segmented<T> extends StatelessWidget {
   const V360Segmented({
     super.key,

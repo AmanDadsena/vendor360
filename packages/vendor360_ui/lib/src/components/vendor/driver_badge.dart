@@ -33,7 +33,9 @@ class DriverBadge extends StatelessWidget {
     final colors = v360.colors;
 
     final rising = effect >= 0;
-    final figure = rising ? colors.voiceText : colors.accentText;
+    // Attention amber for a rise, teal for a fall: marigold text is the
+    // mic's, and is not borrowed for a number.
+    final figure = rising ? colors.warningText : colors.accentText;
 
     final icon = _isWeather
         ? (rising ? Icons.water_drop_outlined : Icons.wb_cloudy_outlined)

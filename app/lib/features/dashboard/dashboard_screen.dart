@@ -316,7 +316,7 @@ class _ExpiringRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Icon(Icons.hourglass_bottom_rounded, size: 20, color: colors.danger),
+          Icon(Icons.hourglass_bottom_rounded, size: 20, color: colors.warning),
           SizedBox(width: v360.spacing.md),
           Expanded(
             child: Text.rich(
@@ -329,8 +329,9 @@ class _ExpiringRow extends StatelessWidget {
                   TextSpan(text: '${strings.expiringSoonWindow} · '),
                   TextSpan(
                     text: data.valueAtRisk.display,
+                    // Still sellable at a discount, so attention, not loss.
                     style: v360.text.bodyStrong
-                        .copyWith(color: colors.dangerText),
+                        .copyWith(color: colors.warningText),
                   ),
                   TextSpan(text: ' ${strings.atRisk}'),
                 ],

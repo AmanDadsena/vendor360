@@ -20,8 +20,10 @@ class ExpiryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (String label, PillTone tone, IconData icon) = switch (daysLeft) {
       < 0 => ('Expired', PillTone.urgent, Icons.dangerous_outlined),
-      0 => ('Today', PillTone.urgent, Icons.timer_outlined),
-      1 => ('1 day', PillTone.urgent, Icons.timer_outlined),
+      // Red is kept for stock with no value left; everything still sellable,
+      // however soon, is attention.
+      0 => ('Today', PillTone.attention, Icons.timer_outlined),
+      1 => ('1 day', PillTone.attention, Icons.timer_outlined),
       <= 3 => ('$daysLeft days', PillTone.attention, Icons.schedule_rounded),
       <= 7 => ('$daysLeft days', PillTone.attention, Icons.schedule_rounded),
       _ => (
@@ -68,8 +70,10 @@ class ExpiryRow extends StatelessWidget {
 
     final (String due, Color tone) = switch (daysLeft) {
       < 0 => ('Expired', colors.danger),
-      0 => ('Today', colors.danger),
-      1 => ('1 day left', colors.danger),
+      // MRP red only once it has expired: until then it can still be sold
+      // at a discount, which is attention, not loss.
+      0 => ('Today', colors.warning),
+      1 => ('1 day left', colors.warning),
       <= 7 => ('$daysLeft days left', colors.warning),
       _ => ('$daysLeft days left', colors.accent),
     };
