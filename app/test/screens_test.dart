@@ -208,6 +208,12 @@ void main() {
     // Typing is the documented fallback when ASR struggles (PRD 7).
     expect(find.text('Or type it'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
+    // Below the fold under the band, so scroll to it the way a person would.
+    await tester.scrollUntilVisible(
+      find.text('Or tap a phrase'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('Or tap a phrase'), findsOneWidget);
     expect(find.textContaining('दूध'), findsWidgets);
 
