@@ -41,16 +41,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/'),
         ),
         title: Text(
-          'Your order',
-          style: v360.text.titleM.copyWith(color: colors.ink),
-        ),
+          'Your order'),
         actions: <Widget>[
           if (lines.isNotEmpty)
             TextButton(
@@ -58,7 +54,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 cart.clear();
                 HapticFeedback.selectionClick();
               },
-              child: Text('Clear', style: TextStyle(color: colors.dangerText)),
+              child: Text('Clear', style: TextStyle(color: colors.onBand)),
             ),
         ],
       ),

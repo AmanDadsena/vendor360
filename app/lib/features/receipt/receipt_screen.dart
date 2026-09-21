@@ -157,13 +157,11 @@ TOTAL                          1560.00''',
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/'),
         ),
-        title: Text('Scan receipt', style: v360.text.titleM.copyWith(color: colors.ink)),
+        title: Text('Scan receipt'),
       ),
       body: SafeArea(
         child: ListView(

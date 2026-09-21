@@ -24,10 +24,8 @@ class DistCatalogScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        title: Text('Catalog', style: v360.text.titleM.copyWith(color: colors.ink)),
+        title: Text('Catalog'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.upload_file_rounded),

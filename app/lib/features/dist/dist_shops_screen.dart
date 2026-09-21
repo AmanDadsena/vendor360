@@ -24,10 +24,8 @@ class DistShopsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        title: Text('Shops', style: v360.text.titleM.copyWith(color: colors.ink)),
+        title: Text('Shops'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.account_balance_wallet_outlined),

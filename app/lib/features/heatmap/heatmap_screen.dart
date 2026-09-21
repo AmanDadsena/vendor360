@@ -25,16 +25,12 @@ class HeatmapScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/'),
         ),
         title: Text(
-          'Demand map',
-          style: v360.text.titleM.copyWith(color: colors.ink),
-        ),
+          'Demand map'),
       ),
       body: SafeArea(
         child: ListView(

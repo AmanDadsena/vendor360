@@ -35,10 +35,8 @@ class DistOrdersScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        title: Text('Orders', style: v360.text.titleM.copyWith(color: colors.ink)),
+        title: Text('Orders'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.local_shipping_outlined),

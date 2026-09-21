@@ -35,13 +35,11 @@ class OrdersScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/'),
         ),
-        title: Text('Orders', style: v360.text.titleM.copyWith(color: colors.ink)),
+        title: Text('Orders'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.account_balance_wallet_outlined),

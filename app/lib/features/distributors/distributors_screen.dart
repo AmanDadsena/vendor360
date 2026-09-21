@@ -26,16 +26,12 @@ class DistributorsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/'),
         ),
         title: Text(
-          'Distributors',
-          style: v360.text.titleM.copyWith(color: colors.ink),
-        ),
+          'Distributors'),
       ),
       body: SafeArea(
         child: all.when(

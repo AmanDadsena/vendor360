@@ -52,8 +52,6 @@ class _SetupFlowScreenState extends ConsumerState<SetupFlowScreen> {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: _step == 0
             ? null
             : IconButton(
@@ -65,7 +63,7 @@ class _SetupFlowScreenState extends ConsumerState<SetupFlowScreen> {
             // Skippable on purpose. Someone who wants to start by speaking
             // their stock should not be held behind a picker.
             onPressed: () => context.go('/'),
-            child: Text('Skip', style: TextStyle(color: colors.inkMuted)),
+            child: Text('Skip', style: TextStyle(color: colors.onBand)),
           ),
         ],
       ),

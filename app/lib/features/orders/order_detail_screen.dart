@@ -29,16 +29,12 @@ class OrderDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: colors.canvas,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/orders'),
         ),
         title: Text(
-          order.value?.code ?? 'Order',
-          style: v360.text.titleM.copyWith(color: colors.ink),
-        ),
+          order.value?.code ?? 'Order'),
       ),
       body: SafeArea(
         child: order.when(
