@@ -119,7 +119,7 @@ class _BottomNav extends StatelessWidget {
   static const List<IconData> _icons = <IconData>[
     Icons.home_outlined,
     Icons.inventory_2_outlined,
-    Icons.mic_none_rounded,
+    Icons.mic_rounded,
     Icons.trending_up_rounded,
     Icons.verified_outlined,
   ];
@@ -137,31 +137,36 @@ class _BottomNav extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    return Container(
+    // Flat and ruled: a keyline on top, no shadow. The bar is part of the
+    // printed page, not a card floating above it.
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(top: BorderSide(color: colors.hairline)),
-        boxShadow: V360Elevation.floating(v360.brightness),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 68,
+          height: 64,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               for (var i = 0; i < labels.length; i++)
                 Expanded(
-                  child: _NavItem(
-                    // The voice tab is the product's primary action, so it is
-                    // rendered as a saffron pill rather than another grey icon.
-                    isVoice: i == 2,
-                    selected: i == index,
-                    icon: i == index ? _activeIcons[i] : _icons[i],
-                    label: labels[i],
-                    badge: i == 1 && queued > 0 ? queued : null,
-                    syncing: syncing,
-                    onTap: () => onTap(i),
-                  ),
+                  child: i == 2
+                      ? _MicItem(
+                          label: labels[i],
+                          selected: i == index,
+                          onTap: () => onTap(i),
+                        )
+                      : _NavItem(
+                          selected: i == index,
+                          icon: i == index ? _activeIcons[i] : _icons[i],
+                          label: labels[i],
+                          badge: i == 1 && queued > 0 ? queued : null,
+                          syncing: syncing,
+                          onTap: () => onTap(i),
+                        ),
                 ),
             ],
           ),
@@ -171,13 +176,14 @@ class _BottomNav extends StatelessWidget {
   }
 }
 
+/// A plain destination: icon and word, with a short teal rule printed over
+/// the selected one — the mark a pack uses to flag its variant.
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.selected,
     required this.icon,
     required this.label,
     required this.onTap,
-    required this.isVoice,
     this.badge,
     this.syncing = false,
   });
@@ -186,7 +192,6 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool isVoice;
   final int? badge;
   final bool syncing;
 
@@ -195,73 +200,135 @@ class _NavItem extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
     final motion = MotionScope.of(context);
+    final tint = selected ? colors.accentText : colors.inkMuted;
 
-    final tint = isVoice
-        ? colors.voice
-        : selected
-            ? colors.accentText
-            : colors.inkSubtle;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: badge == null ? label : '$label, $badge waiting to sync',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          children: <Widget>[
+            Align(
+              alignment: Alignment.topCenter,
+              child: AnimatedContainer(
+                duration: motion.fast,
+                curve: motion.standard,
+                width: selected ? 28 : 0,
+                height: 3,
+                color: colors.accent,
+              ),
+            ),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: <Widget>[
+                      Icon(icon, size: 24, color: tint),
+                      if (badge != null)
+                        Positioned(
+                          right: -10,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: syncing ? colors.accent : colors.danger,
+                              borderRadius:
+                                  BorderRadius.circular(V360Radius.sm),
+                              border:
+                                  Border.all(color: colors.surface, width: 1.5),
+                            ),
+                            child: Text(
+                              '$badge',
+                              style: v360.text.label
+                                  .copyWith(color: colors.onFill, fontSize: 10)
+                                  .weight(FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: v360.text.label
+                        .copyWith(color: tint)
+                        .weight(selected ? FontWeight.w700 : FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The microphone: a marigold disc set into the top edge of the bar.
+///
+/// It is the product's most frequent action, so it is the one round, loud
+/// object on the screen, raised where the thumb rests. A white ring
+/// separates it from the bar's keyline rather than a shadow.
+class _MicItem extends StatelessWidget {
+  const _MicItem({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  static const double _disc = 58;
+
+  @override
+  Widget build(BuildContext context) {
+    final v360 = context.v360;
+    final colors = v360.colors;
 
     return Semantics(
       button: true,
       selected: selected,
       label: label,
       excludeSemantics: true,
-      child: InkWell(
+      child: GestureDetector(
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
           children: <Widget>[
-            Stack(
-              clipBehavior: Clip.none,
-              children: <Widget>[
-                AnimatedContainer(
-                  duration: motion.base,
-                  curve: motion.standard,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isVoice ? 18 : 14,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isVoice
-                        ? colors.voiceSurface
-                        : selected
-                            ? colors.accentSurface
-                            : Colors.transparent,
-                    borderRadius: BorderRadius.circular(V360Radius.pill),
-                  ),
-                  child: Icon(icon, size: 22, color: tint),
+            Positioned(
+              top: -20,
+              child: Container(
+                width: _disc,
+                height: _disc,
+                decoration: BoxDecoration(
+                  color: colors.voice,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.surface, width: 4),
                 ),
-                if (badge != null)
-                  Positioned(
-                    right: 2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: syncing ? colors.accent : colors.warning,
-                        borderRadius: BorderRadius.circular(V360Radius.pill),
-                        border: Border.all(color: colors.surface, width: 1.5),
-                      ),
-                      child: Text(
-                        '$badge',
-                        style: v360.text.label.copyWith(
-                          color: colors.onFill,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+                child: Icon(Icons.mic_rounded, size: 28, color: colors.onVoice),
+              ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: v360.text.label.copyWith(
-                color: tint,
-              ).weight(selected ? FontWeight.w700 : FontWeight.w600),
+            Positioned(
+              bottom: 8,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: v360.text.label
+                    .copyWith(color: colors.ink)
+                    .weight(FontWeight.w700),
+              ),
             ),
           ],
         ),
