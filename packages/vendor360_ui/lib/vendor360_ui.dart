@@ -1,14 +1,16 @@
 /// Vendor360 design system.
 ///
-/// Tokens, theme, motion and components for the Vendor360 vendor app.
+/// Tokens, theme, motion and components for the Vendor360 app, in a visual
+/// world taken from the packets on a kirana shelf: flat inks on white board,
+/// one teal band per screen, figures set narrow in Anek (Latin and
+/// Devanagari from one design), status as a small square of colour beside
+/// words in ink, ruled lists instead of card grids, and no shadows, glows or
+/// gradients. PRODUCT.md and DESIGN.md at the repository root record why.
 ///
-/// Forked from the CarryO design system, which established the structure this
-/// package keeps: semantic colour tokens with a single file permitted to hold
-/// literals, Inter with tabular figures on every style, a 4pt spacing scale,
-/// motion resolved through `MotionScope` against the platform's reduce-motion
-/// setting, and a soft shadow in light mode against a hairline border in dark.
-/// The palette is Vendor360's own (teal and saffron, per the UI/UX guide);
-/// everything else is inherited deliberately.
+/// Structure is inherited from the CarryO design system: semantic colour
+/// tokens with a single file permitted to hold literals, tabular figures on
+/// every style, a 4pt spacing scale, and motion resolved through
+/// `MotionScope` against the platform's reduce-motion setting.
 ///
 /// This package must never depend on app models, Riverpod or networking — the
 /// package boundary is what keeps the design system reusable and testable in
@@ -41,7 +43,6 @@ export 'src/components/feedback/v360_banner.dart';
 export 'src/components/feedback/status_mark.dart';
 export 'src/components/feedback/v360_skeleton.dart';
 export 'src/components/feedback/sync_badge.dart';
-export 'src/components/nav/v360_bottom_nav.dart';
 
 // Vendor360-specific components, built on the same tokens.
 export 'src/components/vendor/voice_orb.dart';
