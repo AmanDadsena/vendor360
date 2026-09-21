@@ -29,25 +29,29 @@ class DistShell extends ConsumerWidget {
     // Watched rather than passed down: the badge has to move the moment an
     // order is confirmed on the Orders tab, without that screen knowing the
     // shell exists.
-    final pending = ref.watch(distSummaryProvider).maybeWhen(
-          data: (s) => s.needsAction,
-          orElse: () => 0,
-        );
+    final pending = ref
+        .watch(distSummaryProvider)
+        .maybeWhen(data: (s) => s.needsAction, orElse: () => 0);
 
-    return Scaffold(
-      backgroundColor: v360.colors.canvas,
-      body: Column(
-        children: <Widget>[
-          const DemoBanner(),
-          Expanded(child: navigationShell),
-        ],
-      ),
-      bottomNavigationBar: _DistNav(
-        index: navigationShell.currentIndex,
-        pending: pending,
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
+    // The same pack line printed on a deeper bottle-green band, so a shop
+    // screen and a wholesaler screen are never mistaken for each other.
+    return Theme(
+      data: buildV360Theme(v360.brightness, distributor: true),
+      child: Scaffold(
+        backgroundColor: v360.colors.canvas,
+        body: Column(
+          children: <Widget>[
+            const DemoBanner(),
+            Expanded(child: navigationShell),
+          ],
+        ),
+        bottomNavigationBar: _DistNav(
+          index: navigationShell.currentIndex,
+          pending: pending,
+          onTap: (index) => navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          ),
         ),
       ),
     );
@@ -94,24 +98,23 @@ class _DistNav extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    return Container(
+    // Flat and ruled, like the shop's bar. The waiting count on Orders is the
+    // emphasis; the tab itself does not need to shout.
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(top: BorderSide(color: colors.hairline)),
-        boxShadow: V360Elevation.floating(v360.brightness),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 68,
+          height: 64,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               for (var i = 0; i < _labels.length; i++)
                 Expanded(
                   child: _NavItem(
-                    // The inbox is the wholesaler's primary action, so it
-                    // carries the emphasis the voice orb carries for a shop.
-                    isPrimary: i == 1,
                     selected: i == index,
                     icon: i == index ? _active[i] : _icons[i],
                     label: _labels[i],
@@ -133,7 +136,6 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    required this.isPrimary,
     this.badge,
   });
 
@@ -141,7 +143,6 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool isPrimary;
   final int? badge;
 
   @override
@@ -149,12 +150,7 @@ class _NavItem extends StatelessWidget {
     final v360 = context.v360;
     final colors = v360.colors;
     final motion = MotionScope.of(context);
-
-    final tint = isPrimary
-        ? colors.voice
-        : selected
-            ? colors.accentText
-            : colors.inkSubtle;
+    final tint = selected ? colors.accentText : colors.inkMuted;
 
     return Semantics(
       button: true,
@@ -163,62 +159,66 @@ class _NavItem extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: <Widget>[
-            Stack(
-              clipBehavior: Clip.none,
-              children: <Widget>[
-                AnimatedContainer(
-                  duration: motion.base,
-                  curve: motion.standard,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isPrimary ? 18 : 14,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isPrimary
-                        ? colors.voiceSurface
-                        : selected
-                            ? colors.accentSurface
-                            : Colors.transparent,
-                    borderRadius: BorderRadius.circular(V360Radius.pill),
-                  ),
-                  child: Icon(icon, size: 22, color: tint),
-                ),
-                if (badge != null)
-                  Positioned(
-                    right: 2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.danger,
-                        borderRadius: BorderRadius.circular(V360Radius.pill),
-                        border: Border.all(color: colors.surface, width: 1.5),
-                      ),
-                      child: Text(
-                        '$badge',
-                        style: v360.text.label.copyWith(
-                          color: colors.onFill,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            Align(
+              alignment: Alignment.topCenter,
+              child: AnimatedContainer(
+                duration: motion.fast,
+                curve: motion.standard,
+                width: selected ? 28 : 0,
+                height: 3,
+                color: colors.accent,
+              ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: v360.text.label.copyWith(
-                color: tint,
-              ).weight(selected ? FontWeight.w700 : FontWeight.w600),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: <Widget>[
+                      Icon(icon, size: 24, color: tint),
+                      if (badge != null)
+                        Positioned(
+                          right: -10,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.danger,
+                              borderRadius: BorderRadius.circular(
+                                V360Radius.sm,
+                              ),
+                              border: Border.all(
+                                color: colors.surface,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              '$badge',
+                              style: v360.text.label
+                                  .copyWith(color: colors.onFill, fontSize: 10)
+                                  .weight(FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: v360.text.label
+                        .copyWith(color: tint)
+                        .weight(selected ? FontWeight.w700 : FontWeight.w500),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
