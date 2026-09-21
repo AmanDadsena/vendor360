@@ -194,7 +194,7 @@ class _CategoryPicker extends ConsumerWidget {
     final v360 = context.v360;
 
     return SizedBox(
-      height: 34,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _options.length,
@@ -207,23 +207,22 @@ class _CategoryPicker extends ConsumerWidget {
               HapticFeedback.selectionClick();
               ref.read(heatmapCategoryProvider.notifier).value = option.key;
             },
-            borderRadius: BorderRadius.circular(V360Radius.pill),
+            borderRadius: BorderRadius.circular(V360Radius.sm),
+            // The same printed tabs as the Stock screen's categories.
             child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: v360.spacing.lg,
-                vertical: v360.spacing.sm,
-              ),
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
               decoration: BoxDecoration(
-                color: active ? v360.colors.accent : v360.colors.surface,
-                borderRadius: BorderRadius.circular(V360Radius.pill),
+                color: active ? v360.colors.ink : v360.colors.surface,
+                borderRadius: BorderRadius.circular(V360Radius.sm),
                 border: Border.all(
-                  color: active ? v360.colors.accent : v360.colors.hairline,
+                  color: active ? v360.colors.ink : v360.colors.hairline,
                 ),
               ),
               child: Text(
                 option.label,
                 style: v360.text.caption.copyWith(
-                  color: active ? v360.colors.onFill : v360.colors.inkMuted,
+                  color: active ? v360.colors.canvas : v360.colors.ink,
                 ).weight(FontWeight.w600),
               ),
             ),
@@ -251,19 +250,10 @@ class _SupplierRow extends StatelessWidget {
         padding: EdgeInsets.all(v360.spacing.lg),
         child: Row(
           children: <Widget>[
-            Container(
-              width: 38,
-              height: 38,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isMandi ? colors.voiceSurface : colors.accentSurface,
-                borderRadius: BorderRadius.circular(V360Radius.sm),
-              ),
-              child: Icon(
-                isMandi ? Icons.storefront_outlined : Icons.local_shipping_outlined,
-                size: 18,
-                color: isMandi ? colors.voiceText : colors.accentText,
-              ),
+            Icon(
+              isMandi ? Icons.storefront_outlined : Icons.local_shipping_outlined,
+              size: 22,
+              color: colors.inkMuted,
             ),
             SizedBox(width: v360.spacing.md),
             Expanded(

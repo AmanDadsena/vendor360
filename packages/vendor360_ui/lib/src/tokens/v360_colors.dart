@@ -150,6 +150,19 @@ class V360Colors {
   final Color dangerText;
   final Color dangerSurface;
 
+  /// The demand map's five steps, pale marigold to MRP red.
+  ///
+  /// One warm family rather than a rainbow: a rainbow makes the middle
+  /// values look like a separate category, and teal is kept for "live".
+  /// The same five read on the light board and on the dark one.
+  static const List<Color> heatRamp = <Color>[
+    Color(0xFFF9DE93),
+    Color(0xFFF3BA45),
+    Color(0xFFE88D1E),
+    Color(0xFFD35A1C),
+    Color(0xFFB02A1B),
+  ];
+
   factory V360Colors.light() => const V360Colors(
         canvas: Color(0xFFFFFFFF),
         surface: Color(0xFFFFFFFF),

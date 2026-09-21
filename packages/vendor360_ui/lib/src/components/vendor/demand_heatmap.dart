@@ -1,9 +1,9 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../../motion/motion_scope.dart';
+import '../../tokens/v360_colors.dart';
 import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
 
@@ -54,7 +54,7 @@ class SupplierPin {
   final int leadDays;
 }
 
-/// Hyperlocal demand intensity.
+/// Hyperlocal demand intensity, drawn like a printed district map.
 ///
 /// Drawn on a canvas rather than over map tiles, deliberately: the app is
 /// offline-first, and a heatmap that renders as grey squares whenever the
@@ -62,10 +62,13 @@ class SupplierPin {
 /// from the returned coordinates, so it looks identical on a 2G connection and
 /// in airplane mode.
 ///
-/// Cells are painted as radial falloffs and composited additively, so
-/// neighbouring cells bleed into one another the way a real heat surface does.
-/// A grid of hard squares would imply the underlying geography is quantised,
-/// when the cell size is only a privacy artefact.
+/// Each cell is a flat disc sized by demand and filled from a five-step ramp,
+/// the way a printed map shows quantities at places. It used to be glowing
+/// radial blobs added together on a near-black ground with neon markers —
+/// the look of every generated analytics screen, and harder to read: two
+/// adjacent glows summed into a hot spot that neither cell had. A disc says
+/// "about this much, about here", which is exactly what a privacy-sized
+/// aggregate can honestly claim.
 class DemandHeatmap extends StatelessWidget {
   const DemandHeatmap({
     super.key,
@@ -101,18 +104,18 @@ class DemandHeatmap extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.map_outlined, size: 32, color: colors.inkSubtle),
+              Icon(Icons.map_outlined, size: 28, color: colors.inkSubtle),
               SizedBox(height: v360.spacing.md),
               Text(
                 'No demand data for this filter',
-                style: v360.text.bodyStrong.copyWith(color: colors.inkMuted),
+                style: v360.text.bodyStrong.copyWith(color: colors.ink),
               ),
               SizedBox(height: v360.spacing.xs),
               Text(
                 'Cells appear once at least three nearby stores contribute, '
                 'so no single shop can be identified.',
                 textAlign: TextAlign.center,
-                style: v360.text.caption.copyWith(color: colors.inkSubtle),
+                style: v360.text.caption.copyWith(color: colors.inkMuted),
               ),
             ],
           ),
@@ -133,27 +136,39 @@ class DemandHeatmap extends StatelessWidget {
                   final hit = _hitTest(details.localPosition, size, bounds);
                   if (hit != null) onCellTap!(hit);
                 },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(V360Radius.lg),
-            child: Container(
-              height: height,
-              width: size.width,
-              color: v360.isDark ? colors.surfaceMuted : const Color(0xFF0E1B18),
+          child: Container(
+            height: height,
+            width: size.width,
+            decoration: BoxDecoration(
+              color: colors.surfaceMuted,
+              borderRadius: BorderRadius.circular(V360Radius.lg),
+              border: Border.all(color: colors.hairline),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(V360Radius.lg),
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0, end: 1),
-                duration: motion.reduced ? Duration.zero : motion.deliberate,
-                curve: motion.emphasized,
+                duration: motion.reduced ? Duration.zero : motion.base,
+                curve: motion.decelerate,
                 builder: (context, t, _) => CustomPaint(
                   size: size,
                   painter: _HeatPainter(
                     cells: cells,
-                    suppliers: showSuppliers ? suppliers : const <SupplierPin>[],
+                    suppliers:
+                        showSuppliers ? suppliers : const <SupplierPin>[],
                     bounds: bounds,
                     progress: t,
-                    labelStyle: v360.text.label.copyWith(
-                      color: Colors.white.withValues(alpha: 0.75),
-                    ),
-                    pinStyle: v360.text.label.copyWith(color: Colors.white),
+                    ramp: V360Colors.heatRamp,
+                    grid: colors.hairline,
+                    paper: colors.surface,
+                    ink: colors.ink,
+                    shortage: colors.danger,
+                    labelStyle: v360.text.label
+                        .copyWith(color: colors.ink)
+                        .weight(FontWeight.w600),
+                    pinStyle: v360.text.label
+                        .copyWith(color: colors.ink)
+                        .weight(FontWeight.w700),
                   ),
                 ),
               ),
@@ -232,6 +247,11 @@ class _HeatPainter extends CustomPainter {
     required this.suppliers,
     required this.bounds,
     required this.progress,
+    required this.ramp,
+    required this.grid,
+    required this.paper,
+    required this.ink,
+    required this.shortage,
     required this.labelStyle,
     required this.pinStyle,
   });
@@ -240,69 +260,87 @@ class _HeatPainter extends CustomPainter {
   final List<SupplierPin> suppliers;
   final _Bounds bounds;
   final double progress;
+  final List<Color> ramp;
+  final Color grid;
+  final Color paper;
+  final Color ink;
+  final Color shortage;
   final TextStyle labelStyle;
   final TextStyle pinStyle;
 
-  /// Cool-to-hot ramp. Teal through saffron to red, so it stays inside the
-  /// product palette instead of importing a generic rainbow — and because a
-  /// rainbow ramp misleads by making mid-values look like a distinct category.
-  static const List<Color> _ramp = <Color>[
-    Color(0xFF0F7A6B),
-    Color(0xFF3FA98C),
-    Color(0xFFA8C34F),
-    Color(0xFFD98A0F),
-    Color(0xFFE85D4C),
-  ];
-
-  Color _rampColor(double t) {
-    final clamped = t.clamp(0.0, 1.0);
-    final scaled = clamped * (_ramp.length - 1);
-    final index = scaled.floor().clamp(0, _ramp.length - 2);
-    return Color.lerp(_ramp[index], _ramp[index + 1], scaled - index)!;
+  /// Stepped, not blended: a printed map shows five classes, and a
+  /// continuous blend makes neighbouring values look like different things.
+  Color _step(double t) {
+    final i = (t.clamp(0.0, 0.9999) * ramp.length).floor();
+    return ramp[i];
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     _paintGrid(canvas, size);
 
-    // Radius scales with the canvas so the surface looks the same on a phone
-    // and on a tablet.
-    final baseRadius = math.min(size.width, size.height) * 0.22;
+    // Radius scales with the canvas so the map reads the same on a phone and
+    // on a tablet, and with the square root of intensity so a disc's *area*
+    // tracks demand — twice the demand is twice the ink, not four times.
+    final maxRadius = math.min(size.width, size.height) * 0.13;
 
-    // Additive blending, so overlapping cells brighten rather than the later
-    // one simply covering the earlier — that additive build is what makes a
-    // heat surface read as continuous.
-    canvas.saveLayer(Offset.zero & size, Paint()..blendMode = BlendMode.plus);
+    // Biggest first, so a small cell is never buried under a large one.
+    final ordered = <HeatCell>[...cells]
+      ..sort((a, b) => b.intensity.compareTo(a.intensity));
 
-    for (final cell in cells) {
+    for (final cell in ordered) {
       final centre = bounds.project(cell.lat, cell.lon, size);
-      final intensity = cell.intensity * progress;
-      if (intensity <= 0.01) continue;
-
-      final radius = baseRadius * (0.55 + 0.45 * cell.intensity);
-      final colour = _rampColor(cell.intensity);
+      final radius =
+          maxRadius * (0.32 + 0.68 * math.sqrt(cell.intensity)) * progress;
+      if (radius <= 0.5) continue;
 
       canvas.drawCircle(
         centre,
         radius,
-        Paint()
-          ..shader = ui.Gradient.radial(
-            centre,
-            radius,
-            <Color>[
-              colour.withValues(alpha: 0.85 * intensity),
-              colour.withValues(alpha: 0.35 * intensity),
-              colour.withValues(alpha: 0.0),
-            ],
-            <double>[0.0, 0.45, 1.0],
-          ),
+        Paint()..color = _step(cell.intensity).withValues(alpha: 0.92),
       );
+      // A paper keyline, so overlapping discs stay separate shapes.
+      canvas.drawCircle(
+        centre,
+        radius,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = paper,
+      );
+
+      // Shortage: a dashed ring marking cells where restocking pressure is
+      // building even if sales have not spiked yet.
+      if (cell.shortageCount > 0 && progress > 0.5) {
+        const segments = 18;
+        for (var i = 0; i < segments; i += 2) {
+          final start = (i / segments) * 2 * math.pi;
+          canvas.drawArc(
+            Rect.fromCircle(center: centre, radius: radius + 5),
+            start,
+            (2 * math.pi / segments) * 0.9,
+            false,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2
+              ..color = shortage,
+          );
+        }
+      }
     }
 
-    canvas.restore();
-
-    for (final cell in cells) {
-      _paintCellMarker(canvas, size, cell);
+    if (progress > 0.9) {
+      for (final cell in ordered) {
+        if (cell.topSku == null) continue;
+        final centre = bounds.project(cell.lat, cell.lon, size);
+        final radius = maxRadius * (0.32 + 0.68 * math.sqrt(cell.intensity));
+        _paintText(
+          canvas,
+          cell.topSku!,
+          Offset(centre.dx, centre.dy + radius + 4),
+          labelStyle,
+        );
+      }
     }
 
     for (final pin in suppliers) {
@@ -312,7 +350,7 @@ class _HeatPainter extends CustomPainter {
 
   void _paintGrid(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
+      ..color = grid
       ..strokeWidth = 1;
 
     for (var i = 1; i < 6; i++) {
@@ -325,92 +363,26 @@ class _HeatPainter extends CustomPainter {
     }
   }
 
-  void _paintCellMarker(Canvas canvas, Size size, HeatCell cell) {
-    final centre = bounds.project(cell.lat, cell.lon, size);
-
-    canvas.drawCircle(
-      centre,
-      5,
-      Paint()..color = Colors.white.withValues(alpha: 0.9 * progress),
-    );
-    canvas.drawCircle(
-      centre,
-      5,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = Colors.black.withValues(alpha: 0.35 * progress),
-    );
-
-    // Shortage ring: a dashed halo marking cells where restocking pressure is
-    // building even if sales have not spiked yet.
-    if (cell.shortageCount > 0) {
-      const segments = 16;
-      for (var i = 0; i < segments; i += 2) {
-        final start = (i / segments) * 2 * math.pi;
-        canvas.drawArc(
-          Rect.fromCircle(center: centre, radius: 13),
-          start,
-          (2 * math.pi / segments) * 0.9,
-          false,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2
-            ..color = const Color(0xFFE85D4C).withValues(alpha: 0.9 * progress),
-        );
-      }
-    }
-
-    if (cell.topSku != null && progress > 0.75) {
-      _paintText(
-        canvas,
-        cell.topSku!,
-        Offset(centre.dx, centre.dy + 12),
-        labelStyle,
-        centred: true,
-      );
-    }
-  }
-
   void _paintSupplier(Canvas canvas, Size size, SupplierPin pin) {
     final at = bounds.project(pin.lat, pin.lon, size);
     final isMandi = pin.kind == 'mandi';
 
-    // Suppliers are squares, demand cells are circles. Shape, not just colour,
-    // separates the two layers — the same colour-blindness rule the pills follow.
-    final rect = Rect.fromCenter(center: at, width: 13, height: 13);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(3)),
-      Paint()
-        ..color = (isMandi ? const Color(0xFF8B5CF6) : const Color(0xFF38BDF8))
-            .withValues(alpha: progress),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(3)),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = Colors.white.withValues(alpha: 0.85 * progress),
-    );
+    // Shape, not colour, separates the layers: demand is a disc, a
+    // distributor an ink square, a mandi an ink diamond.
+    canvas.save();
+    canvas.translate(at.dx, at.dy);
+    if (isMandi) canvas.rotate(math.pi / 4);
+    final rect = Rect.fromCenter(center: Offset.zero, width: 11, height: 11);
+    canvas.drawRect(rect.inflate(1.5), Paint()..color = paper);
+    canvas.drawRect(rect, Paint()..color = ink.withValues(alpha: progress));
+    canvas.restore();
 
-    if (progress > 0.8) {
-      _paintText(
-        canvas,
-        pin.name,
-        Offset(at.dx, at.dy - 22),
-        pinStyle,
-        centred: true,
-      );
+    if (progress > 0.9) {
+      _paintText(canvas, pin.name, Offset(at.dx, at.dy - 26), pinStyle);
     }
   }
 
-  void _paintText(
-    Canvas canvas,
-    String text,
-    Offset at,
-    TextStyle style, {
-    bool centred = false,
-  }) {
+  void _paintText(Canvas canvas, String text, Offset at, TextStyle style) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
@@ -418,23 +390,21 @@ class _HeatPainter extends CustomPainter {
       ellipsis: '…',
     )..layout(maxWidth: 120);
 
-    final origin = centred
-        ? Offset(at.dx - painter.width / 2, at.dy)
-        : at;
+    final origin = Offset(at.dx - painter.width / 2, at.dy);
 
-    // A dark plate behind the label, so text stays readable over a bright
-    // patch of the heat surface.
+    // A paper plate behind the label, like a printed map's label knock-out,
+    // so text stays readable over a disc.
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(
           origin.dx - 4,
-          origin.dy - 2,
+          origin.dy - 1,
           painter.width + 8,
-          painter.height + 4,
+          painter.height + 2,
         ),
-        const Radius.circular(4),
+        const Radius.circular(2),
       ),
-      Paint()..color = Colors.black.withValues(alpha: 0.45 * progress),
+      Paint()..color = paper.withValues(alpha: 0.92),
     );
 
     painter.paint(canvas, origin);
@@ -444,10 +414,11 @@ class _HeatPainter extends CustomPainter {
   bool shouldRepaint(_HeatPainter old) =>
       old.progress != progress ||
       old.cells != cells ||
-      old.suppliers != suppliers;
+      old.suppliers != suppliers ||
+      old.paper != paper;
 }
 
-/// Key for the heatmap's colour ramp and marker shapes.
+/// Key for the heatmap's steps and marker shapes.
 class HeatmapLegend extends StatelessWidget {
   const HeatmapLegend({super.key, this.showSuppliers = true});
 
@@ -463,27 +434,16 @@ class HeatmapLegend extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Text('Low', style: v360.text.label.copyWith(color: colors.inkSubtle)),
+            Text('Low', style: v360.text.label.copyWith(color: colors.inkMuted)),
             SizedBox(width: v360.spacing.sm),
-            Expanded(
-              child: Container(
-                height: 8,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  gradient: const LinearGradient(
-                    colors: <Color>[
-                      Color(0xFF0F7A6B),
-                      Color(0xFF3FA98C),
-                      Color(0xFFA8C34F),
-                      Color(0xFFD98A0F),
-                      Color(0xFFE85D4C),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: v360.spacing.sm),
-            Text('High', style: v360.text.label.copyWith(color: colors.inkSubtle)),
+            // Five printed swatches, one per step, rather than a gradient bar:
+            // the map draws steps, so the key shows steps.
+            for (final swatch in V360Colors.heatRamp) ...<Widget>[
+              Container(width: 22, height: 12, color: swatch),
+              const SizedBox(width: 2),
+            ],
+            SizedBox(width: v360.spacing.sm - 2),
+            Text('High', style: v360.text.label.copyWith(color: colors.inkMuted)),
           ],
         ),
         if (showSuppliers) ...<Widget>[
@@ -492,16 +452,8 @@ class HeatmapLegend extends StatelessWidget {
             spacing: v360.spacing.lg,
             runSpacing: v360.spacing.sm,
             children: <Widget>[
-              const _LegendKey(
-                colour: Color(0xFF38BDF8),
-                label: 'Distributor',
-                square: true,
-              ),
-              const _LegendKey(
-                colour: Color(0xFF8B5CF6),
-                label: 'Mandi',
-                square: true,
-              ),
+              _LegendKey(colour: colors.ink, label: 'Distributor', square: true),
+              _LegendKey(colour: colors.ink, label: 'Mandi', diamond: true),
               _LegendKey(
                 colour: colors.danger,
                 label: 'Restock pressure',
@@ -520,30 +472,34 @@ class _LegendKey extends StatelessWidget {
     required this.colour,
     required this.label,
     this.square = false,
+    this.diamond = false,
     this.ring = false,
   });
 
   final Color colour;
   final String label;
   final bool square;
+  final bool diamond;
   final bool ring;
 
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
+    Widget mark = Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: ring ? null : colour,
+        border: ring ? Border.all(color: colour, width: 2) : null,
+        shape: square || diamond ? BoxShape.rectangle : BoxShape.circle,
+      ),
+    );
+    if (diamond) mark = Transform.rotate(angle: math.pi / 4, child: mark);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Container(
-          width: 11,
-          height: 11,
-          decoration: BoxDecoration(
-            color: ring ? null : colour,
-            border: ring ? Border.all(color: colour, width: 2) : null,
-            shape: square ? BoxShape.rectangle : BoxShape.circle,
-            borderRadius: square ? BorderRadius.circular(3) : null,
-          ),
-        ),
+        SizedBox(width: 14, height: 14, child: Center(child: mark)),
         SizedBox(width: v360.spacing.xs),
         Text(
           label,
