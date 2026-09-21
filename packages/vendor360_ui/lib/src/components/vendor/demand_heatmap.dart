@@ -338,11 +338,24 @@ class _HeatPainter extends CustomPainter {
     // would land on another is left off rather than printed over it — a
     // printed map chooses which names to set; it never stacks them.
     if (progress > 0.9) {
-      final placed = <Rect>[];
+      // Pins are reserved first, so no label is ever printed over one.
+      final placed = <Rect>[
+        for (final pin in suppliers)
+          Rect.fromCenter(
+            center: bounds.project(pin.lat, pin.lon, size),
+            width: 18,
+            height: 18,
+          ),
+      ];
       for (final pin in suppliers) {
         final at = bounds.project(pin.lat, pin.lon, size);
-        _paintLabel(canvas, size, pin.name, Offset(at.dx, at.dy - 24),
-            pinStyle, placed);
+        // Above the pin if there is room, otherwise below it.
+        // Clear of the pin's own reserved box either way.
+        if (!_paintLabel(canvas, size, pin.name, Offset(at.dx, at.dy - 31),
+            pinStyle, placed)) {
+          _paintLabel(canvas, size, pin.name, Offset(at.dx, at.dy + 14),
+              pinStyle, placed);
+        }
       }
       for (final cell in ordered) {
         if (cell.topSku == null) continue;
@@ -384,7 +397,9 @@ class _HeatPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _paintLabel(
+  /// Paints [text] at [at] unless it would land on something already set.
+  /// Returns whether it was painted.
+  bool _paintLabel(
     Canvas canvas,
     Size size,
     String text,
@@ -409,7 +424,7 @@ class _HeatPainter extends CustomPainter {
       painter.width + 8,
       painter.height + 2,
     );
-    if (placed.any((r) => r.overlaps(box.inflate(2)))) return;
+    if (placed.any((r) => r.overlaps(box.inflate(2)))) return false;
     placed.add(box);
 
     // A paper plate behind the label, like a printed map's label knock-out,
@@ -420,6 +435,7 @@ class _HeatPainter extends CustomPainter {
     );
 
     painter.paint(canvas, origin);
+    return true;
   }
 
   @override
@@ -497,15 +513,20 @@ class _LegendKey extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
-    Widget mark = Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: ring ? null : colour,
-        border: ring ? Border.all(color: colour, width: 2) : null,
-        shape: square || diamond ? BoxShape.rectangle : BoxShape.circle,
-      ),
-    );
+    Widget mark = ring
+        // Dashed, because the map draws restock pressure as a dashed ring.
+        ? CustomPaint(
+            size: const Size(12, 12),
+            painter: _DashedRingPainter(colour),
+          )
+        : Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: colour,
+              shape: square || diamond ? BoxShape.rectangle : BoxShape.circle,
+            ),
+          );
     if (diamond) mark = Transform.rotate(angle: math.pi / 4, child: mark);
 
     return Row(
@@ -520,4 +541,31 @@ class _LegendKey extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DashedRingPainter extends CustomPainter {
+  _DashedRingPainter(this.colour);
+
+  final Color colour;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const segments = 10;
+    final rect = Offset.zero & size;
+    for (var i = 0; i < segments; i += 2) {
+      canvas.drawArc(
+        rect.deflate(1),
+        (i / segments) * 2 * math.pi,
+        (2 * math.pi / segments) * 0.9,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = colour,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRingPainter old) => old.colour != colour;
 }

@@ -29,8 +29,7 @@ class HeatmapScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/'),
         ),
-        title: Text(
-          'Demand map'),
+        title: Text('Demand map'),
       ),
       body: SafeArea(
         child: ListView(
@@ -52,7 +51,8 @@ class HeatmapScreen extends ConsumerWidget {
             SizedBox(height: v360.spacing.lg),
 
             data.when(
-              loading: () => const V360Skeleton(height: 320, radius: V360Radius.lg),
+              loading: () =>
+                  const V360Skeleton(height: 320, radius: V360Radius.lg),
               error: (error, _) => EmptyState(
                 icon: Icons.map_outlined,
                 title: 'Map unavailable',
@@ -62,43 +62,35 @@ class HeatmapScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   DemandHeatmap(
-                      cells: result.cells,
-                      suppliers: result.suppliers,
-                      height: 340,
-                      onCellTap: (cell) => _showCell(context, cell),
-                    ),
+                    cells: result.cells,
+                    suppliers: result.suppliers,
+                    height: 340,
+                    onCellTap: (cell) => _showCell(context, cell),
+                  ),
                   SizedBox(height: v360.spacing.lg),
                   const HeatmapLegend(),
                   SizedBox(height: v360.spacing.xl),
 
-                  Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: StatTile(
-                            label: 'Active zones',
-                            value: '${result.cells.length}',
-                            caption: 'with 3+ contributing stores',
-                            compact: true,
-                          ),
-                        ),
-                        SizedBox(width: v360.spacing.md),
-                        Expanded(
-                          child: StatTile(
-                            label: 'Suppliers',
-                            value: '${result.suppliers.length}',
-                            caption: 'mandis and distributors',
-                            compact: true,
-                          ),
-                        ),
-                      ],
-                    ),
+                  DeclarationStrip(
+                    facts: <PackFact>[
+                      PackFact(
+                        '${result.cells.length}',
+                        'active zones',
+                      ),
+                      PackFact(
+                        '${result.suppliers.length}',
+                        'suppliers nearby',
+                      ),
+                    ],
+                  ),
 
                   if (result.suppressed > 0) ...<Widget>[
                     SizedBox(height: v360.spacing.lg),
                     V360Banner(
                       icon: Icons.lock_outline_rounded,
                       title: '${result.suppressed} zones hidden',
-                      body: 'A zone is only shown once at least three stores '
+                      body:
+                          'A zone is only shown once at least three stores '
                           'contribute to it, so no single shop can be '
                           'identified from the map.',
                     ),
@@ -125,7 +117,9 @@ class HeatmapScreen extends ConsumerWidget {
       context: context,
       backgroundColor: v360.colors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(V360Radius.xl)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(V360Radius.xl),
+        ),
       ),
       builder: (_) => Padding(
         padding: EdgeInsets.all(v360.spacing.xxl),
@@ -179,15 +173,16 @@ class _CategoryPicker extends ConsumerWidget {
 
   final String? selected;
 
-  static const List<({String? key, String label})> _options = <({String? key, String label})>[
-    (key: null, label: 'All'),
-    (key: 'dairy', label: 'Dairy'),
-    (key: 'produce', label: 'Produce'),
-    (key: 'staples', label: 'Staples'),
-    (key: 'snacks', label: 'Snacks'),
-    (key: 'sweets', label: 'Sweets'),
-    (key: 'monsoon', label: 'Monsoon'),
-  ];
+  static const List<({String? key, String label})> _options =
+      <({String? key, String label})>[
+        (key: null, label: 'All'),
+        (key: 'dairy', label: 'Dairy'),
+        (key: 'produce', label: 'Produce'),
+        (key: 'staples', label: 'Staples'),
+        (key: 'snacks', label: 'Snacks'),
+        (key: 'sweets', label: 'Sweets'),
+        (key: 'monsoon', label: 'Monsoon'),
+      ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -202,30 +197,13 @@ class _CategoryPicker extends ConsumerWidget {
         itemBuilder: (context, index) {
           final option = _options[index];
           final active = option.key == selected;
-          return V360Pressable(
+          return V360Tab(
+            label: option.label,
+            active: active,
             onTap: () {
               HapticFeedback.selectionClick();
               ref.read(heatmapCategoryProvider.notifier).value = option.key;
             },
-            borderRadius: BorderRadius.circular(V360Radius.sm),
-            // The same printed tabs as the Stock screen's categories.
-            child: Container(
-              alignment: Alignment.center,
-              padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
-              decoration: BoxDecoration(
-                color: active ? v360.colors.ink : v360.colors.surface,
-                borderRadius: BorderRadius.circular(V360Radius.sm),
-                border: Border.all(
-                  color: active ? v360.colors.ink : v360.colors.hairline,
-                ),
-              ),
-              child: Text(
-                option.label,
-                style: v360.text.caption.copyWith(
-                  color: active ? v360.colors.canvas : v360.colors.ink,
-                ).weight(FontWeight.w600),
-              ),
-            ),
           );
         },
       ),
@@ -251,7 +229,9 @@ class _SupplierRow extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Icon(
-              isMandi ? Icons.storefront_outlined : Icons.local_shipping_outlined,
+              isMandi
+                  ? Icons.storefront_outlined
+                  : Icons.local_shipping_outlined,
               size: 22,
               color: colors.inkMuted,
             ),
