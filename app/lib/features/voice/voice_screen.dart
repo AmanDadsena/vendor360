@@ -243,8 +243,7 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
                     'Quick action phrases',
                     style: v360.text.caption.copyWith(
                       color: colors.inkMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    ).weight(FontWeight.w600),
                   ),
                   SizedBox(height: v360.spacing.sm),
                   Wrap(
@@ -286,8 +285,7 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
                                   phrase,
                                   style: v360.text.caption.copyWith(
                                     color: colors.ink,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  ).weight(FontWeight.w500),
                                 ),
                               ],
                             ),

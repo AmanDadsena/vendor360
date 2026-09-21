@@ -238,8 +238,7 @@ class _CategoryPicker extends ConsumerWidget {
                 option.label,
                 style: v360.text.caption.copyWith(
                   color: active ? v360.colors.onFill : v360.colors.inkMuted,
-                  fontWeight: FontWeight.w600,
-                ),
+                ).weight(FontWeight.w600),
               ),
             ),
           );

@@ -261,8 +261,7 @@ class _NavItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: v360.text.label.copyWith(
                 color: tint,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-              ),
+              ).weight(selected ? FontWeight.w700 : FontWeight.w600),
             ),
           ],
         ),

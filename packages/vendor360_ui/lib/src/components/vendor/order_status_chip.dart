@@ -75,9 +75,8 @@ class OrderStatusChip extends StatelessWidget {
             label,
             style: v360.text.label.copyWith(
               color: text,
-              fontWeight: FontWeight.w700,
               fontSize: dense ? 10 : null,
-            ),
+            ).weight(FontWeight.w700),
           ),
         ],
       ),

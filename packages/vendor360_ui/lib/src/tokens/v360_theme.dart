@@ -6,6 +6,10 @@ import 'v360_motion.dart';
 import 'v360_spacing.dart';
 import 'v360_typography.dart';
 
+// Every widget that reads `context.v360` also adjusts styles, so the
+// axis-aware helpers travel with the theme import.
+export 'v360_typography.dart' show V360TextStyleX;
+
 /// All Vendor360 design tokens, carried on [ThemeData.extensions].
 ///
 /// Note: the typography field is called `text`, not `type`. [ThemeExtension]

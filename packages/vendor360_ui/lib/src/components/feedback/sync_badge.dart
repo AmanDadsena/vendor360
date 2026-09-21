@@ -92,8 +92,7 @@ class _SyncBadgeState extends State<SyncBadge>
                   : '${widget.queued} queued',
               style: v360.text.caption.copyWith(
                 color: colors.warningText,
-                fontWeight: FontWeight.w600,
-              ),
+              ).weight(FontWeight.w600),
             ),
           ],
         ),

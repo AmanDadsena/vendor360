@@ -53,9 +53,9 @@ void main() {
         const Color(0xFF0B1210));
   });
 
-  test('theme uses bundled Inter as its default family', () {
+  test('theme uses bundled Anek as its default family', () {
     expect(buildV360Theme(Brightness.light).textTheme.bodyMedium?.fontFamily,
-        contains('Inter'));
+        contains('AnekLatin'));
   });
 
   test('theme extension lerps between light and dark', () {

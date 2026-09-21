@@ -16,7 +16,6 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const files = <String, String>{
-    'Inter': 'assets/fonts/Inter-Variable.ttf',
     'AnekLatin': 'assets/fonts/AnekLatin-Variable.ttf',
     'AnekDevanagari': 'assets/fonts/AnekDevanagari-Variable.ttf',
   };

@@ -127,8 +127,7 @@ class ExpiryScreen extends ConsumerWidget {
                               'Dynamic markdowns recover up to 70% of cost on perishables before zero-value write-offs.',
                               style: v360.text.caption.copyWith(
                                 color: colors.accentText,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              ).weight(FontWeight.w500),
                             ),
                           ),
                         ],

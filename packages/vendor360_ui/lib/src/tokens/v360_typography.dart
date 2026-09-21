@@ -1,29 +1,38 @@
 import 'package:flutter/widgets.dart';
 
-/// The Vendor360 type scale.
+/// The Vendor360 type scale, set in Anek.
 ///
-/// Inter, bundled as a package asset rather than fetched at runtime, so
-/// typography renders correctly with no network. Tabular figures are enabled
-/// on every style — a functional requirement, not a stylistic one: rolling
-/// counters jitter without them and price columns fail to align.
+/// Anek is by Ek Type, a Mumbai type foundry, and draws Latin and Devanagari
+/// as one design — so a Hindi screen, the product's default, speaks in the
+/// same letterforms as an English one. Both files are bundled rather than
+/// fetched, so type renders correctly with no network.
 ///
-/// Inter carries no Devanagari, so [devanagari] is bundled behind it as a
-/// fallback. This is load-bearing rather than decorative: `language_pref`
-/// defaults to `hi`, and without the fallback every Hindi and Marathi string —
-/// the language picker's own endonyms included — renders as empty boxes.
+/// The scale borrows its voice from the packets on a kirana shelf: the big
+/// figures are set narrow and heavy, the way a pack prints its product name
+/// and MRP, while running text stays at normal width where reading matters
+/// more than presence. Width is Anek's `wdth` axis, 75 (narrow) to 125.
+///
+/// Tabular figures are on every style — functional, not stylistic: a figure
+/// that updates live must not change width, and price columns must align.
+///
+/// Weight is written to the `wght` axis explicitly, alongside `fontWeight`.
+/// A variable font given only a `fontWeight` may be emboldened synthetically
+/// instead of drawn at that weight, which smears the counters of narrow
+/// figures first. Use [V360TextStyleX.weight] to change weight so the axis
+/// moves with it.
 @immutable
 class V360Typography {
   const V360Typography();
 
-  static const String family = 'Inter';
+  static const String family = 'AnekLatin';
 
-  /// Devanagari coverage for Hindi and Marathi.
+  /// Devanagari, for Hindi and Marathi. Also carries full Latin.
   ///
   /// Must be a bundled package asset, not a platform font name. Flutter
   /// prefixes *every* `fontFamilyFallback` entry with `packages/$package/`
   /// when [package] is set, so a system family named here would resolve to
   /// nothing at all — and would do it silently, with no error and no glyphs.
-  static const String devanagari = 'NotoSansDevanagari';
+  static const String devanagari = 'AnekDevanagari';
 
   static const String package = 'vendor360_ui';
 
@@ -40,10 +49,19 @@ class V360Typography {
     FontFeature.tabularFigures(),
   ];
 
-  TextStyle _style({
+  /// Normal width. Running text, labels, buttons.
+  static const double regularWidth = 100;
+
+  /// The pack-print width, for figures and titles that must carry weight in
+  /// a small space.
+  static const double narrowWidth = 78;
+
+  static TextStyle _style({
     required double size,
     required double lineHeight,
     required FontWeight weight,
+    double? axisWeight,
+    double width = regularWidth,
     double? letterSpacing,
   }) =>
       TextStyle(
@@ -55,47 +73,115 @@ class V360Typography {
         fontWeight: weight,
         letterSpacing: letterSpacing,
         fontFeatures: _features,
+        fontVariations: <FontVariation>[
+          FontVariation('wght', axisWeight ?? weight.value.toDouble()),
+          FontVariation('wdth', width),
+        ],
       );
 
-  /// Hero numbers — arrival time, total, capacity percentage.
-  TextStyle get display =>
-      _style(size: 34, lineHeight: 40, weight: FontWeight.w700);
+  /// The figure that owns a screen's teal band — today's sales, a stock
+  /// count, a score. Narrow and heavy, like a pack's product name.
+  TextStyle get display => _style(
+        size: 56,
+        lineHeight: 56,
+        weight: FontWeight.w700,
+        width: narrowWidth,
+        letterSpacing: -0.5,
+      );
+
+  /// A figure inside a panel — a count, an amount, a date.
+  TextStyle get figure => _style(
+        size: 30,
+        lineHeight: 32,
+        weight: FontWeight.w700,
+        width: 82,
+      );
 
   /// Screen titles.
-  TextStyle get titleL =>
-      _style(size: 24, lineHeight: 30, weight: FontWeight.w600);
+  TextStyle get titleL => _style(
+        size: 26,
+        lineHeight: 30,
+        weight: FontWeight.w700,
+        width: 88,
+      );
 
-  /// Card titles.
-  TextStyle get titleM =>
-      _style(size: 20, lineHeight: 26, weight: FontWeight.w600);
+  /// Section headings.
+  TextStyle get titleM => _style(
+        size: 20,
+        lineHeight: 24,
+        weight: FontWeight.w600,
+        width: 94,
+      );
 
-  /// Row titles.
+  /// Row titles — an item, a shop, an order.
   TextStyle get titleS =>
       _style(size: 17, lineHeight: 22, weight: FontWeight.w600);
 
-  TextStyle get body =>
-      _style(size: 15, lineHeight: 22, weight: FontWeight.w400);
+  /// Anek's regular is drawn light; 430 on the axis holds up in daylight
+  /// without reading as medium.
+  TextStyle get body => _style(
+        size: 15,
+        lineHeight: 22,
+        weight: FontWeight.w400,
+        axisWeight: 430,
+      );
 
   TextStyle get bodyStrong =>
       _style(size: 15, lineHeight: 22, weight: FontWeight.w600);
 
-  TextStyle get caption =>
-      _style(size: 13, lineHeight: 18, weight: FontWeight.w400);
-
-  /// Uppercase section labels. Always render with an uppercased string —
-  /// `SectionLabel` does this for you.
-  TextStyle get label => _style(
-        size: 11,
-        lineHeight: 14,
-        weight: FontWeight.w600,
-        letterSpacing: 11 * 0.08,
+  TextStyle get caption => _style(
+        size: 13,
+        lineHeight: 18,
+        weight: FontWeight.w400,
+        axisWeight: 450,
       );
 
-  /// Parcel IDs, OTP digits, registration plates.
+  /// The small print — the "Net qty" and "Best before" of a panel, set next
+  /// to its value rather than above a heading. Sentence case; never used as
+  /// an eyebrow.
+  TextStyle get label => _style(
+        size: 12,
+        lineHeight: 16,
+        weight: FontWeight.w500,
+        letterSpacing: 0.1,
+      );
+
+  /// OTP digits, order numbers, batch codes.
   TextStyle get code => _style(
-        size: 15,
+        size: 16,
         lineHeight: 22,
         weight: FontWeight.w600,
-        letterSpacing: 0.5,
+        width: 110,
+        letterSpacing: 1,
       );
+}
+
+/// Axis-aware adjustments to a [V360Typography] style.
+extension V360TextStyleX on TextStyle {
+  /// Changes weight on both `fontWeight` and the `wght` axis, keeping width.
+  TextStyle weight(FontWeight weight) => copyWith(
+        fontWeight: weight,
+        fontVariations: <FontVariation>[
+          FontVariation('wght', weight.value.toDouble()),
+          FontVariation('wdth', _axis('wdth') ?? V360Typography.regularWidth),
+        ],
+      );
+
+  /// Sets the `wdth` axis, keeping weight. Defaults to the pack-print width.
+  TextStyle narrow([double width = V360Typography.narrowWidth]) => copyWith(
+        fontVariations: <FontVariation>[
+          FontVariation(
+            'wght',
+            _axis('wght') ?? (fontWeight ?? FontWeight.w400).value.toDouble(),
+          ),
+          FontVariation('wdth', width),
+        ],
+      );
+
+  double? _axis(String tag) {
+    for (final v in fontVariations ?? const <FontVariation>[]) {
+      if (v.axis == tag) return v.value;
+    }
+    return null;
+  }
 }

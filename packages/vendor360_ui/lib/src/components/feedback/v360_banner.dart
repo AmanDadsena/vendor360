@@ -107,8 +107,7 @@ class TrustBadge extends StatelessWidget {
         '${rating.toStringAsFixed(1)} ★ · $countLabel',
         style: v360.text.caption.copyWith(
           color: v360.colors.accentText,
-          fontWeight: FontWeight.w600,
-        ),
+        ).weight(FontWeight.w600),
       ),
     );
   }

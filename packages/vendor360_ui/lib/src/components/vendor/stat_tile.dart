@@ -203,8 +203,7 @@ class StatusPill extends StatelessWidget {
             label,
             style: (dense ? v360.text.label : v360.text.caption).copyWith(
               color: text,
-              fontWeight: FontWeight.w600,
-            ),
+            ).weight(FontWeight.w600),
           ),
         ],
       ),

@@ -107,8 +107,7 @@ class _NavSlot extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: v360.text.caption.copyWith(
                   color: content,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                ),
+                ).weight(selected ? FontWeight.w600 : FontWeight.w400),
               ),
             ],
           ),

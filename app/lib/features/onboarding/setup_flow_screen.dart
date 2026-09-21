@@ -313,8 +313,7 @@ class _AisleChip extends StatelessWidget {
               label,
               style: v360.text.body.copyWith(
                 color: selected ? colors.accentText : colors.ink,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-              ),
+              ).weight(selected ? FontWeight.w700 : FontWeight.w600),
             ),
           ],
         ),

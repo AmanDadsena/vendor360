@@ -47,10 +47,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Inter is bundled rather than fetched at runtime, so typography is identical
-  # on every device and correct with no network on first launch — which for an
-  # offline-first app is the normal case, not the exception.
-  fonts:
-    - family: Inter
-      fonts:
-        - asset: ../packages/vendor360_ui/assets/fonts/Inter-Variable.ttf
+  # Fonts are not declared here. Anek ships inside vendor360_ui and every
+  # style names it with `package: 'vendor360_ui'`, so the package's own
+  # pubspec is the one place a font file is registered.

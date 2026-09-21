@@ -183,8 +183,7 @@ class _PoolCardState extends ConsumerState<_PoolCard> {
                     pool.savings.formatSavingsBenefit(pool.unit),
                     style: v360.text.caption.copyWith(
                       color: colors.accentText,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    ).weight(FontWeight.w600),
                   ),
                 ],
               ),

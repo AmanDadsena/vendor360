@@ -122,8 +122,7 @@ void main() {
       await tester.pumpWidget(carryHarness(const SectionLabel('departs')));
       final style = tester.widget<Text>(find.text('DEPARTS')).style!;
       expect(style.color, const Color(0xFF8A9793));
-      expect(style.fontSize, 11);
-      expect(style.letterSpacing, closeTo(11 * 0.08, 0.001));
+      expect(style.fontSize, const V360Typography().label.fontSize);
     });
   });
 

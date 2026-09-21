@@ -18,22 +18,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Variable.ttf
-
-    # Devanagari, for Hindi and Marathi. Inter has no Devanagari coverage, so
-    # without this every vernacular string renders as tofu — and `hi` is the
-    # product's default language. Bundled rather than relied on from the
-    # platform because `TextStyle.package` prefixes every `fontFamilyFallback`
-    # entry with `packages/vendor360_ui/`, so a system font name in that list
-    # silently resolves to nothing.
-    #
-    # SIL Open Font License 1.1 — see assets/fonts/OFL-NotoSansDevanagari.txt.
-    - family: NotoSansDevanagari
-      fonts:
-        - asset: assets/fonts/NotoSansDevanagari-Variable.ttf
-
     # Anek, by Ek Type (Mumbai) — the product's voice from here on. One
     # design in two scripts, so Hindi and Marathi carry the same letterforms
     # as English instead of borrowing a stranger's. Both files are variable

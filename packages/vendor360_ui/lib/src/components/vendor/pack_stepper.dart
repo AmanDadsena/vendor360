@@ -87,12 +87,11 @@ class PackStepper extends StatelessWidget {
                 child: Text(
                   '$packs',
                   style: (dense ? v360.text.body : v360.text.titleS).copyWith(
-                    fontWeight: FontWeight.w800,
                     color: colors.ink,
                     // Tabular figures: the row must not jitter as the count
                     // crosses from 9 to 10.
                     fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-                  ),
+                  ).weight(FontWeight.w800),
                 ),
               ),
               _Step(

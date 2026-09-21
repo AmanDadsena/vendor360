@@ -71,8 +71,7 @@ class InventoryScreen extends ConsumerWidget {
                           color: lowOnly
                               ? v360.colors.warningText
                               : v360.colors.inkMuted,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        ).weight(FontWeight.w600),
                       ),
                     ],
                   ),
@@ -212,8 +211,7 @@ class _CategoryFilter extends ConsumerWidget {
                 category.label,
                 style: v360.text.caption.copyWith(
                   color: active ? v360.colors.onFill : v360.colors.inkMuted,
-                  fontWeight: FontWeight.w600,
-                ),
+                ).weight(FontWeight.w600),
               ),
             ),
           );
@@ -276,8 +274,7 @@ class _ItemRow extends ConsumerWidget {
                           'Shortfall: ${(item.reorderPoint - item.quantity.amount).clamp(0, double.infinity).toStringAsFixed(0)} ${item.quantity.unit}',
                           style: v360.text.caption.copyWith(
                             color: colors.warningText,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          ).weight(FontWeight.w600),
                         ),
                     ],
                   ),

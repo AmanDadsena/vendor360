@@ -64,8 +64,7 @@ class DriverBadge extends StatelessWidget {
             compact ? '$magnitude $driver' : '$magnitude · $driver',
             style: (compact ? v360.text.label : v360.text.caption).copyWith(
               color: text,
-              fontWeight: FontWeight.w600,
-            ),
+            ).weight(FontWeight.w600),
             overflow: TextOverflow.ellipsis,
           ),
         ],

@@ -47,9 +47,8 @@ class DemoBanner extends ConsumerWidget {
                 'DEMO MODE · simulated activity',
                 style: v360.text.label.copyWith(
                   color: colors.onFill,
-                  fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
-                ),
+                ).weight(FontWeight.w800),
               ),
             ],
           ),

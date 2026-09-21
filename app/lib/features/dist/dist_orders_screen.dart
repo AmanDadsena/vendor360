@@ -188,8 +188,7 @@ class _Chip extends StatelessWidget {
           label,
           style: v360.text.label.copyWith(
             color: selected ? colors.accentText : colors.inkMuted,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-          ),
+          ).weight(selected ? FontWeight.w700 : FontWeight.w600),
         ),
       ),
     );
