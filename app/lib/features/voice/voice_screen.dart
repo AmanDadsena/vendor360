@@ -96,7 +96,9 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
   }
 
   /// Stands in for Bhashini. Returns a transcript and an ASR confidence.
-  Future<({String text, double confidence})> _capture(AppLanguage language) async {
+  Future<({String text, double confidence})> _capture(
+    AppLanguage language,
+  ) async {
     await Future<void>.delayed(const Duration(milliseconds: 1400));
     final pool = _samples[language]!;
     return (
@@ -136,7 +138,9 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
     });
 
     try {
-      final result = await ref.read(repositoryProvider).parseUtterance(
+      final result = await ref
+          .read(repositoryProvider)
+          .parseUtterance(
             transcript: text,
             language: ref.read(languageProvider).code,
             asrConfidence: asrConfidence,
@@ -177,11 +181,15 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$saved ${saved == 1 ? 'entry' : 'entries'} saved')),
+        SnackBar(
+          content: Text('$saved ${saved == 1 ? 'entry' : 'entries'} saved'),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = 'Saved locally. It will sync when you are back online.');
+      setState(
+        () => _error = 'Saved locally. It will sync when you are back online.',
+      );
     }
   }
 
@@ -195,169 +203,174 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
 
     return Scaffold(
       backgroundColor: colors.canvas,
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.all(v360.spacing.gutter),
-          children: <Widget>[
-            _LanguageSwitcher(current: language),
-            SizedBox(height: v360.spacing.xxl),
+      body: Column(
+        children: <Widget>[
+          PackHeader(title: s.speak, subtitle: s.checkBeforeSaving),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.all(v360.spacing.gutter),
+              children: <Widget>[
+                _LanguageSwitcher(current: language),
+                SizedBox(height: v360.spacing.xxl),
 
-            if (!hasResult) ...<Widget>[
-              Center(
-                child: Column(
-                  children: <Widget>[
-                    Text(
-                      _listening ? s.listening : s.speakNow,
-                      style: v360.text.titleL.copyWith(color: colors.ink),
-                    ),
-                    SizedBox(height: v360.spacing.sm),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: v360.spacing.xxl),
-                      child: Text(
-                        s.voiceExample,
-                        textAlign: TextAlign.center,
-                        style: v360.text.caption.copyWith(color: colors.inkMuted),
-                      ),
-                    ),
-                    SizedBox(height: v360.spacing.x3),
-                    VoiceOrb(
-                      listening: _listening,
-                      processing: _parsing,
-                      onTap: _listening ? null : _startListening,
-                      size: 104,
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: v360.spacing.x3),
-              _TranscriptField(
-                controller: _transcript,
-                onSubmit: () => _parse(),
-                busy: _parsing,
-              ),
-              SizedBox(height: v360.spacing.lg),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Quick action phrases',
-                    style: v360.text.caption.copyWith(
-                      color: colors.inkMuted,
-                    ).weight(FontWeight.w600),
-                  ),
-                  SizedBox(height: v360.spacing.sm),
-                  Wrap(
-                    spacing: v360.spacing.sm,
-                    runSpacing: v360.spacing.sm,
-                    children: <Widget>[
-                      for (final phrase in _quickPhrases[language] ??
-                          _quickPhrases[AppLanguage.hindi]!)
-                        InkWell(
-                          onTap: _parsing || _listening
-                              ? null
-                              : () {
-                                  HapticFeedback.selectionClick();
-                                  _transcript.text = phrase;
-                                  _parse();
-                                },
-                          borderRadius: BorderRadius.circular(V360Radius.pill),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: v360.spacing.md,
-                              vertical: v360.spacing.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.surface,
-                              borderRadius:
-                                  BorderRadius.circular(V360Radius.pill),
-                              border: Border.all(color: colors.hairline),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Icon(
-                                  Icons.bolt_rounded,
-                                  size: 14,
-                                  color: colors.accent,
-                                ),
-                                SizedBox(width: v360.spacing.xs),
-                                Text(
-                                  phrase,
-                                  style: v360.text.caption.copyWith(
-                                    color: colors.ink,
-                                  ).weight(FontWeight.w500),
-                                ),
-                              ],
+                if (!hasResult) ...<Widget>[
+                  Center(
+                    child: Column(
+                      children: <Widget>[
+                        Text(
+                          _listening ? s.listening : s.speakNow,
+                          textAlign: TextAlign.center,
+                          style: v360.text.titleM
+                              .copyWith(color: colors.ink)
+                              .weight(FontWeight.w700),
+                        ),
+                        SizedBox(height: v360.spacing.sm),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: v360.spacing.xxl,
+                          ),
+                          child: Text(
+                            s.voiceExample,
+                            textAlign: TextAlign.center,
+                            style: v360.text.caption.copyWith(
+                              color: colors.inkMuted,
                             ),
                           ),
                         ),
+                        SizedBox(height: v360.spacing.x3),
+                        VoiceOrb(
+                          listening: _listening,
+                          processing: _parsing,
+                          onTap: _listening ? null : _startListening,
+                          size: 104,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: v360.spacing.x3),
+                  _TranscriptField(
+                    controller: _transcript,
+                    onSubmit: () => _parse(),
+                    busy: _parsing,
+                  ),
+                  SizedBox(height: v360.spacing.lg),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const SectionLabel('Or tap a phrase'),
+                      SizedBox(height: v360.spacing.sm),
+                      Wrap(
+                        spacing: v360.spacing.sm,
+                        runSpacing: v360.spacing.sm,
+                        children: <Widget>[
+                          for (final phrase
+                              in _quickPhrases[language] ??
+                                  _quickPhrases[AppLanguage.hindi]!)
+                            InkWell(
+                              onTap: _parsing || _listening
+                                  ? null
+                                  : () {
+                                      HapticFeedback.selectionClick();
+                                      _transcript.text = phrase;
+                                      _parse();
+                                    },
+                              borderRadius: BorderRadius.circular(
+                                V360Radius.sm,
+                              ),
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minHeight: 40,
+                                ),
+                                alignment: Alignment.centerLeft,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: v360.spacing.md,
+                                  vertical: v360.spacing.sm,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.surface,
+                                  borderRadius: BorderRadius.circular(
+                                    V360Radius.sm,
+                                  ),
+                                  border: Border.all(color: colors.hairline),
+                                ),
+                                child: Text(
+                                  phrase,
+                                  style: v360.text.body.copyWith(
+                                    color: colors.ink,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ],
-              ),
-            ],
 
-            if (_error != null) ...<Widget>[
-              SizedBox(height: v360.spacing.lg),
-              V360Banner(
-                icon: Icons.cloud_off_rounded,
-                title: _error!,
-                tone: V360BannerTone.warning,
-              ),
-            ],
-
-            if (hasResult) ...<Widget>[
-              _ReviewHeader(result: _result!, strings: s),
-              SizedBox(height: v360.spacing.lg),
-
-              for (var i = 0; i < _lines.length; i++)
-                ConfidenceRow(
-                    skuName: _lines[i].skuName,
-                    quantity: _lines[i].qty,
-                    unit: _lines[i].unit,
-                    confidence: _lines[i].confidence,
-                    needsReview: _lines[i].needsReview,
-                    movementLabel: _movementLabel(_lines[i].movement),
-                    isKnownItem: _lines[i].knownItem,
-                    matchedText: _lines[i].matchedText,
-                    onIncrement: () => setState(() => _lines[i].qty += 1),
-                    onDecrement: () => setState(
-                      () => _lines[i].qty = (_lines[i].qty - 1).clamp(1, 99999),
-                    ),
-                    onRemove: () => setState(() => _lines.removeAt(i)),
+                if (_error != null) ...<Widget>[
+                  SizedBox(height: v360.spacing.lg),
+                  V360Banner(
+                    icon: Icons.cloud_off_rounded,
+                    title: _error!,
+                    tone: V360BannerTone.warning,
                   ),
+                ],
 
-              SizedBox(height: v360.spacing.lg),
-              V360Button.primary(
-                label: s.confirmAndSave,
-                expand: true,
-                leadingIcon: Icons.check_rounded,
-                onPressed: _confirm,
-              ),
-              SizedBox(height: v360.spacing.sm),
-              V360Button.secondary(
-                label: s.tryAgain,
-                expand: true,
-                onPressed: () => setState(() {
-                  _result = null;
-                  _lines = <ParsedLine>[];
-                  _transcript.clear();
-                }),
-              ),
-            ],
+                if (hasResult) ...<Widget>[
+                  _ReviewHeader(result: _result!, strings: s),
+                  SizedBox(height: v360.spacing.lg),
 
-            SizedBox(height: v360.spacing.x5),
-          ],
-        ),
+                  for (var i = 0; i < _lines.length; i++)
+                    ConfidenceRow(
+                      skuName: _lines[i].skuName,
+                      quantity: _lines[i].qty,
+                      unit: _lines[i].unit,
+                      confidence: _lines[i].confidence,
+                      needsReview: _lines[i].needsReview,
+                      movementLabel: _movementLabel(_lines[i].movement),
+                      isKnownItem: _lines[i].knownItem,
+                      matchedText: _lines[i].matchedText,
+                      onIncrement: () => setState(() => _lines[i].qty += 1),
+                      onDecrement: () => setState(
+                        () =>
+                            _lines[i].qty = (_lines[i].qty - 1).clamp(1, 99999),
+                      ),
+                      onRemove: () => setState(() => _lines.removeAt(i)),
+                    ),
+
+                  SizedBox(height: v360.spacing.lg),
+                  V360Button.primary(
+                    label: s.confirmAndSave,
+                    expand: true,
+                    leadingIcon: Icons.check_rounded,
+                    onPressed: _confirm,
+                  ),
+                  SizedBox(height: v360.spacing.sm),
+                  V360Button.secondary(
+                    label: s.tryAgain,
+                    expand: true,
+                    onPressed: () => setState(() {
+                      _result = null;
+                      _lines = <ParsedLine>[];
+                      _transcript.clear();
+                    }),
+                  ),
+                ],
+
+                SizedBox(height: v360.spacing.x5),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   String _movementLabel(String movement) => switch (movement) {
-        'restock' => 'Restock',
-        'wastage' => 'Waste',
-        _ => 'Sale',
-      };
+    'restock' => 'Restock',
+    'wastage' => 'Waste',
+    _ => 'Sale',
+  };
 }
 
 class _LanguageSwitcher extends ConsumerWidget {
@@ -375,10 +388,7 @@ class _LanguageSwitcher extends ConsumerWidget {
       onChanged: (value) => ref.read(languageProvider.notifier).value = value,
       segments: <V360Segment<AppLanguage>>[
         for (final language in AppLanguage.values)
-          V360Segment<AppLanguage>(
-            value: language,
-            label: language.nativeName,
-          ),
+          V360Segment<AppLanguage>(value: language, label: language.nativeName),
       ],
     );
   }
@@ -499,7 +509,8 @@ class _ReviewHeader extends StatelessWidget {
           V360Banner(
             icon: Icons.error_outline_rounded,
             title: 'Some words were unclear',
-            body: 'Check the highlighted rows before saving. '
+            body:
+                'Check the highlighted rows before saving. '
                 'Nothing is recorded until you confirm.',
             tone: V360BannerTone.warning,
           ),

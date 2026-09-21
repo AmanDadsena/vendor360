@@ -127,23 +127,19 @@ class _VoiceOrbState extends State<VoiceOrb>
                     child: Container(
                       width: widget.size,
                       height: widget.size,
+                      // Flat marigold with a white ring, like the disc in the
+                      // bottom bar. No glow: the pulsing rings already say
+                      // it is listening, and a coloured halo says nothing.
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: enabled ? colors.voice : colors.surfaceMuted,
-                        boxShadow: enabled
-                            ? <BoxShadow>[
-                                BoxShadow(
-                                  color: colors.voice.withValues(alpha: 0.34),
-                                  blurRadius: widget.listening ? 28 : 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ]
-                            : null,
+                        border: Border.all(color: colors.surface, width: 5),
                       ),
+                      // Ink, not white: white on marigold is about 2:1.
                       child: Icon(
                         icon,
                         size: widget.size * 0.42,
-                        color: enabled ? Colors.white : colors.inkSubtle,
+                        color: enabled ? colors.onVoice : colors.inkSubtle,
                       ),
                     ),
                   ),

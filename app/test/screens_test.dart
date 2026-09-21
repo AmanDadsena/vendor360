@@ -208,7 +208,7 @@ void main() {
     // Typing is the documented fallback when ASR struggles (PRD 7).
     expect(find.text('Or type it'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
-    expect(find.text('Quick action phrases'), findsOneWidget);
+    expect(find.text('Or tap a phrase'), findsOneWidget);
     expect(find.textContaining('दूध'), findsWidgets);
 
     await tester.tap(find.textContaining('दूध').first);
