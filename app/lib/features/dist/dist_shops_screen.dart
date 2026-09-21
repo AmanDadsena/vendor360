@@ -267,7 +267,7 @@ class _Pill extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: v360.spacing.sm, vertical: 3),
       decoration: BoxDecoration(
         color: warn ? colors.warningSurface : colors.surfaceMuted,
-        borderRadius: BorderRadius.circular(V360Radius.pill),
+        borderRadius: BorderRadius.circular(V360Radius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -291,8 +291,8 @@ class _AisleChip extends StatelessWidget {
           vertical: v360.spacing.md,
         ),
         decoration: BoxDecoration(
-          color: selected ? colors.accentSurfaceStrong : colors.surface,
-          borderRadius: BorderRadius.circular(V360Radius.pill),
+          color: selected ? colors.ink : colors.surface,
+          borderRadius: BorderRadius.circular(V360Radius.sm),
           border: Border.all(
             color: selected ? colors.accent : colors.hairline,
             width: selected ? 1.5 : 1,
@@ -304,7 +304,7 @@ class _AisleChip extends StatelessWidget {
             Icon(
               icon,
               size: 17,
-              color: selected ? colors.accentText : colors.inkMuted,
+              color: selected ? colors.canvas : colors.ink,
             ),
             SizedBox(width: v360.spacing.sm),
             Text(
@@ -348,9 +348,7 @@ class _SkuTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? colors.accentSurface : colors.surface,
             borderRadius: BorderRadius.circular(V360Radius.md),
-            border: Border.all(
-              color: selected ? colors.accent : colors.hairline,
-            ),
+            border: Border.all(color: selected ? colors.ink : colors.hairline),
           ),
           child: Row(
             children: <Widget>[

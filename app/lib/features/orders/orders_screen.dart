@@ -186,16 +186,14 @@ class _FilterChip extends StatelessWidget {
           vertical: v360.spacing.sm,
         ),
         decoration: BoxDecoration(
-          color: selected ? colors.accentSurfaceStrong : colors.surface,
-          borderRadius: BorderRadius.circular(V360Radius.pill),
-          border: Border.all(
-            color: selected ? colors.accent : colors.hairline,
-          ),
+          color: selected ? colors.ink : colors.surface,
+          borderRadius: BorderRadius.circular(V360Radius.sm),
+          border: Border.all(color: selected ? colors.ink : colors.hairline),
         ),
         child: Text(
           label,
           style: v360.text.label.copyWith(
-            color: selected ? colors.accentText : colors.inkMuted,
+            color: selected ? colors.canvas : colors.ink,
           ).weight(selected ? FontWeight.w700 : FontWeight.w600),
         ),
       ),

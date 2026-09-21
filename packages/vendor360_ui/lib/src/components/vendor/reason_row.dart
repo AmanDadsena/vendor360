@@ -53,7 +53,7 @@ class ReasonRow extends StatelessWidget {
               color: _isWarning(reason)
                   ? colors.warningSurface
                   : colors.surfaceMuted,
-              borderRadius: BorderRadius.circular(V360Radius.pill),
+              borderRadius: BorderRadius.circular(V360Radius.sm),
             ),
             child: Text(
               reason,

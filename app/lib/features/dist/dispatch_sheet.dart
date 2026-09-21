@@ -116,7 +116,7 @@ class _Leg extends StatelessWidget {
             SizedBox(width: v360.spacing.xs),
             Expanded(
               child: Text(
-                '${leg.locality.toUpperCase()} · ${leg.stops.length}',
+                '${leg.locality} · ${leg.stops.length}',
                 style: v360.text.label.copyWith(color: colors.inkSubtle),
               ),
             ),

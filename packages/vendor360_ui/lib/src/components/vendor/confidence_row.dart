@@ -170,7 +170,7 @@ class _Stepper extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceMuted,
-        borderRadius: BorderRadius.circular(V360Radius.pill),
+        borderRadius: BorderRadius.circular(V360Radius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

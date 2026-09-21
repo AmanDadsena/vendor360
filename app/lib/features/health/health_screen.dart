@@ -226,7 +226,7 @@ class _ConsentList extends ConsumerWidget {
                     style: v360.text.bodyStrong.copyWith(color: colors.ink),
                   ),
                   subtitle: Text(
-                    consent.lenderKind.toUpperCase(),
+                    consent.lenderKind,
                     style: v360.text.label.copyWith(color: colors.inkSubtle),
                   ),
                   onChanged: (value) async {

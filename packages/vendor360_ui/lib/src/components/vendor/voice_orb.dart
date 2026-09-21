@@ -220,7 +220,7 @@ class VoiceOrbMini extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: v360.colors.voiceSurface,
-            borderRadius: BorderRadius.circular(V360Radius.pill),
+            borderRadius: BorderRadius.circular(V360Radius.sm),
             border: Border.all(color: v360.colors.voice.withValues(alpha: 0.35)),
           ),
           child: Row(

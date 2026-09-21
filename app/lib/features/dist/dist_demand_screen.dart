@@ -270,7 +270,7 @@ class _DemandCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: colors.accentSurface,
-                      borderRadius: BorderRadius.circular(V360Radius.pill),
+                      borderRadius: BorderRadius.circular(V360Radius.sm),
                     ),
                     child: Text(
                       'stock ${line.packsToStock!.round()} '
