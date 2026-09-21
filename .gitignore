@@ -33,3 +33,9 @@ backend/*.db-journal
 .DS_Store
 Thumbs.db
 *.log
+
+# Design-review scratch: screenshots and decision-page logs. The design
+# record itself (DESIGN.md, .impeccable/design.json) is committed.
+.impeccable/review/
+.impeccable/questions/
+.impeccable/mocks/

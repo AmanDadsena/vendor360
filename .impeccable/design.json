@@ -1,0 +1,768 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-21T16:27:47+00:00",
+  "title": "Design System: Vendor360",
+  "extensions": {
+    "platform": "Flutter (Android + web), Material 3. Tokens live in Dart under packages/vendor360_ui/lib/src/tokens. Component snippets are HTML/CSS preview approximations of Flutter widgets.",
+    "colorMeta": {
+      "teal-band": {
+        "role": "primary",
+        "displayName": "Pack Teal",
+        "canonical": "#0B7768",
+        "oklch": "oklch(51.1% 0.090 179.7)",
+        "usage": "The one flat band per screen, AppBars, primary fill, selected-tab rule, focus, healthy/live status.",
+        "dark": "#0B5F54 band / #2DB39D fill",
+        "tonalRamp": [
+          "#00120C",
+          "#002F26",
+          "#004F43",
+          "#037163",
+          "#429384",
+          "#6FB4A6",
+          "#9BD7CA",
+          "#C8FBF0"
+        ]
+      },
+      "teal-text": {
+        "role": "primary",
+        "displayName": "Deep Teal Text",
+        "canonical": "#075A4F",
+        "oklch": "oklch(42.0% 0.074 180.5)",
+        "usage": "Teal set as readable text on white.",
+        "dark": "#2DB39D",
+        "tonalRamp": [
+          "#00120C",
+          "#002E26",
+          "#004E44",
+          "#2D6E63",
+          "#578F84",
+          "#80B1A7",
+          "#A9D4CA",
+          "#D4F8F0"
+        ]
+      },
+      "teal-wash": {
+        "role": "primary",
+        "displayName": "Teal Wash",
+        "canonical": "#E1EFEB",
+        "oklch": "oklch(94.1% 0.016 177.1)",
+        "usage": "Tonal button fill, pressed ghost, selected row.",
+        "dark": "#11322C",
+        "tonalRamp": [
+          "#050D0B",
+          "#1D2825",
+          "#394542",
+          "#586461",
+          "#798682",
+          "#9BA8A5",
+          "#BFCDC9",
+          "#E4F2EE"
+        ]
+      },
+      "teal-wash-strong": {
+        "role": "primary",
+        "displayName": "Strong Teal Wash",
+        "canonical": "#C6E3DC",
+        "oklch": "oklch(89.3% 0.032 179.4)",
+        "usage": "Selected control inside a selected row; text selection.",
+        "dark": "#17443B",
+        "tonalRamp": [
+          "#070D0B",
+          "#1E2725",
+          "#384542",
+          "#556561",
+          "#748783",
+          "#94ABA5",
+          "#B5D0C9",
+          "#DAF6EF"
+        ]
+      },
+      "on-band-muted": {
+        "role": "primary",
+        "displayName": "Band Muted",
+        "canonical": "#D9F0EA",
+        "oklch": "oklch(93.7% 0.025 178.4)",
+        "usage": "Secondary text on the band, tinted from teal.",
+        "dark": "#BFE3DB",
+        "tonalRamp": [
+          "#080C0B",
+          "#202725",
+          "#3B4442",
+          "#586461",
+          "#778682",
+          "#98A9A5",
+          "#BACEC9",
+          "#DEF4EE"
+        ]
+      },
+      "bottle-green-band": {
+        "role": "primary",
+        "displayName": "Bottle-Green Band",
+        "canonical": "#16433C",
+        "oklch": "oklch(35.0% 0.051 181.3)",
+        "usage": "Distributor shell band only.",
+        "dark": "#123B35",
+        "tonalRamp": [
+          "#00100C",
+          "#012C26",
+          "#204B44",
+          "#446A63",
+          "#698A84",
+          "#8FACA6",
+          "#B6D0CA",
+          "#DFF4EF"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Green-Black Ink",
+        "canonical": "#10201C",
+        "oklch": "oklch(22.8% 0.023 176.5)",
+        "usage": "All primary text, figures, keylines, active filter tab.",
+        "dark": "#E8EFEC",
+        "tonalRamp": [
+          "#020E0B",
+          "#192925",
+          "#374642",
+          "#576561",
+          "#798582",
+          "#9DA8A5",
+          "#C2CBC9",
+          "#E9F0EE"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "#475853",
+        "oklch": "oklch(44.4% 0.023 175.5)",
+        "usage": "Captions, meta, inactive nav labels.",
+        "dark": "#A3B2AD",
+        "tonalRamp": [
+          "#040D0B",
+          "#1B2825",
+          "#364641",
+          "#556561",
+          "#778682",
+          "#9BA9A4",
+          "#C0CCC9",
+          "#E6F1EE"
+        ]
+      },
+      "ink-subtle": {
+        "role": "neutral",
+        "displayName": "Ink Subtle",
+        "canonical": "#63726D",
+        "oklch": "oklch(53.8% 0.020 173.5)",
+        "usage": "Placeholders, disabled labels, field outlines.",
+        "dark": "#879792",
+        "tonalRamp": [
+          "#030E0A",
+          "#1B2824",
+          "#384641",
+          "#566560",
+          "#778681",
+          "#99A9A4",
+          "#BDCEC8",
+          "#E2F3ED"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#D5DEDA",
+        "oklch": "oklch(89.3% 0.011 167.8)",
+        "usage": "Row rules, panel borders, bottom bar rule.",
+        "dark": "#27342F",
+        "tonalRamp": [
+          "#070D0A",
+          "#202724",
+          "#3D4441",
+          "#5B6360",
+          "#7C8581",
+          "#9FA7A4",
+          "#C3CCC8",
+          "#E8F1ED"
+        ]
+      },
+      "board-white": {
+        "role": "neutral",
+        "displayName": "Board White",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "usage": "Canvas and panel surface.",
+        "dark": "#0D1412 canvas / #131C1A surface",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "board-grey": {
+        "role": "neutral",
+        "displayName": "Board Grey",
+        "canonical": "#EEF3F1",
+        "oklch": "oklch(96.0% 0.006 170.4)",
+        "usage": "Second neutral: inset fields, steppers, tracks, disabled fills.",
+        "dark": "#1A2522",
+        "tonalRamp": [
+          "#090C0B",
+          "#222625",
+          "#3F4341",
+          "#5E6261",
+          "#7F8382",
+          "#A2A6A4",
+          "#C6CAC8",
+          "#EBF0EE"
+        ]
+      },
+      "marigold-voice": {
+        "role": "secondary",
+        "displayName": "Mic Marigold",
+        "canonical": "#F2A20C",
+        "oklch": "oklch(77.2% 0.162 73.3)",
+        "usage": "The mic disc and voice orb only.",
+        "dark": "#F4AE2A",
+        "tonalRamp": [
+          "#1C0400",
+          "#3D1B00",
+          "#623600",
+          "#8A5400",
+          "#B37300",
+          "#DE9300",
+          "#FFB845",
+          "#FFE081"
+        ]
+      },
+      "marigold-voice-text": {
+        "role": "secondary",
+        "displayName": "Marigold Text",
+        "canonical": "#8A5300",
+        "oklch": "oklch(49.4% 0.109 66.9)",
+        "usage": "Readable voice-related text.",
+        "dark": "#F7C66A",
+        "tonalRamp": [
+          "#1E0200",
+          "#3F1900",
+          "#633500",
+          "#8A5300",
+          "#AA763D",
+          "#CA9B69",
+          "#EBC095",
+          "#FFE7C1"
+        ]
+      },
+      "marigold-voice-wash": {
+        "role": "secondary",
+        "displayName": "Marigold Wash",
+        "canonical": "#FDF0D5",
+        "oklch": "oklch(95.8% 0.038 85.3)",
+        "usage": "Pale voice surface.",
+        "dark": "#33260E",
+        "tonalRamp": [
+          "#0D0B07",
+          "#28251D",
+          "#464137",
+          "#676153",
+          "#898171",
+          "#AEA490",
+          "#D3C8B1",
+          "#FAEDD2"
+        ]
+      },
+      "marigold-flash": {
+        "role": "secondary",
+        "displayName": "Flash Marigold",
+        "canonical": "#F5B216",
+        "oklch": "oklch(80.5% 0.163 80.6)",
+        "usage": "The one flash band per screen.",
+        "dark": "#E0A516",
+        "tonalRamp": [
+          "#190600",
+          "#391E00",
+          "#5D3A00",
+          "#835800",
+          "#AB7800",
+          "#D59900",
+          "#FEBC35",
+          "#FFE477"
+        ]
+      },
+      "attention": {
+        "role": "tertiary",
+        "displayName": "Attention Amber",
+        "canonical": "#E39A00",
+        "oklch": "oklch(74.0% 0.156 75.1)",
+        "usage": "Low stock / approaching expiry squares, bars, tab markers. Never text.",
+        "dark": "#F0A928",
+        "tonalRamp": [
+          "#1B0400",
+          "#3D1B00",
+          "#613700",
+          "#885400",
+          "#B17400",
+          "#DC9500",
+          "#FFBB52",
+          "#FFE28A"
+        ]
+      },
+      "attention-text": {
+        "role": "tertiary",
+        "displayName": "Attention Text",
+        "canonical": "#7F4C00",
+        "oklch": "oklch(46.5% 0.103 66.9)",
+        "usage": "Amber that must be read as text.",
+        "dark": "#F6C56A",
+        "tonalRamp": [
+          "#1E0200",
+          "#3F1900",
+          "#623500",
+          "#875414",
+          "#A67744",
+          "#C79C6F",
+          "#E8C19A",
+          "#FFE8C6"
+        ]
+      },
+      "attention-wash": {
+        "role": "tertiary",
+        "displayName": "Attention Wash",
+        "canonical": "#FCF0D6",
+        "oklch": "oklch(95.8% 0.036 86.2)",
+        "usage": "Pale attention surface.",
+        "dark": "#332710",
+        "tonalRamp": [
+          "#0D0B07",
+          "#28251E",
+          "#464238",
+          "#676154",
+          "#898272",
+          "#ADA491",
+          "#D2C8B2",
+          "#F9EDD4"
+        ]
+      },
+      "mrp-red": {
+        "role": "tertiary",
+        "displayName": "MRP Red",
+        "canonical": "#C62A1F",
+        "oklch": "oklch(53.9% 0.193 29.2)",
+        "usage": "Zero stock, expired, overdue, destructive, unsynced badge.",
+        "dark": "#E24A3B",
+        "tonalRamp": [
+          "#2F0000",
+          "#580000",
+          "#840000",
+          "#B31C14",
+          "#DA4A3C",
+          "#FA7867",
+          "#FFA493",
+          "#FFCFBF"
+        ]
+      },
+      "mrp-red-text": {
+        "role": "tertiary",
+        "displayName": "MRP Red Text",
+        "canonical": "#A3221A",
+        "oklch": "oklch(46.8% 0.166 28.9)",
+        "usage": "Red figures such as value at risk.",
+        "dark": "#FF8E7F",
+        "tonalRamp": [
+          "#2D0000",
+          "#550000",
+          "#800303",
+          "#AA2E24",
+          "#CB5B4D",
+          "#EA8476",
+          "#FFAD9F",
+          "#FFD7CB"
+        ]
+      },
+      "mrp-red-wash": {
+        "role": "tertiary",
+        "displayName": "MRP Red Wash",
+        "canonical": "#FBE9E7",
+        "oklch": "oklch(94.8% 0.020 25.2)",
+        "usage": "Pale danger surface.",
+        "dark": "#341713",
+        "tonalRamp": [
+          "#130807",
+          "#2E2120",
+          "#4C3E3D",
+          "#6C5D5B",
+          "#8E7E7C",
+          "#B1A19F",
+          "#D6C5C3",
+          "#FCEAE8"
+        ]
+      },
+      "heat-1": {
+        "role": "tertiary",
+        "displayName": "Heat Step 1",
+        "canonical": "#F9DE93",
+        "oklch": "oklch(90.6% 0.098 90.4)",
+        "usage": "Demand map class 1 of 5, stepped not blended.",
+        "dark": "same in dark",
+        "tonalRamp": [
+          "#100A00",
+          "#2D240B",
+          "#4C4120",
+          "#6F6037",
+          "#93814F",
+          "#B9A368",
+          "#E0C782",
+          "#FFEDA4"
+        ]
+      },
+      "heat-2": {
+        "role": "tertiary",
+        "displayName": "Heat Step 2",
+        "canonical": "#F3BA45",
+        "oklch": "oklch(82.1% 0.145 81.8)",
+        "usage": "Demand map class 2 of 5, stepped not blended.",
+        "dark": "same in dark",
+        "tonalRamp": [
+          "#170700",
+          "#362000",
+          "#593C00",
+          "#7E5A00",
+          "#A57A1B",
+          "#CE9C32",
+          "#F7BF4D",
+          "#FFE686"
+        ]
+      },
+      "heat-3": {
+        "role": "tertiary",
+        "displayName": "Heat Step 3",
+        "canonical": "#E88D1E",
+        "oklch": "oklch(72.3% 0.156 63.8)",
+        "usage": "Demand map class 3 of 5, stepped not blended.",
+        "dark": "same in dark",
+        "tonalRamp": [
+          "#1F0100",
+          "#421700",
+          "#683200",
+          "#904E00",
+          "#BB6D00",
+          "#E78C1D",
+          "#FFB460",
+          "#FFDD94"
+        ]
+      },
+      "heat-4": {
+        "role": "tertiary",
+        "displayName": "Heat Step 4",
+        "canonical": "#D35A1C",
+        "oklch": "oklch(61.4% 0.168 43.3)",
+        "usage": "Demand map class 4 of 5, stepped not blended.",
+        "dark": "same in dark",
+        "tonalRamp": [
+          "#270000",
+          "#4E0100",
+          "#771F00",
+          "#A33B00",
+          "#D0581A",
+          "#F28251",
+          "#FFAB80",
+          "#FFD5AF"
+        ]
+      },
+      "heat-5": {
+        "role": "tertiary",
+        "displayName": "Heat Step 5",
+        "canonical": "#B02A1B",
+        "oklch": "oklch(49.9% 0.173 30.4)",
+        "usage": "Demand map class 5 of 5, stepped not blended.",
+        "dark": "same in dark",
+        "tonalRamp": [
+          "#2D0000",
+          "#550000",
+          "#800300",
+          "#AE281A",
+          "#CF5746",
+          "#EF816F",
+          "#FFAB9A",
+          "#FFD5C5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The one figure on a screen's teal band. Scales down, never wraps."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "A figure inside a panel."
+      },
+      "title-l": {
+        "displayName": "Title L",
+        "purpose": "Screen titles; AppBar at 22px."
+      },
+      "title-m": {
+        "displayName": "Title M",
+        "purpose": "Section headings; the band's store name at 700."
+      },
+      "title-s": {
+        "displayName": "Title S",
+        "purpose": "Row titles; at 700 and width 86-92 the strip value and section heading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text, wght axis lifted to 430 for daylight."
+      },
+      "body-strong": {
+        "displayName": "Body Strong",
+        "purpose": "Button labels, inline emphasis."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Meta lines, strip labels, filter-tab labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Nav labels and small print beside its value. Sentence case, never an eyebrow."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "OTP digits, order numbers, batch codes."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 6px 18px rgba(16, 32, 28, 0.14)",
+        "purpose": "Only for things that genuinely float (a dragged row). None in dark mode. Panels have no shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "instant",
+        "value": "90ms",
+        "purpose": "Micro state flips."
+      },
+      {
+        "name": "fast",
+        "value": "140ms",
+        "purpose": "Button press darkening; the nav selected-rule width."
+      },
+      {
+        "name": "base",
+        "value": "220ms",
+        "purpose": "Standard state transitions."
+      },
+      {
+        "name": "slow",
+        "value": "340ms",
+        "purpose": "Larger state changes."
+      },
+      {
+        "name": "deliberate",
+        "value": "520ms",
+        "purpose": "Values growing into place: forecast bars and the health dial."
+      },
+      {
+        "name": "standard",
+        "value": "cubic-bezier(0.33, 1, 0.68, 1)",
+        "purpose": "easeOutCubic; default easing."
+      },
+      {
+        "name": "emphasized",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "Values growing to their figure; screen switches."
+      },
+      {
+        "name": "press-feel",
+        "value": "scale 0.94 firm / 0.985 soft; decelerate down, overshoot on release",
+        "purpose": "V360Pressable on tabs, tiles and tappable panels. V360Button does not scale; it darkens."
+      },
+      {
+        "name": "reduce-motion",
+        "value": "all durations resolve to 0 via MotionScope",
+        "purpose": "Motion carries state only; no orchestrated entrances."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "single phone column with a 16px gutter; the web build renders the same column in a phone frame"
+      }
+    ],
+    "darkTheme": {
+      "canvas": "#0D1412",
+      "surface": "#131C1A",
+      "band": "#0B5F54",
+      "distributorBand": "#123B35",
+      "accent": "#2DB39D",
+      "onActionFill": "#04211C"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "V360Button.primary: teal block, 52px, 6px corners; darkens 14% ink on press, never shrinks. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<button class=\"ds-btn-primary\">Save sale</button>",
+      "css": ".ds-btn-primary{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;height:52px;padding:0 22px;background:#0B7768;color:#FFFFFF;border:none;border-radius:6px;font-size:15px;font-weight:600;line-height:22px;transition:background 140ms cubic-bezier(0.33,1,0.68,1);cursor:pointer}.ds-btn-primary:active{background:#0C6B5D}.ds-btn-primary:focus-visible{outline:2px solid #10201C;outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "V360Button.secondary: white block with a 1.5px ink keyline. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<button class=\"ds-btn-secondary\">Compare suppliers</button>",
+      "css": ".ds-btn-secondary{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;height:52px;padding:0 22px;background:#FFFFFF;color:#10201C;border:1.5px solid #10201C;border-radius:6px;font-size:15px;font-weight:600;transition:background 140ms;cursor:pointer}.ds-btn-secondary:active{background:#DBDEDD}.ds-btn-secondary:focus-visible{outline:2px solid #0B7768;outline-offset:2px}"
+    },
+    {
+      "name": "Tonal Button",
+      "kind": "button",
+      "refersTo": "button-tonal",
+      "description": "V360Button.tonal at 48px: the repeating row action (Reorder, 1-tap order). Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<button class=\"ds-btn-tonal\">Reorder</button>",
+      "css": ".ds-btn-tonal{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;height:48px;padding:0 18px;background:#E1EFEB;color:#075A4F;border:none;border-radius:6px;font-size:15px;font-weight:600;transition:background 140ms;cursor:pointer}.ds-btn-tonal:active{background:#C4D2CE}.ds-btn-tonal:focus-visible{outline:2px solid #0B7768;outline-offset:2px}"
+    },
+    {
+      "name": "Filter Tab",
+      "kind": "chip",
+      "refersTo": "filter-tab",
+      "description": "V360Tab: the one filter-tab component; ink when active, optional status square when off. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab\"><span class=\"ds-tab-sq\"></span>Running out</button><button class=\"ds-tab ds-tab-on\">All</button><button class=\"ds-tab\">Dairy</button></div>",
+      "css": ".ds-tabs{display:flex;gap:8px}.ds-tab{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;background:#FFFFFF;color:#10201C;border:1px solid #D5DEDA;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer}.ds-tab-sq{width:7px;height:7px;background:#E39A00}.ds-tab-on{background:#10201C;color:#FFFFFF;border-color:#10201C}.ds-tab:focus-visible{outline:2px solid #0B7768;outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "text-field",
+      "description": "Themed TextField: white, Ink Subtle 1px outline, 2px teal on focus. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search stock: milk, atta...\">",
+      "css": ".ds-input{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;width:100%;padding:14px;background:#FFFFFF;color:#10201C;border:1px solid #63726D;border-radius:6px;font-size:15px;line-height:22px}.ds-input::placeholder{color:#63726D}.ds-input:focus{outline:none;border:2px solid #0B7768;padding:13px}"
+    },
+    {
+      "name": "Pack Header with Declaration Strip",
+      "kind": "custom",
+      "refersTo": "pack-header",
+      "description": "PackHeader + DeclarationStrip: the flat teal band with the screen's one narrow figure and a ruled value-first strip. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<header class=\"ds-band\"><div class=\"ds-band-t\">Kumar General Stores</div><div class=\"ds-band-s\">Kothrud</div><div class=\"ds-band-fig\">&#8377;12,012</div><div class=\"ds-band-cap\">Today's sales</div><div class=\"ds-strip\"><div><b>16</b><span>entries</span></div><div><b>&#8377;1,76,205</b><span>this week</span></div><div><b>87</b><span>health score</span></div></div></header>",
+      "css": ".ds-band{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;background:#0B7768;color:#FFFFFF;padding:8px 16px 16px}.ds-band-t{font-size:20px;line-height:24px;font-weight:700;font-variation-settings:'wdth' 94}.ds-band-s{font-size:13px;color:#D9F0EA}.ds-band-fig{margin-top:16px;font-size:56px;line-height:56px;font-weight:700;letter-spacing:-0.5px;font-variation-settings:'wght' 700,'wdth' 78}.ds-band-cap{font-size:15px;color:#D9F0EA}.ds-strip{display:flex;margin-top:16px;border-top:1px solid rgba(255,255,255,.32);border-bottom:1px solid rgba(255,255,255,.32)}.ds-strip>div{flex:1;display:flex;flex-direction:column;padding:10px 8px 10px 12px;border-left:1px solid rgba(255,255,255,.32)}.ds-strip>div:first-child{border-left:none;padding-left:0}.ds-strip b{font-size:17px;font-variation-settings:'wght' 700,'wdth' 86}.ds-strip span{font-size:13px;color:#D9F0EA}"
+    },
+    {
+      "name": "Flash Band",
+      "kind": "custom",
+      "refersTo": "flash-band",
+      "description": "SignalBanner: flat marigold flash, ink type, top-right corner cut. One per screen. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<a class=\"ds-flash\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#10201C\" stroke-width=\"2\"><path d=\"M3 17l6-6 4 4 8-8M15 7h6v6\"/></svg><span><b>Ganesh Chaturthi in 16 days</b><small>Expect ~130% more demand for sweets</small></span></a>",
+      "css": ".ds-flash{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:12px;padding:12px 8px 12px 16px;background:#F5B216;color:#10201C;text-decoration:none;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);border-radius:2px}.ds-flash b{display:block;font-size:15px;font-weight:700}.ds-flash small{font-size:13px}.ds-flash:focus-visible{outline:2px solid #10201C;outline-offset:2px}.ds-flash:active{background:#DDA218}"
+    },
+    {
+      "name": "Ruled Row with Status Mark",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Ruled list rows inside one hairline panel: title, status square + ink word, tonal action. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-row\"><div><div class=\"ds-row-t\">Umbrella</div><div class=\"ds-row-m\"><span class=\"ds-sq\"></span><b>4 pc left</b> &middot; Reorder at 9 pc</div></div><button class=\"ds-row-btn\">Reorder</button></div><div class=\"ds-row\"><div><div class=\"ds-row-t\">Bread</div><div class=\"ds-row-m\"><span class=\"ds-sq ds-sq-red\"></span><b>Out of stock</b> &middot; Reorder at 30 pc</div></div><button class=\"ds-row-btn\">Reorder</button></div></div>",
+      "css": ".ds-panel{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;background:#FFFFFF;border:1px solid #D5DEDA;border-radius:8px;padding:0 16px}.ds-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 0;border-top:1px solid #D5DEDA}.ds-row:first-child{border-top:none}.ds-row-t{font-size:17px;line-height:22px;font-weight:600;color:#10201C}.ds-row-m{font-size:13px;color:#475853;display:flex;align-items:center;gap:6px}.ds-row-m b{color:#10201C;font-weight:600}.ds-sq{width:8px;height:8px;border-radius:1px;background:#E39A00}.ds-sq-red{background:#C62A1F}.ds-row-btn{height:48px;padding:0 18px;background:#E1EFEB;color:#075A4F;border:none;border-radius:6px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}.ds-row-btn:active{background:#C4D2CE}.ds-row-btn:focus-visible{outline:2px solid #0B7768;outline-offset:2px}"
+    },
+    {
+      "name": "Bottom Bar with Mic Disc",
+      "kind": "nav",
+      "refersTo": "bottom-nav",
+      "description": "AppShell bottom bar: flat and ruled, teal top mark on the selected tab, raised marigold mic disc with a white ring. Flutter widget; this HTML/CSS is a preview approximation, not the implementation.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-i ds-nav-on\">Home</a><a class=\"ds-nav-i\">Stock</a><a class=\"ds-nav-mic\"><span class=\"ds-disc\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"#10201C\"><path d=\"M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z\"/></svg></span>Speak</a><a class=\"ds-nav-i\">Forecast</a><a class=\"ds-nav-i\">Score</a></nav>",
+      "css": ".ds-nav{font-family:'Anek Latin','Anek Devanagari',sans-serif;font-variant-numeric:tabular-nums;display:flex;height:64px;background:#FFFFFF;border-top:1px solid #D5DEDA;margin-top:24px}.ds-nav-i,.ds-nav-mic{flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;font-size:12px;font-weight:500;color:#475853;cursor:pointer}.ds-nav-i:hover{color:#10201C}.ds-nav-on{color:#075A4F;font-weight:700}.ds-nav-on::before{content:'';position:absolute;top:0;left:50%;width:28px;height:3px;margin-left:-14px;background:#0B7768}.ds-nav-mic{color:#10201C;font-weight:700;padding-bottom:8px}.ds-disc{position:absolute;top:-20px;left:50%;margin-left:-29px;width:58px;height:58px;box-sizing:border-box;border-radius:999px;background:#F2A20C;border:4px solid #FFFFFF;display:flex;align-items:center;justify-content:center}.ds-nav-mic:focus-visible .ds-disc{border-color:#10201C}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Printed Pack",
+    "overview": "Vendor360 is printed, not lit. Every screen is set the way an FMCG packet on a kirana shelf is set: a few flat inks on white board, one brand colour owning the front of the pack, a dark ink for the small print, and a spot colour for the one thing that must be seen. The big figures (today's sales, a stock count, a score) are set narrow and heavy on Anek's width axis, the way a pack prints its product name and MRP, and the facts that qualify them sit in a ruled, value-first declaration strip like the MRP / Net qty / Best before box on the back panel.\n\nThe density is a shopkeeper's, not an analyst's: ruled lists instead of card grids, one teal band per screen, one marigold flash at most below it, and status printed as a small solid square beside an ink word. Colour carries meaning and nothing else. Hindi is the default language, so Latin and Devanagari are one design (Anek by Ek Type) and share one baseline.\n\nThe system refuses the SaaS vocabulary it replaced: gradient hero cards, stat-tile grids, glows, neon heatmaps, eyebrow labels, tinted pill chips, and entrance choreography.",
+    "keyCharacteristics": [
+      "Four inks on white board: teal band, green-black ink, marigold, MRP red; a cool board grey as the second neutral.",
+      "One flat teal band per screen carrying the title, the actions and the screen's one figure.",
+      "Figures narrow and heavy (width 78 to 86), running text at normal width; tabular figures everywhere.",
+      "Rules, not shadows: hairlines between rows, hairline borders on panels, no panel elevation.",
+      "Tight carton-dieline corners (4 to 12px); the microphone is the only round object.",
+      "Motion carries state only: a rolling figure, bars growing to value, rings while listening, buttons darkening on press."
+    ],
+    "rules": [
+      {
+        "name": "The One Meaning Rule",
+        "body": "A status ink means the same thing on every screen: teal is healthy or live, amber is low or attention, red is zero, expired, overdue or destructive. A colour is never used for decoration where it could be read as a status.",
+        "section": "colors"
+      },
+      {
+        "name": "The Marigold Reserve Rule",
+        "body": "Marigold belongs to the microphone, to attention, and to the one flash band. It is not a chart colour, a highlight colour, or a second brand colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Colour Lives in the Square Rule",
+        "body": "Status colour is printed in a small solid square (7 to 8px, 1px corner) beside a word set in ink. Tinted text on a tinted pill is what washes out first in sunlight, and the word guarantees colour is never the only signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The One File Rule",
+        "body": "Colour literals exist only in `v360_colors.dart`; everything else reads `context.v360.colors`. Contrast is asserted in tests against WCAG ratios, not by pinning hex values.",
+        "section": "colors"
+      },
+      {
+        "name": "The Narrow Figure Rule",
+        "body": "Key figures are narrowed on the `wdth` axis (78 to 86) and heavy; running text is never narrowed. Change weight or width only through the `weight()` and `narrow()` helpers so the `wght` axis moves with `fontWeight` and narrow figures are never synthetically emboldened.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Tabular figures are on every style. A figure that updates live must not change width, and price columns must align.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Baseline Rule",
+        "body": "Any label that may be set in either script carries the Latin strut (`v360Strut`), so Hindi and English beside each other sit on one baseline instead of the Devanagari riding about 3dp high.",
+        "section": "typography"
+      },
+      {
+        "name": "The Value-First Rule",
+        "body": "A figure is printed first and bold with its label small beneath or beside it (\"16 entries\"). No small grey label above a number, no tracked-out uppercase: section headings are real headings in ink, in the case they were written.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rule-Not-Lift Rule",
+        "body": "A panel is separated by a rule, never by a shadow. If you reach for elevation on a card, draw a hairline instead.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do print exactly one flat teal band per screen and put the screen's one figure on it in Display (56px, width 78).",
+      "Do keep status inks consistent everywhere: teal for healthy/live, amber for low/attention, MRP Red only for zero, expired, overdue or destructive.",
+      "Do print status as a solid 7 to 8px square beside an ink word.",
+      "Do set qualifying facts value-first in a ruled Declaration Strip.",
+      "Do use ruled rows inside at most one hairline-bordered panel for lists.",
+      "Do make primary row actions at least 48px (tonal medium button); reserve the 40px size for secondary actions inside a row.",
+      "Do derive a header count from the same read as the rows beneath it (\"Running out · 6\" lists six).",
+      "Do name every window in the copy: \"in 3 days\", \"next 7 days\".",
+      "Do use V360Tab for every filter row.",
+      "Do put the Latin strut on any label that may render in Devanagari.",
+      "Do change weight and width through `weight()` and `narrow()`.",
+      "Do keep colour literals in `v360_colors.dart` and assert contrast ratios in tests.",
+      "Do let motion carry state only: a rolling figure when a sale lands, factor bars growing to value, pulsing rings while listening, a darkening press."
+    ],
+    "donts": [
+      "Don't use gradients, glows or coloured halos on any surface, including charts and the map.",
+      "Don't put shadows on panels; use a hairline.",
+      "Don't lay out key figures as a grid of stat tiles or a gradient hero card.",
+      "Don't set small grey or uppercase letterspaced labels above headings or figures.",
+      "Don't use tinted pill chips or coloured status text; the colour goes in the square.",
+      "Don't use marigold for chart decoration, highlights or anything other than the mic, attention and the one flash band.",
+      "Don't print more than one flash band on a screen.",
+      "Don't let a map label overprint another zone or a pin; leave it off instead.",
+      "Don't round panels beyond 12px or make buttons pills; the pill radius is for things round in life.",
+      "Don't add staggered or orchestrated entrance animations.",
+      "Don't shrink buttons on press.",
+      "Don't use cream or warm off-white as the second neutral; the board grey is cool."
+    ]
+  }
+}

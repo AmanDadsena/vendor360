@@ -74,11 +74,13 @@ OTP is returned by the request endpoint and shown on screen.
 | Phone | Signs in as |
 |---|---|
 | `9876510000` | **Kumar General Stores** — the shop |
-| `9820010009` | **Viman Nagar Cash & Carry** — the distributor |
+| `9820010003` | **Balaji Distributors** — the distributor, on the last seed |
 
 The seed prints both, and picks the distributor with the fullest order book
 rather than whichever was created first — an account with nothing waiting and
-nobody running low makes the console look broken rather than calm.
+nobody running low makes the console look broken rather than calm. That choice
+is made fresh on every `--reset`, so trust the number the seed prints over the
+one in this table.
 
 The role is a property of the account, not of the sign-in form, so the same
 screen serves both and the app builds whichever shell the server resolves.
@@ -103,6 +105,25 @@ cd packages/vendor360_core && dart test
 
 410 tests across the four suites. The backend cases are named for the Test
 Plan's `TC-` identifiers.
+
+---
+
+## Design
+
+The interface is printed like the packets on a kirana shelf: flat inks on
+white board, one teal band per screen carrying its most important number,
+figures set narrow in Anek (an Indian typeface that draws Hindi, Marathi and
+English as one design), status as a small square of colour beside words in
+ink, and ruled lists rather than grids of cards. No gradients, glows or
+shadows. The microphone is the one round, loud object on every screen: a
+marigold disc set into the bottom bar. The distributor's half of the app
+prints on a deeper bottle-green band, so the two sides are never confused.
+
+`PRODUCT.md` records who the app is for and what the design must keep;
+`DESIGN.md` records the system itself, including the tokens, components and
+the rules behind them. Every colour lives in
+`packages/vendor360_ui/lib/src/tokens/v360_colors.dart`, and its tests assert
+WCAG contrast rather than pinning hex values.
 
 ---
 
