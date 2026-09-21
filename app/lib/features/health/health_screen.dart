@@ -129,7 +129,13 @@ class _Body extends ConsumerWidget {
                 if (i < score.components.length - 1)
                   Divider(color: colors.hairline, height: 1),
               ],
-              Divider(color: colors.hairline, height: v360.spacing.xl),
+              // A heavy rule over the total, the way a pack's nutrition
+              // table closes its panel.
+              Divider(
+                color: colors.ink,
+                thickness: 2,
+                height: v360.spacing.xl,
+              ),
               Row(
                 children: <Widget>[
                   Expanded(
