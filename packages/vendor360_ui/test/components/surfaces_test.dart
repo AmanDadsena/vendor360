@@ -38,14 +38,14 @@ void main() {
 
     // A shadow on a near-black canvas reads as mud, so dark separates with
     // a hairline border instead.
-    testWidgets('has a shadow in light and a border in dark', (tester) async {
+    testWidgets('is flat and ruled in both themes', (tester) async {
       await tester.pumpWidget(
         carryHarness(const V360Card(child: Text('x'))),
       );
       await tester.pumpAndSettle();
       final light = _cardDecoration(tester);
-      expect(light.boxShadow, isNotEmpty);
-      expect(light.border, isNull);
+      expect(light.boxShadow ?? const <BoxShadow>[], isEmpty);
+      expect(light.border, isNotNull);
 
       await tester.pumpWidget(carryHarness(
         const V360Card(child: Text('x')),
@@ -53,7 +53,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
       final dark = _cardDecoration(tester);
-      expect(dark.boxShadow, isEmpty);
+      expect(dark.boxShadow ?? const <BoxShadow>[], isEmpty);
       expect(dark.border, isNotNull);
     });
 

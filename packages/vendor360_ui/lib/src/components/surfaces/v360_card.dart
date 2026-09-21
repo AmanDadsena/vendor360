@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/v360_elevation.dart';
 import '../../tokens/v360_spacing.dart';
 import '../../tokens/v360_theme.dart';
 import '../controls/v360_pressable.dart';
 
-/// The Vendor360 card surface.
+/// The Vendor360 panel surface.
 ///
-/// Light mode carries a soft shadow; dark mode uses a hairline border
-/// instead, because a shadow on a near-black canvas reads as mud.
+/// Flat and ruled in both themes: a panel is separated from the page by a
+/// hairline, the way a pack separates its small-print panel, not by a
+/// shadow lifting it off the board.
 class V360Card extends StatelessWidget {
   const V360Card({
     super.key,
@@ -43,8 +43,7 @@ class V360Card extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? colors.surface,
         borderRadius: BorderRadius.circular(radius),
-        border: v360.isDark ? Border.all(color: colors.hairline) : null,
-        boxShadow: V360Elevation.card(v360.brightness),
+        border: Border.all(color: colors.hairline),
       ),
       child: child,
     );

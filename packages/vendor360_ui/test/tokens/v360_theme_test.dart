@@ -17,7 +17,7 @@ void main() {
     expect(v360.brightness, Brightness.light);
     expect(v360.isDark, isFalse);
     expect(v360.colors.band, V360Colors.light().band);
-    expect(v360.spacing.gutter, 20);
+    expect(v360.spacing.gutter, 16);
   });
 
   testWidgets('context.v360 exposes the dark palette', (tester) async {
