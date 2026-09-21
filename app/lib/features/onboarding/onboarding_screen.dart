@@ -59,7 +59,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _verify() async {
-    final ok = await ref.read(sessionProvider.notifier).verify(
+    final ok = await ref
+        .read(sessionProvider.notifier)
+        .verify(
           phone: _phone.text.trim(),
           code: _code.text.trim(),
           language: _language,
@@ -128,36 +130,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                   strings: s,
                                 )
                               : _step == _Step.role
-                                  ? _RoleStep(
-                                      key: const ValueKey('role'),
-                                      selected: _intent,
-                                      onSelect: (role) =>
-                                          setState(() => _intent = role),
-                                      onContinue: () =>
-                                          setState(() => _step = _Step.phone),
-                                      onBack: () => setState(
-                                          () => _step = _Step.language),
-                                    )
-                                  : _step == _Step.phone
-                                      ? _PhoneStep(
-                                          key: const ValueKey('phone'),
-                                          controller: _phone,
-                                          loading: session.loading,
-                                          onSubmit: _sendCode,
-                                          onBack: () => setState(
-                                              () => _step = _Step.role),
-                                          strings: s,
-                                        )
-                                      : _CodeStep(
-                                          key: const ValueKey('code'),
-                                          controller: _code,
-                                          loading: session.loading,
-                                          devCode: _devCode,
-                                          onSubmit: _verify,
-                                          onBack: () => setState(
-                                              () => _step = _Step.phone),
-                                          strings: s,
-                                        ),
+                              ? _RoleStep(
+                                  key: const ValueKey('role'),
+                                  selected: _intent,
+                                  onSelect: (role) =>
+                                      setState(() => _intent = role),
+                                  onContinue: () =>
+                                      setState(() => _step = _Step.phone),
+                                  onBack: () =>
+                                      setState(() => _step = _Step.language),
+                                )
+                              : _step == _Step.phone
+                              ? _PhoneStep(
+                                  key: const ValueKey('phone'),
+                                  controller: _phone,
+                                  loading: session.loading,
+                                  onSubmit: _sendCode,
+                                  onBack: () =>
+                                      setState(() => _step = _Step.role),
+                                  strings: s,
+                                )
+                              : _CodeStep(
+                                  key: const ValueKey('code'),
+                                  controller: _code,
+                                  loading: session.loading,
+                                  devCode: _devCode,
+                                  onSubmit: _verify,
+                                  onBack: () =>
+                                      setState(() => _step = _Step.phone),
+                                  strings: s,
+                                ),
                         ),
                         if (session.error != null) ...<Widget>[
                           SizedBox(height: v360.spacing.lg),
@@ -205,7 +207,10 @@ class _Front extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
-            child: Padding(
+            // Full width of the column, so the name starts on the same line
+            // as the steps below instead of being centred as a block.
+            child: Container(
+              width: double.infinity,
               padding: EdgeInsets.fromLTRB(
                 v360.spacing.gutter,
                 v360.spacing.x4,
@@ -266,27 +271,27 @@ class _LanguageStep extends StatelessWidget {
     final v360 = context.v360;
 
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          SectionLabel(strings.chooseLanguage),
-          SizedBox(height: v360.spacing.md),
-          for (final language in AppLanguage.values) ...<Widget>[
-            _LanguageOption(
-              language: language,
-              selected: language == selected,
-              onTap: () => onSelect(language),
-            ),
-            SizedBox(height: v360.spacing.md),
-          ],
-          SizedBox(height: v360.spacing.sm),
-          V360Button.primary(
-            label: strings.continueLabel,
-            expand: true,
-            trailingIcon: Icons.arrow_forward_rounded,
-            onPressed: onContinue,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        SectionLabel(strings.chooseLanguage),
+        SizedBox(height: v360.spacing.md),
+        for (final language in AppLanguage.values) ...<Widget>[
+          _LanguageOption(
+            language: language,
+            selected: language == selected,
+            onTap: () => onSelect(language),
           ),
+          SizedBox(height: v360.spacing.md),
         ],
-      );
+        SizedBox(height: v360.spacing.sm),
+        V360Button.primary(
+          label: strings.continueLabel,
+          expand: true,
+          trailingIcon: Icons.arrow_forward_rounded,
+          onPressed: onContinue,
+        ),
+      ],
+    );
   }
 }
 
@@ -411,7 +416,11 @@ class _PhoneStep extends StatelessWidget {
           onPressed: controller.text.trim().length >= 10 ? onSubmit : null,
         ),
         SizedBox(height: v360.spacing.sm),
-        V360Button.ghost(label: strings.cancel, expand: true, onPressed: onBack),
+        V360Button.ghost(
+          label: strings.cancel,
+          expand: true,
+          onPressed: onBack,
+        ),
       ],
     );
   }
@@ -486,7 +495,6 @@ class _CodeStep extends StatelessWidget {
   }
 }
 
-
 /// Which side of the marketplace they are on.
 ///
 /// Asked before the phone number rather than after, because it decides what
@@ -534,7 +542,8 @@ class _RoleStep extends StatelessWidget {
         _RoleOption(
           icon: Icons.storefront_rounded,
           title: 'I run a shop',
-          body: 'Forecast what will sell, log stock by speaking, and order '
+          body:
+              'Forecast what will sell, log stock by speaking, and order '
               'from wholesalers before you run out.',
           selected: selected == Principal.vendor,
           onTap: () => onSelect(Principal.vendor),
@@ -543,13 +552,18 @@ class _RoleStep extends StatelessWidget {
         _RoleOption(
           icon: Icons.local_shipping_rounded,
           title: 'I supply shops',
-          body: 'See what the shops on your book will need, answer their '
+          body:
+              'See what the shops on your book will need, answer their '
               'orders, and know who is about to run out.',
           selected: selected == Principal.distributor,
           onTap: () => onSelect(Principal.distributor),
         ),
         SizedBox(height: v360.spacing.xl),
-        V360Button.primary(label: 'Continue', expand: true, onPressed: onContinue),
+        V360Button.primary(
+          label: 'Continue',
+          expand: true,
+          onPressed: onContinue,
+        ),
         SizedBox(height: v360.spacing.sm),
         V360Button.ghost(label: 'Back', expand: true, onPressed: onBack),
       ],

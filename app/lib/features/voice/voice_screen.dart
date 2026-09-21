@@ -449,7 +449,6 @@ class _TranscriptField extends StatelessWidget {
           label: 'Read this',
           expand: true,
           loading: busy,
-          leadingIcon: Icons.auto_awesome_rounded,
           onPressed: onSubmit,
         ),
       ],

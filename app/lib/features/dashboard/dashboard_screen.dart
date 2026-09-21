@@ -87,7 +87,7 @@ class _DashboardBody extends StatelessWidget {
                   detail: data.topSignalDetail ?? '',
                   onTap: () => context.go('/forecast'),
                 ),
-                gap,
+                SizedBox(height: v360.spacing.xxl),
               ],
               _RunningOut(strings: strings, lowCount: data.lowStockCount),
               if (data.expiringSoonCount > 0) ...<Widget>[
@@ -150,11 +150,13 @@ class _Front extends ConsumerWidget {
       ),
       figureCaption: quiet ? strings.noSalesYet : strings.todaySales,
       facts: <PackFact>[
+        // Labels in one case: the strip reads as three facts, not three
+        // headings. A no-op for Devanagari, which has no case.
         PackFact('${data.todayTransactionCount}', strings.entries),
-        PackFact(data.weekSalesValue.display, strings.thisWeek),
+        PackFact(data.weekSalesValue.display, strings.thisWeek.toLowerCase()),
         PackFact(
           data.healthScore == null ? '—' : '${data.healthScore!.round()}',
-          strings.healthScore,
+          strings.healthScore.toLowerCase(),
           onTap: () => context.go('/health'),
         ),
       ],
