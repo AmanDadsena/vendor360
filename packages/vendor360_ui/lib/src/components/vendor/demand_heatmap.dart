@@ -282,7 +282,7 @@ class _HeatPainter extends CustomPainter {
     // Radius scales with the canvas so the map reads the same on a phone and
     // on a tablet, and with the square root of intensity so a disc's *area*
     // tracks demand — twice the demand is twice the ink, not four times.
-    final maxRadius = math.min(size.width, size.height) * 0.13;
+    final maxRadius = math.min(size.width, size.height) * 0.09;
 
     // Biggest first, so a small cell is never buried under a large one.
     final ordered = <HeatCell>[...cells]
@@ -329,22 +329,28 @@ class _HeatPainter extends CustomPainter {
       }
     }
 
+    for (final pin in suppliers) {
+      _paintSupplier(canvas, size, pin);
+    }
+
+    // Labels last, and only where they fit: suppliers first (they are the
+    // places you can call), then the busiest cells' top item. A label that
+    // would land on another is left off rather than printed over it — a
+    // printed map chooses which names to set; it never stacks them.
     if (progress > 0.9) {
+      final placed = <Rect>[];
+      for (final pin in suppliers) {
+        final at = bounds.project(pin.lat, pin.lon, size);
+        _paintLabel(canvas, size, pin.name, Offset(at.dx, at.dy - 24),
+            pinStyle, placed);
+      }
       for (final cell in ordered) {
         if (cell.topSku == null) continue;
         final centre = bounds.project(cell.lat, cell.lon, size);
         final radius = maxRadius * (0.32 + 0.68 * math.sqrt(cell.intensity));
-        _paintText(
-          canvas,
-          cell.topSku!,
-          Offset(centre.dx, centre.dy + radius + 4),
-          labelStyle,
-        );
+        _paintLabel(canvas, size, cell.topSku!,
+            Offset(centre.dx, centre.dy + radius + 3), labelStyle, placed);
       }
-    }
-
-    for (final pin in suppliers) {
-      _paintSupplier(canvas, size, pin);
     }
   }
 
@@ -376,13 +382,16 @@ class _HeatPainter extends CustomPainter {
     canvas.drawRect(rect.inflate(1.5), Paint()..color = paper);
     canvas.drawRect(rect, Paint()..color = ink.withValues(alpha: progress));
     canvas.restore();
-
-    if (progress > 0.9) {
-      _paintText(canvas, pin.name, Offset(at.dx, at.dy - 26), pinStyle);
-    }
   }
 
-  void _paintText(Canvas canvas, String text, Offset at, TextStyle style) {
+  void _paintLabel(
+    Canvas canvas,
+    Size size,
+    String text,
+    Offset at,
+    TextStyle style,
+    List<Rect> placed,
+  ) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
@@ -390,20 +399,23 @@ class _HeatPainter extends CustomPainter {
       ellipsis: '…',
     )..layout(maxWidth: 120);
 
-    final origin = Offset(at.dx - painter.width / 2, at.dy);
+    final origin = Offset(
+      (at.dx - painter.width / 2).clamp(4, size.width - painter.width - 4),
+      at.dy.clamp(2, size.height - painter.height - 2),
+    );
+    final box = Rect.fromLTWH(
+      origin.dx - 4,
+      origin.dy - 1,
+      painter.width + 8,
+      painter.height + 2,
+    );
+    if (placed.any((r) => r.overlaps(box.inflate(2)))) return;
+    placed.add(box);
 
     // A paper plate behind the label, like a printed map's label knock-out,
     // so text stays readable over a disc.
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          origin.dx - 4,
-          origin.dy - 1,
-          painter.width + 8,
-          painter.height + 2,
-        ),
-        const Radius.circular(2),
-      ),
+      RRect.fromRectAndRadius(box, const Radius.circular(2)),
       Paint()..color = paper.withValues(alpha: 0.92),
     );
 
