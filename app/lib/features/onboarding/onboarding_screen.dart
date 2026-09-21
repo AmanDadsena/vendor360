@@ -102,26 +102,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   SizedBox(height: v360.spacing.x4),
-                  const V360Reveal(child: _Brandmark()),
+                  _Brandmark(),
                   SizedBox(height: v360.spacing.x3),
 
-                  V360Reveal(
-                    delayIndex: 1,
-                    child: Text(
+                  Text(
                       s.welcome,
                       textAlign: TextAlign.center,
                       style: v360.text.titleL.copyWith(color: colors.ink),
                     ),
-                  ),
                   SizedBox(height: v360.spacing.sm),
-                  V360Reveal(
-                    delayIndex: 2,
-                    child: Text(
+                  Text(
                       s.welcomeDetail,
                       textAlign: TextAlign.center,
                       style: v360.text.body.copyWith(color: colors.inkMuted),
                     ),
-                  ),
                   SizedBox(height: v360.spacing.x3),
 
                   AnimatedSwitcher(
@@ -286,9 +280,7 @@ class _LanguageStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final v360 = context.v360;
 
-    return V360Reveal(
-      delayIndex: 3,
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           SectionLabel(strings.chooseLanguage),
@@ -309,8 +301,7 @@ class _LanguageStep extends StatelessWidget {
             onPressed: onContinue,
           ),
         ],
-      ),
-    );
+      );
   }
 }
 

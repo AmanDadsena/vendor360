@@ -75,8 +75,7 @@ class ExpiryScreen extends ConsumerWidget {
                   v360.spacing.gutter, 0, v360.spacing.gutter, v360.spacing.x5,
                 ),
                 children: <Widget>[
-                  V360Reveal(
-                    child: Row(
+                  Row(
                       children: <Widget>[
                         Expanded(
                           child: StatTile(
@@ -98,11 +97,8 @@ class ExpiryScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
                   SizedBox(height: v360.spacing.lg),
-                  V360Reveal(
-                    delayIndex: 1,
-                    child: Container(
+                  Container(
                       padding: EdgeInsets.all(v360.spacing.md),
                       decoration: BoxDecoration(
                         color: colors.accentSurface,
@@ -131,14 +127,11 @@ class ExpiryScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                  ),
                   SizedBox(height: v360.spacing.xl),
                   const SectionLabel('Clear these first'),
                   SizedBox(height: v360.spacing.md),
                   for (var i = 0; i < list.length; i++)
-                    V360Reveal(
-                      delayIndex: i,
-                      child: ExpiryRow(
+                    ExpiryRow(
                         skuName: list[i].skuName,
                         quantityLabel: list[i].quantity.display,
                         daysLeft: list[i].daysLeft,
@@ -147,7 +140,6 @@ class ExpiryScreen extends ConsumerWidget {
                         onDiscount: () => _confirmDiscount(context, list[i]),
                         onMarkWasted: () => _markWasted(context, ref, list[i]),
                       ),
-                    ),
                 ],
               ),
             );

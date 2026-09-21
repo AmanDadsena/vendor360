@@ -66,12 +66,9 @@ class AccuracyScreen extends ConsumerWidget {
                     const SectionLabel('Per item — best predicted first'),
                     SizedBox(height: v360.spacing.md),
                     for (var i = 0; i < items.length && i < 12; i++)
-                      V360Reveal(
-                        delayIndex: i,
-                        child: _ItemAccuracyRow(
+                      _ItemAccuracyRow(
                           row: Map<String, dynamic>.from(items[i] as Map),
                         ),
-                      ),
                     SizedBox(height: v360.spacing.xl),
                   ],
                 );

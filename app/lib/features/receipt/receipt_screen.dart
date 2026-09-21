@@ -342,10 +342,7 @@ class _ReceiptReview extends StatelessWidget {
         SizedBox(height: v360.spacing.md),
 
         for (var i = 0; i < result.lines.length; i++)
-          V360Reveal(
-            delayIndex: i,
-            child: _LineRow(line: result.lines[i], dateFormat: dateFormat),
-          ),
+          _LineRow(line: result.lines[i], dateFormat: dateFormat),
 
         SizedBox(height: v360.spacing.lg),
         V360Button.primary(

@@ -80,20 +80,15 @@ class _DashboardBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                V360Reveal(child: _Greeting(vendor: data.vendor, queued: queued, syncing: sync.syncing)),
+                _Greeting(vendor: data.vendor, queued: queued, syncing: sync.syncing),
                 SizedBox(height: v360.spacing.xxl),
 
                 // Today's money, given the most visual weight on the screen.
-                V360Reveal(
-                  delayIndex: 1,
-                  child: _TodayCard(data: data, strings: strings),
-                ),
+                _TodayCard(data: data, strings: strings),
                 SizedBox(height: v360.spacing.lg),
 
                 // Things demanding action.
-                V360Reveal(
-                  delayIndex: 2,
-                  child: Row(
+                Row(
                     children: <Widget>[
                       Expanded(
                         child: StatTile(
@@ -120,35 +115,28 @@ class _DashboardBody extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
                 SizedBox(height: v360.spacing.lg),
 
                 // The forward-looking signal — the thing that makes this
                 // different from a ledger app.
                 if (data.topSignal != null)
-                  V360Reveal(
-                    delayIndex: 3,
-                    child: SignalBanner(
+                  SignalBanner(
                       title: data.topSignal!,
                       detail: data.topSignalDetail ?? '',
                       onTap: () => context.go('/forecast'),
                     ),
-                  ),
                 SizedBox(height: v360.spacing.xxl),
 
-                V360Reveal(delayIndex: 4, child: SectionLabel(strings.quickActions)),
+                SectionLabel(strings.quickActions),
                 SizedBox(height: v360.spacing.md),
-                V360Reveal(delayIndex: 5, child: _QuickActions(strings: strings, data: data)),
+                _QuickActions(strings: strings, data: data),
                 SizedBox(height: v360.spacing.xxl),
 
-                V360Reveal(
-                  delayIndex: 6,
-                  child: _ScoreCard(
+                _ScoreCard(
                     score: data.healthScore,
                     band: data.healthBand,
                     strings: strings,
                   ),
-                ),
                 SizedBox(height: v360.spacing.x5),
               ],
             ),

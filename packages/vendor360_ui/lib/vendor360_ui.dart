@@ -24,7 +24,6 @@ export 'src/tokens/v360_theme.dart';
 
 export 'src/motion/motion_scope.dart';
 export 'src/motion/v360_transitions.dart';
-export 'src/motion/v360_reveal.dart';
 
 export 'src/components/buttons/v360_button.dart';
 export 'src/components/buttons/v360_icon_button.dart';

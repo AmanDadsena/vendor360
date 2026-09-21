@@ -76,10 +76,7 @@ class PoolsScreen extends ConsumerWidget {
                       ),
                       SizedBox(height: v360.spacing.xl),
                       for (var i = 0; i < list.length; i++)
-                        V360Reveal(
-                          delayIndex: i,
-                          child: _PoolCard(pool: list[i]),
-                        ),
+                        _PoolCard(pool: list[i]),
                     ],
                   ),
                 ),

@@ -87,10 +87,7 @@ class ForecastScreen extends ConsumerWidget {
                           ),
                         );
                       }
-                      return V360Reveal(
-                        delayIndex: index - 1,
-                        child: _ForecastCard(forecast: list[index - 1]),
-                      );
+                      return _ForecastCard(forecast: list[index - 1]);
                     },
                   ),
           ),

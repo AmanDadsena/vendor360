@@ -140,10 +140,7 @@ class InventoryScreen extends ConsumerWidget {
                             v360.spacing.x5,
                           ),
                           itemCount: list.length,
-                          itemBuilder: (context, index) => V360Reveal(
-                            delayIndex: index,
-                            child: _ItemRow(item: list[index], strings: s),
-                          ),
+                          itemBuilder: (context, index) => _ItemRow(item: list[index], strings: s),
                         ),
                       );
                 },

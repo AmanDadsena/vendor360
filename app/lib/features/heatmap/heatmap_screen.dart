@@ -65,21 +65,17 @@ class HeatmapScreen extends ConsumerWidget {
               data: (result) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  V360Reveal(
-                    child: DemandHeatmap(
+                  DemandHeatmap(
                       cells: result.cells,
                       suppliers: result.suppliers,
                       height: 340,
                       onCellTap: (cell) => _showCell(context, cell),
                     ),
-                  ),
                   SizedBox(height: v360.spacing.lg),
                   const HeatmapLegend(),
                   SizedBox(height: v360.spacing.xl),
 
-                  V360Reveal(
-                    delayIndex: 1,
-                    child: Row(
+                  Row(
                       children: <Widget>[
                         Expanded(
                           child: StatTile(
@@ -100,7 +96,6 @@ class HeatmapScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
 
                   if (result.suppressed > 0) ...<Widget>[
                     SizedBox(height: v360.spacing.lg),
@@ -117,10 +112,7 @@ class HeatmapScreen extends ConsumerWidget {
                   const SectionLabel('Nearest suppliers'),
                   SizedBox(height: v360.spacing.sm),
                   for (var i = 0; i < result.suppliers.length; i++)
-                    V360Reveal(
-                      delayIndex: i,
-                      child: _SupplierRow(pin: result.suppliers[i]),
-                    ),
+                    _SupplierRow(pin: result.suppliers[i]),
                 ],
               ),
             ),

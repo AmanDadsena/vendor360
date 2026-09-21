@@ -311,9 +311,7 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
               SizedBox(height: v360.spacing.lg),
 
               for (var i = 0; i < _lines.length; i++)
-                V360Reveal(
-                  delayIndex: i,
-                  child: ConfidenceRow(
+                ConfidenceRow(
                     skuName: _lines[i].skuName,
                     quantity: _lines[i].qty,
                     unit: _lines[i].unit,
@@ -328,7 +326,6 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
                     ),
                     onRemove: () => setState(() => _lines.removeAt(i)),
                   ),
-                ),
 
               SizedBox(height: v360.spacing.lg),
               V360Button.primary(

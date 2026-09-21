@@ -84,20 +84,16 @@ class _Body extends ConsumerWidget {
         ),
         SizedBox(height: v360.spacing.xxl),
 
-        V360Reveal(
-          child: Center(
+        Center(
             child: HealthDial(
               score: score.score,
               provisional: score.provisional,
               bandLabel: score.band.label,
             ),
           ),
-        ),
         SizedBox(height: v360.spacing.xl),
 
-        V360Reveal(
-          delayIndex: 1,
-          child: Container(
+        Container(
             padding: EdgeInsets.all(v360.spacing.lg),
             decoration: BoxDecoration(
               color: score.provisional ? colors.warningSurface : colors.accentSurface,
@@ -127,15 +123,12 @@ class _Body extends ConsumerWidget {
               ],
             ),
           ),
-        ),
         SizedBox(height: v360.spacing.x3),
 
-        V360Reveal(delayIndex: 2, child: const SectionLabel('How this is calculated')),
+        const SectionLabel('How this is calculated'),
         SizedBox(height: v360.spacing.sm),
 
-        V360Reveal(
-          delayIndex: 3,
-          child: V360Card(
+        V360Card(
             child: Column(
               children: <Widget>[
                 for (var i = 0; i < score.components.length; i++) ...<Widget>[
@@ -174,21 +167,17 @@ class _Body extends ConsumerWidget {
               ],
             ),
           ),
-        ),
-        V360Reveal(
-          delayIndex: 4,
-          child: V360Button.secondary(
+        V360Button.secondary(
             label: 'View Credit Assessment Report',
             leadingIcon: Icons.description_outlined,
             expand: true,
             onPressed: () => _showCreditReportModal(context, ref),
           ),
-        ),
         SizedBox(height: v360.spacing.x3),
 
-        V360Reveal(delayIndex: 5, child: SectionLabel(strings.shareWithLender)),
+        SectionLabel(strings.shareWithLender),
         SizedBox(height: v360.spacing.sm),
-        V360Reveal(delayIndex: 6, child: _ConsentList(strings: strings)),
+        _ConsentList(strings: strings),
 
         SizedBox(height: v360.spacing.xl),
         V360Button.ghost(
