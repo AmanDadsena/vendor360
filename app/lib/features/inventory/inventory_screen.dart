@@ -28,126 +28,110 @@ class InventoryScreen extends ConsumerWidget {
     final lowOnly = ref.watch(lowOnlyProvider);
     final category = ref.watch(inventoryFilterProvider);
 
+    final count = items.value?.length;
+
     return Scaffold(
       backgroundColor: v360.colors.canvas,
-      body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                v360.spacing.gutter,
-                v360.spacing.lg,
-                v360.spacing.gutter,
-                v360.spacing.md,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          s.inventory,
-                          style: v360.text.titleL.copyWith(color: v360.colors.ink),
-                        ),
-                      ),
-                      FilterChip(
-                        selected: lowOnly,
-                        label: Text(s.reorderNow),
-                        avatar: Icon(
-                          Icons.trending_down_rounded,
-                          size: 16,
-                          color: lowOnly
-                              ? v360.colors.warningText
-                              : v360.colors.inkSubtle,
-                        ),
-                        onSelected: (value) =>
-                            ref.read(lowOnlyProvider.notifier).value = value,
-                        selectedColor: v360.colors.warningSurface,
-                        backgroundColor: v360.colors.surface,
-                        side: BorderSide(color: v360.colors.hairline),
-                        showCheckmark: false,
-                        labelStyle: v360.text.caption.copyWith(
-                          color: lowOnly
-                              ? v360.colors.warningText
-                              : v360.colors.inkMuted,
-                        ).weight(FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: v360.spacing.sm),
-                  const _InventorySearchBar(),
-                  SizedBox(height: v360.spacing.sm),
-                  _CategoryFilter(selected: category),
-                ],
-              ),
+      body: Column(
+        children: <Widget>[
+          PackHeader(
+            title: s.inventory,
+            subtitle: count == null
+                ? null
+                : lowOnly
+                    ? '$count ${s.runningOut.toLowerCase()}'
+                    : '$count items',
+            bottom: const _InventorySearchBar(),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              v360.spacing.gutter,
+              v360.spacing.md,
+              v360.spacing.gutter,
+              v360.spacing.sm,
             ),
-            Expanded(
-              child: items.when(
-                loading: () => ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: v360.spacing.gutter),
-                  itemCount: 6,
-                  itemBuilder: (context, _) => Padding(
-                    padding: EdgeInsets.only(bottom: v360.spacing.md),
-                    child: const V360Skeleton(height: 82),
-                  ),
+            child: Row(
+              children: <Widget>[
+                V360Segmented<bool>(
+                  value: lowOnly,
+                  onChanged: (value) =>
+                      ref.read(lowOnlyProvider.notifier).value = value,
+                  segments: <V360Segment<bool>>[
+                    V360Segment<bool>(value: false, label: s.allItems),
+                    V360Segment<bool>(value: true, label: s.runningOut),
+                  ],
                 ),
-                error: (error, _) => EmptyState(
-                  icon: Icons.cloud_off_rounded,
-                  title: 'Could not load stock',
-                  body: '$error',
-                  action: V360Button.primary(
-                    label: s.retry,
-                    onPressed: () => ref.invalidate(inventoryProvider),
-                  ),
-                ),
-                data: (list) {
-                  final searchQ = ref.watch(inventorySearchQueryProvider);
-                  final isSearching = searchQ != null && searchQ.isNotEmpty;
-                  if (list.isEmpty) {
-                    return EmptyState(
-                      icon: Icons.inventory_2_outlined,
-                      title: isSearching
-                          ? 'No items matching "$searchQ"'
-                          : (lowOnly ? 'Nothing needs reordering' : s.noData),
-                      body: isSearching
-                          ? 'Try searching with a different name or reset filter.'
-                          : (lowOnly
-                              ? 'Every item is above its reorder point.'
-                              : 'Log a sale or scan a receipt to get started.'),
-                      action: isSearching
-                          ? V360Button.ghost(
-                              label: 'Clear search',
-                              onPressed: () => ref
-                                  .read(inventorySearchQueryProvider.notifier)
-                                  .value = null,
-                            )
-                          : null,
-                    );
-                  }
-                  return RefreshIndicator(
-                        color: v360.colors.accent,
-                        onRefresh: () async {
-                          HapticFeedback.lightImpact();
-                          await ref.read(syncProvider.notifier).flush();
-                          ref.invalidate(inventoryProvider);
-                        },
-                        child: ListView.builder(
-                          padding: EdgeInsets.fromLTRB(
-                            v360.spacing.gutter,
-                            0,
-                            v360.spacing.gutter,
-                            v360.spacing.x5,
-                          ),
-                          itemCount: list.length,
-                          itemBuilder: (context, index) => _ItemRow(item: list[index], strings: s),
-                        ),
-                      );
-                },
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          _CategoryFilter(selected: category),
+          const Divider(),
+          Expanded(
+            child: items.when(
+              loading: () => ListView.builder(
+                padding: EdgeInsets.all(v360.spacing.gutter),
+                itemCount: 6,
+                itemBuilder: (context, _) => Padding(
+                  padding: EdgeInsets.only(bottom: v360.spacing.md),
+                  child: const V360Skeleton(height: 64),
+                ),
+              ),
+              error: (error, _) => EmptyState(
+                icon: Icons.cloud_off_rounded,
+                title: 'Could not load stock',
+                body: '$error',
+                action: V360Button.primary(
+                  label: s.retry,
+                  onPressed: () => ref.invalidate(inventoryProvider),
+                ),
+              ),
+              data: (list) {
+                final searchQ = ref.watch(inventorySearchQueryProvider);
+                final isSearching = searchQ != null && searchQ.isNotEmpty;
+                if (list.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: isSearching
+                        ? 'No items matching "$searchQ"'
+                        : (lowOnly ? 'Nothing needs reordering' : s.noData),
+                    body: isSearching
+                        ? 'Try a different name, or clear the search.'
+                        : (lowOnly
+                            ? s.allAboveReorder
+                            : 'Log a sale or scan a receipt to get started.'),
+                    action: isSearching
+                        ? V360Button.ghost(
+                            label: 'Clear search',
+                            onPressed: () => ref
+                                .read(inventorySearchQueryProvider.notifier)
+                                .value = null,
+                          )
+                        : null,
+                  );
+                }
+                return RefreshIndicator(
+                  color: v360.colors.accent,
+                  onRefresh: () async {
+                    HapticFeedback.lightImpact();
+                    await ref.read(syncProvider.notifier).flush();
+                    ref.invalidate(inventoryProvider);
+                  },
+                  // One ruled list, not a stack of cards: a shop's stock is a
+                  // long list read top to bottom, and a card per item spends
+                  // a third of every row on borders and gaps.
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(bottom: v360.spacing.x5),
+                    itemCount: list.length,
+                    separatorBuilder: (_, _) =>
+                        Divider(indent: v360.spacing.gutter),
+                    itemBuilder: (context, index) =>
+                        _ItemRow(item: list[index], strings: s),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -177,38 +161,49 @@ class _CategoryFilter extends ConsumerWidget {
     final v360 = context.v360;
 
     return SizedBox(
-      height: 34,
+      height: 48,
       child: ListView.separated(
+        padding: EdgeInsets.symmetric(
+          horizontal: v360.spacing.gutter,
+          vertical: v360.spacing.xs + 2,
+        ),
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
-        separatorBuilder: (_, _) => SizedBox(width: v360.spacing.sm),
+        separatorBuilder: (_, _) => SizedBox(width: v360.spacing.xs + 2),
         itemBuilder: (context, index) {
           final category = _categories[index];
           final active = category.key == selected;
 
-          return V360Pressable(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              ref.read(inventoryFilterProvider.notifier).value = category.key;
-            },
-            borderRadius: BorderRadius.circular(V360Radius.pill),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: v360.spacing.lg,
-                vertical: v360.spacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: active ? v360.colors.accent : v360.colors.surface,
-                borderRadius: BorderRadius.circular(V360Radius.pill),
-                border: Border.all(
-                  color: active ? v360.colors.accent : v360.colors.hairline,
+          return Semantics(
+            button: true,
+            selected: active,
+            label: category.label,
+            excludeSemantics: true,
+            child: V360Pressable(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref.read(inventoryFilterProvider.notifier).value =
+                    category.key;
+              },
+              borderRadius: BorderRadius.circular(V360Radius.sm),
+              child: Container(
+                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
+                decoration: BoxDecoration(
+                  color: active ? v360.colors.ink : v360.colors.surface,
+                  borderRadius: BorderRadius.circular(V360Radius.sm),
+                  border: Border.all(
+                    color: active ? v360.colors.ink : v360.colors.hairline,
+                  ),
                 ),
-              ),
-              child: Text(
-                category.label,
-                style: v360.text.caption.copyWith(
-                  color: active ? v360.colors.onFill : v360.colors.inkMuted,
-                ).weight(FontWeight.w600),
+                child: Text(
+                  category.label,
+                  style: v360.text.caption
+                      .copyWith(
+                        color: active ? v360.colors.canvas : v360.colors.ink,
+                      )
+                      .weight(FontWeight.w600),
+                ),
               ),
             ),
           );
@@ -230,25 +225,29 @@ class _ItemRow extends ConsumerWidget {
     final colors = v360.colors;
     final state = item.state(DateTime.now());
 
-    final (PillTone tone, String label, IconData icon) = switch (state) {
-      StockState.expired => (PillTone.urgent, 'Expired', Icons.dangerous_outlined),
-      StockState.out => (PillTone.urgent, strings.outOfStock, Icons.remove_circle_outline),
-      StockState.expiringSoon =>
-        (PillTone.urgent, 'Use today', Icons.timer_outlined),
-      StockState.low => (PillTone.attention, strings.reorderNow, Icons.trending_down_rounded),
-      StockState.healthy => (PillTone.healthy, strings.inStock, Icons.check_circle_outline_rounded),
+    final (Color tone, String label) = switch (state) {
+      StockState.expired => (colors.danger, 'Expired'),
+      StockState.out => (colors.danger, strings.outOfStock),
+      StockState.expiringSoon => (colors.danger, 'Use today'),
+      StockState.low => (colors.warning, strings.reorderNow),
+      StockState.healthy => (colors.accent, strings.inStock),
     };
+    final needsAction = state != StockState.healthy;
 
     // Fill relative to twice the reorder point, so a healthy item sits around
     // half rather than pinned at 100% and telling the vendor nothing.
     final ceiling = (item.reorderPoint * 2).clamp(1, double.infinity);
     final fill = (item.quantity.amount / ceiling).clamp(0.0, 1.0);
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: v360.spacing.md),
-      child: V360Card(
-        padding: EdgeInsets.all(v360.spacing.lg),
-        onTap: () => _openSheet(context, ref),
+    return InkWell(
+      onTap: () => _openSheet(context, ref),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          v360.spacing.gutter,
+          v360.spacing.md,
+          v360.spacing.gutter,
+          needsAction ? v360.spacing.xs : v360.spacing.md,
+        ),
         child: Column(
           children: <Widget>[
             Row(
@@ -259,97 +258,76 @@ class _ItemRow extends ConsumerWidget {
                     children: <Widget>[
                       Text(
                         item.skuName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: v360.text.titleS.copyWith(color: colors.ink),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        '${strings.reorderAt} ${item.reorderPoint.toStringAsFixed(0)} ${item.quantity.unit}',
-                        style: v360.text.caption.copyWith(color: colors.inkSubtle),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: <Widget>[
+                          StatusMark(label: label, color: tone, dense: true),
+                          Flexible(
+                            child: Text(
+                              '  ·  ${strings.reorderAt} '
+                              '${item.reorderPoint.toStringAsFixed(0)} '
+                              '${item.quantity.unit}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: v360.text.caption
+                                  .copyWith(color: colors.inkMuted),
+                            ),
+                          ),
+                        ],
                       ),
-                      if (state == StockState.low || state == StockState.out)
-                        Text(
-                          'Shortfall: ${(item.reorderPoint - item.quantity.amount).clamp(0, double.infinity).toStringAsFixed(0)} ${item.quantity.unit}',
-                          style: v360.text.caption.copyWith(
-                            color: colors.warningText,
-                          ).weight(FontWeight.w600),
-                        ),
                     ],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    Text(
-                      item.quantity.display,
-                      style: v360.text.titleM.copyWith(
-                        color: state == StockState.healthy
-                            ? colors.ink
-                            : state == StockState.low
-                                ? colors.warningText
-                                : colors.dangerText,
-                      ),
-                    ),
-                    SizedBox(height: v360.spacing.xs),
-                    StatusPill(label: label, tone: tone, icon: icon, dense: true),
-                  ],
+                SizedBox(width: v360.spacing.md),
+                Text(
+                  item.quantity.display,
+                  style: v360.text.titleM
+                      .copyWith(color: colors.ink)
+                      .weight(FontWeight.w700)
+                      .narrow(86),
                 ),
               ],
             ),
-            SizedBox(height: v360.spacing.md),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+            SizedBox(height: v360.spacing.sm),
+            // The level against the reorder line, as a thin printed rule
+            // rather than a rounded progress pill.
+            SizedBox(
+              height: 3,
               child: LinearProgressIndicator(
                 value: fill,
-                minHeight: 5,
                 backgroundColor: colors.surfaceMuted,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  switch (state) {
-                    StockState.healthy => colors.accent,
-                    StockState.low => colors.warning,
-                    _ => colors.danger,
-                  },
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(tone),
               ),
             ),
 
-            // The two things a shopkeeper does at the shelf, without opening
-            // anything. Only on rows where they make sense: "sold out" on a
-            // shelf that still has stock, "order" on one that does not.
-            if (state != StockState.healthy || item.quantity.amount > 0) ...<Widget>[
-              SizedBox(height: v360.spacing.md),
+            // The two things a shopkeeper does at a shelf that needs them,
+            // without opening anything. Healthy rows stay quiet; their
+            // adjustments live in the sheet a tap away.
+            if (needsAction)
               Row(
                 children: <Widget>[
                   if (item.quantity.amount > 0)
-                    Expanded(
-                      child: V360Button.ghost(
-                        label: 'Sold out',
-                        expand: true,
-                        onPressed: () => _markSoldOut(context, ref),
-                      ),
+                    TextButton(
+                      onPressed: () => _markSoldOut(context, ref),
+                      child: const Text('Sold out'),
                     ),
-                  if (item.quantity.amount > 0 && state != StockState.healthy)
-                    SizedBox(width: v360.spacing.sm),
-                  if (state != StockState.healthy) ...<Widget>[
-                    Expanded(
-                      child: V360Button.secondary(
-                        label: 'Options',
-                        expand: true,
-                        onPressed: () =>
-                            showSourcingSheet(context, itemId: item.id),
-                      ),
-                    ),
-                    SizedBox(width: v360.spacing.sm),
-                    Expanded(
-                      child: V360Button.primary(
-                        label: '1-Tap Order',
-                        expand: true,
-                        onPressed: () => _quickReorder(context, ref),
-                      ),
-                    ),
-                  ],
+                  TextButton(
+                    onPressed: () =>
+                        showSourcingSheet(context, itemId: item.id),
+                    child: const Text('Compare suppliers'),
+                  ),
+                  const Spacer(),
+                  V360Button.tonal(
+                    label: '1-tap order',
+                    size: V360ButtonSize.sm,
+                    onPressed: () => _quickReorder(context, ref),
+                  ),
                 ],
               ),
-            ],
           ],
         ),
       ),
@@ -640,12 +618,12 @@ class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
     final v360 = context.v360;
     final query = ref.watch(inventorySearchQueryProvider);
 
+    // White on the band, with no border: the band is the frame.
     return Container(
-      height: 40,
+      height: 44,
       decoration: BoxDecoration(
         color: v360.colors.surface,
         borderRadius: BorderRadius.circular(V360Radius.md),
-        border: Border.all(color: v360.colors.hairline),
       ),
       padding: EdgeInsets.symmetric(horizontal: v360.spacing.md),
       child: Row(
@@ -657,7 +635,7 @@ class _InventorySearchBarState extends ConsumerState<_InventorySearchBar> {
               controller: _controller,
               style: v360.text.body.copyWith(color: v360.colors.ink),
               decoration: InputDecoration(
-                hintText: 'Search items (e.g. Milk, Atta)...',
+                hintText: 'Search stock: milk, atta…',
                 hintStyle:
                     v360.text.body.copyWith(color: v360.colors.inkSubtle),
                 border: InputBorder.none,

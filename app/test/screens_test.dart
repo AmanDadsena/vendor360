@@ -107,7 +107,9 @@ void main() {
     // has two scrollables (the horizontal category chips and the vertical
     // list), which is why this drags the list directly instead of using
     // scrollUntilVisible.
-    expect(find.byType(V360Card), findsWidgets);
+    // One ruled list rather than a card per item.
+    expect(find.byType(StatusMark), findsWidgets);
+    expect(find.byType(V360Card), findsNothing);
     // The threshold is shown as a computed value, not an editable setting —
     // and in Devanagari, because Hindi is the default language rather than a
     // setting the vendor has to find.
@@ -137,7 +139,7 @@ void main() {
     await tester.pumpWidget(host(const InventoryScreen()));
     await settle(tester);
 
-    expect(find.text('1-Tap Order'), findsWidgets);
+    expect(find.text('1-tap order'), findsWidgets);
   });
 
   testWidgets('Forecast leads with the recommendation, not the chart',
