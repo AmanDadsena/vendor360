@@ -92,97 +92,89 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     return Scaffold(
       backgroundColor: colors.canvas,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _Front(strings: s),
+          Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(v360.spacing.xxl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(height: v360.spacing.x4),
-                  _Brandmark(),
-                  SizedBox(height: v360.spacing.x3),
-
-                  Text(
-                      s.welcome,
-                      textAlign: TextAlign.center,
-                      style: v360.text.titleL.copyWith(color: colors.ink),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      v360.spacing.gutter,
+                      v360.spacing.xxl,
+                      v360.spacing.gutter,
+                      v360.spacing.xxl,
                     ),
-                  SizedBox(height: v360.spacing.sm),
-                  Text(
-                      s.welcomeDetail,
-                      textAlign: TextAlign.center,
-                      style: v360.text.body.copyWith(color: colors.inkMuted),
-                    ),
-                  SizedBox(height: v360.spacing.x3),
-
-                  AnimatedSwitcher(
-                    duration: v360.motion.base,
-                    switchInCurve: v360.motion.standard,
-                    switchOutCurve: v360.motion.standard,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.05, 0),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        AnimatedSwitcher(
+                          duration: v360.motion.base,
+                          switchInCurve: v360.motion.standard,
+                          switchOutCurve: v360.motion.standard,
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(opacity: animation, child: child),
+                          child: _step == _Step.language
+                              ? _LanguageStep(
+                                  key: const ValueKey('language'),
+                                  selected: _language,
+                                  onSelect: (lang) =>
+                                      setState(() => _language = lang),
+                                  onContinue: () =>
+                                      setState(() => _step = _Step.role),
+                                  strings: s,
+                                )
+                              : _step == _Step.role
+                                  ? _RoleStep(
+                                      key: const ValueKey('role'),
+                                      selected: _intent,
+                                      onSelect: (role) =>
+                                          setState(() => _intent = role),
+                                      onContinue: () =>
+                                          setState(() => _step = _Step.phone),
+                                      onBack: () => setState(
+                                          () => _step = _Step.language),
+                                    )
+                                  : _step == _Step.phone
+                                      ? _PhoneStep(
+                                          key: const ValueKey('phone'),
+                                          controller: _phone,
+                                          loading: session.loading,
+                                          onSubmit: _sendCode,
+                                          onBack: () => setState(
+                                              () => _step = _Step.role),
+                                          strings: s,
+                                        )
+                                      : _CodeStep(
+                                          key: const ValueKey('code'),
+                                          controller: _code,
+                                          loading: session.loading,
+                                          devCode: _devCode,
+                                          onSubmit: _verify,
+                                          onBack: () => setState(
+                                              () => _step = _Step.phone),
+                                          strings: s,
+                                        ),
                         ),
-                      );
-                    },
-                    child: _step == _Step.language
-                        ? _LanguageStep(
-                            key: const ValueKey('language'),
-                            selected: _language,
-                            onSelect: (lang) => setState(() => _language = lang),
-                            onContinue: () => setState(() => _step = _Step.role),
-                            strings: s,
-                          )
-                        : _step == _Step.role
-                        ? _RoleStep(
-                            key: const ValueKey('role'),
-                            selected: _intent,
-                            onSelect: (role) => setState(() => _intent = role),
-                            onContinue: () => setState(() => _step = _Step.phone),
-                            onBack: () => setState(() => _step = _Step.language),
-                          )
-                        : _step == _Step.phone
-                            ? _PhoneStep(
-                                key: const ValueKey('phone'),
-                                controller: _phone,
-                                loading: session.loading,
-                                onSubmit: _sendCode,
-                                onBack: () => setState(() => _step = _Step.role),
-                                strings: s,
-                              )
-                            : _CodeStep(
-                                key: const ValueKey('code'),
-                                controller: _code,
-                                loading: session.loading,
-                                devCode: _devCode,
-                                onSubmit: _verify,
-                                onBack: () => setState(() => _step = _Step.phone),
-                                strings: s,
-                              ),
-                  ),
-
-                  if (session.error != null) ...<Widget>[
-                    SizedBox(height: v360.spacing.lg),
-                    V360Banner(
-                      icon: Icons.wifi_off_rounded,
-                      title: session.error!,
-                      tone: V360BannerTone.danger,
+                        if (session.error != null) ...<Widget>[
+                          SizedBox(height: v360.spacing.lg),
+                          V360Banner(
+                            icon: Icons.wifi_off_rounded,
+                            title: session.error!,
+                            tone: V360BannerTone.danger,
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
-                ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -190,74 +182,67 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
 enum _Step { language, role, phone, code }
 
-class _Brandmark extends StatefulWidget {
-  const _Brandmark();
+/// The front of the pack, where a new user meets the product.
+///
+/// The name printed large and narrow the way a pack prints its product
+/// name, and the promise beneath it — on a flat teal field, with nothing
+/// else. The old mark was a teal-to-saffron gradient tile with a breathing
+/// glow, which is the logo every generated app ships.
+class _Front extends StatelessWidget {
+  const _Front({required this.strings});
 
-  @override
-  State<_Brandmark> createState() => _BrandmarkState();
-}
-
-class _BrandmarkState extends State<_Brandmark> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2000),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  final Strings strings;
 
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
     final colors = v360.colors;
 
-    return Column(
-      children: <Widget>[
-        AnimatedBuilder(
-          animation: _ctrl,
-          builder: (context, child) {
-            final scale = 1.0 + (_ctrl.value * 0.08);
-            final shadowOp = 0.15 + (_ctrl.value * 0.25);
-            return Transform.scale(
-              scale: scale,
-              child: Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: <Color>[colors.accent, colors.voice],
-                  ),
-                  borderRadius: BorderRadius.circular(V360Radius.xl),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.accent.withValues(alpha: shadowOp),
-                      blurRadius: 24,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: child,
+    return Material(
+      color: colors.band,
+      child: SafeArea(
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                v360.spacing.gutter,
+                v360.spacing.x4,
+                v360.spacing.gutter,
+                v360.spacing.x3,
               ),
-            );
-          },
-          child: Icon(Icons.storefront_rounded, size: 38, color: colors.onFill),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'Vendor360',
+                      style: v360.text.display.copyWith(
+                        color: colors.onBand,
+                        fontSize: 48,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: v360.spacing.lg),
+                  Text(
+                    strings.welcome,
+                    style: v360.text.titleM
+                        .copyWith(color: colors.onBand)
+                        .weight(FontWeight.w700),
+                  ),
+                  SizedBox(height: v360.spacing.xs),
+                  Text(
+                    strings.welcomeDetail,
+                    style: v360.text.body.copyWith(color: colors.onBandMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        SizedBox(height: v360.spacing.lg),
-        Text(
-          'Vendor360',
-          style: v360.text.figure.copyWith(color: colors.ink),
-        ),
-        Text(
-          'PREDICTIVE INTELLIGENCE FOR LOCAL VENDORS',
-          textAlign: TextAlign.center,
-          style: v360.text.label.copyWith(color: colors.inkSubtle),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -295,7 +280,7 @@ class _LanguageStep extends StatelessWidget {
           ],
           SizedBox(height: v360.spacing.sm),
           V360Button.primary(
-            label: strings.sendCode,
+            label: strings.continueLabel,
             expand: true,
             trailingIcon: Icons.arrow_forward_rounded,
             onPressed: onContinue,
@@ -328,10 +313,13 @@ class _LanguageOption extends StatelessWidget {
       child: AnimatedContainer(
         duration: motion.base,
         curve: motion.standard,
-        padding: EdgeInsets.all(v360.spacing.lg),
+        padding: EdgeInsets.symmetric(
+          horizontal: v360.spacing.lg,
+          vertical: v360.spacing.md,
+        ),
         decoration: BoxDecoration(
           color: selected ? colors.accentSurface : colors.surface,
-          borderRadius: BorderRadius.circular(V360Radius.md),
+          borderRadius: BorderRadius.circular(V360Radius.lg),
           border: Border.all(
             color: selected ? colors.accent : colors.hairline,
             width: selected ? 2 : 1,
@@ -406,25 +394,13 @@ class _PhoneStep extends StatelessWidget {
             FilteringTextInputFormatter.digitsOnly,
           ],
           style: v360.text.titleM.copyWith(color: colors.ink),
+          // Borders and fill come from the theme, so this field matches
+          // every other field in the app.
           decoration: InputDecoration(
             counterText: '',
             prefixText: '+91  ',
             prefixStyle: v360.text.titleM.copyWith(color: colors.inkMuted),
-            filled: true,
-            fillColor: colors.surface,
             contentPadding: EdgeInsets.all(v360.spacing.lg),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(V360Radius.md),
-              borderSide: BorderSide(color: colors.hairline),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(V360Radius.md),
-              borderSide: BorderSide(color: colors.hairline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(V360Radius.md),
-              borderSide: BorderSide(color: colors.accent, width: 2),
-            ),
           ),
         ),
         SizedBox(height: v360.spacing.lg),
@@ -481,17 +457,7 @@ class _CodeStep extends StatelessWidget {
           style: v360.text.figure.copyWith(color: colors.ink, letterSpacing: 8),
           decoration: InputDecoration(
             counterText: '',
-            filled: true,
-            fillColor: colors.surface,
             contentPadding: EdgeInsets.all(v360.spacing.lg),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(V360Radius.md),
-              borderSide: BorderSide(color: colors.hairline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(V360Radius.md),
-              borderSide: BorderSide(color: colors.accent, width: 2),
-            ),
           ),
         ),
         if (devCode != null) ...<Widget>[
@@ -555,7 +521,9 @@ class _RoleStep extends StatelessWidget {
       children: <Widget>[
         Text(
           'Which are you?',
-          style: v360.text.titleL.copyWith(color: colors.ink),
+          style: v360.text.titleM
+              .copyWith(color: colors.ink)
+              .weight(FontWeight.w700),
         ),
         SizedBox(height: v360.spacing.xs),
         Text(

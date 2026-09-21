@@ -127,6 +127,7 @@ class Strings {
   String get loading => _pick('Loading…', 'लोड हो रहा है…', 'लोड होत आहे…');
   String get noData => _pick('Nothing here yet', 'अभी कुछ नहीं', 'अजून काही नाही');
   String get seeAll => _pick('See all', 'सभी देखें', 'सर्व पहा');
+  String get continueLabel => _pick('Continue', 'आगे बढ़ें', 'पुढे जा');
 
   // Home
   String get runningOut => _pick('Running out', 'खत्म हो रहा है', 'संपत आहे');
