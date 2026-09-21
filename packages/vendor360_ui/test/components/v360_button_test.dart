@@ -50,24 +50,38 @@ void main() {
           V360Colors.dark().onActionFill);
     });
 
-    testWidgets('is a true pill at every size', (tester) async {
+    testWidgets('is a printed block, not a pill, at every size',
+        (tester) async {
       for (final size in V360ButtonSize.values) {
         await tester.pumpWidget(carryHarness(
           V360Button.primary(label: 'X', onPressed: () {}, size: size),
         ));
         final radius =
             (_decorationOf(tester).borderRadius! as BorderRadius).topLeft.x;
-        final height = tester.getSize(find.byType(V360Button)).height;
-        expect(radius, greaterThanOrEqualTo(height / 2),
-            reason: '$size is not a full pill');
+        expect(radius, V360Radius.md, reason: '$size');
       }
     });
 
-    testWidgets('sizes are 40 / 48 / 56', (tester) async {
+    testWidgets('pressing darkens the fill instead of shrinking the button',
+        (tester) async {
+      await tester.pumpWidget(carryHarness(
+        V360Button.primary(label: 'Order', onPressed: () {}),
+      ));
+      final before = _decorationOf(tester).color!;
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('Order')));
+      await tester.pumpAndSettle();
+      final pressed = _decorationOf(tester).color!;
+      expect(pressed.computeLuminance(), lessThan(before.computeLuminance()));
+      expect(find.byType(AnimatedScale), findsNothing);
+      await gesture.up();
+    });
+
+    testWidgets('sizes are 40 / 48 / 52', (tester) async {
       const expected = <V360ButtonSize, double>{
         V360ButtonSize.sm: 40,
         V360ButtonSize.md: 48,
-        V360ButtonSize.lg: 56,
+        V360ButtonSize.lg: 52,
       };
       for (final entry in expected.entries) {
         await tester.pumpWidget(carryHarness(
@@ -80,14 +94,15 @@ void main() {
       }
     });
 
-    testWidgets('secondary uses surface with a hairline border',
+    testWidgets('secondary uses surface with an ink keyline',
         (tester) async {
       await tester.pumpWidget(carryHarness(
         V360Button.secondary(label: 'Directions', onPressed: () {}),
       ));
       final decoration = _decorationOf(tester);
       expect(decoration.color, V360Colors.light().surface);
-      expect(decoration.border, isNotNull);
+      final border = decoration.border! as Border;
+      expect(border.top.color, V360Colors.light().keyline);
     });
 
     testWidgets('ghost uses accentText, the readable teal', (tester) async {

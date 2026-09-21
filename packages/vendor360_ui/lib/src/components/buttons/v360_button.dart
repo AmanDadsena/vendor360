@@ -9,10 +9,15 @@ enum V360ButtonSize { sm, md, lg }
 
 enum V360ButtonVariant { primary, secondary, ghost, danger }
 
-/// The Vendor360 pill button.
+/// The Vendor360 button.
 ///
-/// The primary variant is **near-black in light mode and azure in dark mode**. That
-/// inversion lives in the `actionFill` token — never hardcode either colour.
+/// A printed block, not a pill: tight corners like the rest of the pack,
+/// teal for the primary action, an ink keyline for the secondary. Pressing
+/// darkens the block the way a rubber stamp darkens paper, rather than
+/// shrinking it — a bouncing button is a web habit, and on a phone the
+/// finger already covers the control.
+///
+/// The fill lives in the `actionFill` token — never hardcode it.
 class V360Button extends StatefulWidget {
   const V360Button._({
     super.key,
@@ -126,16 +131,19 @@ class V360Button extends StatefulWidget {
 class _V360ButtonState extends State<V360Button> {
   bool _pressed = false;
 
+  // 48 is the smallest a shopkeeper's thumb should be asked to hit; the
+  // small size is for secondary actions inside a row, where the row itself
+  // carries the rest of the target.
   double get _height => switch (widget.size) {
     V360ButtonSize.sm => 40,
     V360ButtonSize.md => 48,
-    V360ButtonSize.lg => 56,
+    V360ButtonSize.lg => 52,
   };
 
   double get _padding => switch (widget.size) {
-    V360ButtonSize.sm => 16,
-    V360ButtonSize.md => 20,
-    V360ButtonSize.lg => 24,
+    V360ButtonSize.sm => 14,
+    V360ButtonSize.md => 18,
+    V360ButtonSize.lg => 22,
   };
 
   @override
@@ -155,19 +163,29 @@ class _V360ButtonState extends State<V360Button> {
       case V360ButtonVariant.secondary:
         fill = colors.surface;
         content = colors.ink;
-        border = Border.all(color: colors.hairline);
+        border = Border.all(color: colors.keyline, width: 1.5);
       case V360ButtonVariant.ghost:
         fill = const Color(0x00000000);
         content = colors.accentText;
       case V360ButtonVariant.danger:
         fill = colors.danger;
-        content = const Color(0xFFFFFFFF);
+        content = colors.onFill;
     }
 
     final enabled = widget.isEnabled;
-    final effectiveFill = enabled
-        ? fill
-        : Color.alphaBlend(fill.withValues(alpha: 0.35), colors.canvas);
+    final ghost = widget.variant == V360ButtonVariant.ghost;
+    final Color effectiveFill;
+    if (!enabled) {
+      effectiveFill = ghost ? fill : colors.surfaceMuted;
+      border = null;
+    } else if (_pressed) {
+      // Darken, don't shrink: the press reads as ink going down.
+      effectiveFill = ghost
+          ? colors.accentSurface
+          : Color.alphaBlend(colors.ink.withValues(alpha: 0.14), fill);
+    } else {
+      effectiveFill = fill;
+    }
     final effectiveContent = enabled ? content : colors.inkSubtle;
 
     final Widget inner = widget.loading
@@ -222,24 +240,19 @@ class _V360ButtonState extends State<V360Button> {
         onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
         onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
         onTap: enabled ? widget.onPressed : null,
-        child: AnimatedScale(
-          scale: _pressed ? 0.97 : 1.0,
+        child: AnimatedContainer(
           duration: motion.fast,
           curve: motion.standard,
-          child: AnimatedContainer(
-            duration: motion.base,
-            curve: motion.standard,
-            height: _height,
-            width: widget.expand ? double.infinity : null,
-            padding: EdgeInsets.symmetric(horizontal: _padding),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: effectiveFill,
-              border: border,
-              borderRadius: BorderRadius.circular(V360Radius.pill),
-            ),
-            child: inner,
+          height: _height,
+          width: widget.expand ? double.infinity : null,
+          padding: EdgeInsets.symmetric(horizontal: _padding),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: effectiveFill,
+            border: border,
+            borderRadius: BorderRadius.circular(V360Radius.md),
           ),
+          child: inner,
         ),
       ),
     );

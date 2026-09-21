@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../../motion/motion_scope.dart';
 import '../../tokens/v360_theme.dart';
 
-/// A circular icon button with a hairline border.
+/// A round icon button.
 ///
-/// Used for the swap, stepper and back affordances in the design.
+/// Plain by default — an icon with a 48dp round target and a pressed wash,
+/// the way Android's own icon buttons behave — rather than an icon inside a
+/// hairline circle, which is decoration every generated screen repeats.
+/// [filled] prints it as a solid teal disc for the one icon action that
+/// matters on a screen. [color] recolours the icon, for buttons sitting on
+/// the teal band.
 class V360IconButton extends StatefulWidget {
   const V360IconButton({
     super.key,
@@ -14,6 +19,7 @@ class V360IconButton extends StatefulWidget {
     this.size = 48,
     this.filled = false,
     this.semanticLabel,
+    this.color,
   });
 
   final IconData icon;
@@ -24,6 +30,9 @@ class V360IconButton extends StatefulWidget {
   final bool filled;
 
   final String? semanticLabel;
+
+  /// Icon colour override — `colors.onBand` on the band.
+  final Color? color;
 
   bool get isEnabled => onPressed != null;
 
@@ -40,8 +49,19 @@ class _V360IconButtonState extends State<V360IconButton> {
     final motion = MotionScope.of(context);
     final enabled = widget.isEnabled;
 
-    final fill = widget.filled ? colors.actionFill : colors.surface;
-    final content = widget.filled ? colors.onActionFill : colors.ink;
+    final content =
+        widget.color ?? (widget.filled ? colors.onActionFill : colors.ink);
+    final Color fill;
+    if (widget.filled) {
+      fill = _pressed
+          ? Color.alphaBlend(colors.ink.withValues(alpha: 0.14),
+              colors.actionFill)
+          : colors.actionFill;
+    } else {
+      fill = _pressed
+          ? content.withValues(alpha: 0.12)
+          : const Color(0x00000000);
+    }
 
     return Semantics(
       button: true,
@@ -53,24 +73,17 @@ class _V360IconButtonState extends State<V360IconButton> {
         onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
         onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
         onTap: enabled ? widget.onPressed : null,
-        child: AnimatedScale(
-          scale: _pressed ? 0.92 : 1.0,
+        child: AnimatedContainer(
           duration: motion.fast,
           curve: motion.standard,
-          child: Container(
-            height: widget.size,
-            width: widget.size,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: fill,
-              shape: BoxShape.circle,
-              border: widget.filled ? null : Border.all(color: colors.hairline),
-            ),
-            child: Icon(
-              widget.icon,
-              size: widget.size * 0.42,
-              color: enabled ? content : colors.inkSubtle,
-            ),
+          height: widget.size,
+          width: widget.size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
+          child: Icon(
+            widget.icon,
+            size: widget.size * 0.46,
+            color: enabled ? content : colors.inkSubtle,
           ),
         ),
       ),

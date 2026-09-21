@@ -67,9 +67,11 @@ class PackStepper extends StatelessWidget {
       children: <Widget>[
         Container(
           decoration: BoxDecoration(
-            color: colors.surfaceMuted,
-            borderRadius: BorderRadius.circular(V360Radius.pill),
-            border: Border.all(color: colors.hairline),
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(V360Radius.md),
+            // A control's edge: 3:1 against the page, so the hairline is not
+            // enough on its own.
+            border: Border.all(color: colors.inkSubtle),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -86,12 +88,17 @@ class PackStepper extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '$packs',
-                  style: (dense ? v360.text.body : v360.text.titleS).copyWith(
-                    color: colors.ink,
-                    // Tabular figures: the row must not jitter as the count
-                    // crosses from 9 to 10.
-                    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-                  ).weight(FontWeight.w800),
+                  style: (dense ? v360.text.bodyStrong : v360.text.titleS)
+                      .copyWith(
+                        color: colors.ink,
+                        // Tabular figures: the row must not jitter as the
+                        // count crosses from 9 to 10.
+                        fontFeatures: const <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      )
+                      .weight(FontWeight.w700)
+                      .narrow(88),
                 ),
               ),
               _Step(
@@ -110,7 +117,7 @@ class PackStepper extends StatelessWidget {
               ? '× $_sizeLabel $unit = $_quantityLabel'
               : '$_quantityLabel · ₹${(_quantity * unitPrice!).round()}',
           style: v360.text.label.copyWith(
-            color: colors.inkSubtle,
+            color: colors.inkMuted,
             fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
           ),
         ),
@@ -137,7 +144,8 @@ class _Step extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.v360.colors;
-    final size = dense ? 30.0 : 38.0;
+    // A thumb target: close to 48dp without crowding a dense order row.
+    final size = dense ? 36.0 : 44.0;
 
     return Semantics(
       button: true,

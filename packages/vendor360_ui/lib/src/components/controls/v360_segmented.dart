@@ -46,7 +46,7 @@ class V360Segmented<T> extends StatelessWidget {
     final children = <Widget>[];
 
     for (var i = 0; i < segments.length; i++) {
-      if (i > 0) children.add(SizedBox(width: v360.spacing.md));
+      if (i > 0) children.add(SizedBox(width: v360.spacing.sm));
       children.add(
         _Chip<T>(
           segment: segments[i],
@@ -87,9 +87,7 @@ class _Chip<T> extends StatelessWidget {
 
     final fill = selected ? colors.actionFill : colors.surface;
     final content = selected ? colors.onActionFill : colors.ink;
-    final subContent = selected
-        ? colors.onActionFill.withValues(alpha: 0.7)
-        : colors.inkMuted;
+    final subContent = selected ? colors.onBandMuted : colors.inkMuted;
 
     return Semantics(
       button: true,
@@ -102,14 +100,17 @@ class _Chip<T> extends StatelessWidget {
         child: AnimatedContainer(
           duration: motion.base,
           curve: motion.standard,
+          constraints: const BoxConstraints(minHeight: 44),
           padding: EdgeInsets.symmetric(
-            horizontal: v360.spacing.xl,
-            vertical: segment.sublabel == null ? 12 : 10,
+            horizontal: v360.spacing.lg,
+            vertical: segment.sublabel == null ? 10 : 8,
           ),
           decoration: BoxDecoration(
             color: fill,
-            border: selected ? null : Border.all(color: colors.hairline),
-            borderRadius: BorderRadius.circular(V360Radius.pill),
+            border: Border.all(
+              color: selected ? fill : colors.hairline,
+            ),
+            borderRadius: BorderRadius.circular(V360Radius.md),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

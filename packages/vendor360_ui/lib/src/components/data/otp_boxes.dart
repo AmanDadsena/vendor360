@@ -32,7 +32,7 @@ class OtpBoxes extends StatelessWidget {
     final motion = MotionScope.of(context);
 
     final (Color border, Color fill, Color ink) = switch (state) {
-      OtpState.idle => (colors.hairline, colors.surfaceMuted, colors.ink),
+      OtpState.idle => (colors.inkSubtle, colors.surface, colors.ink),
       OtpState.success => (
         colors.accent,
         colors.accentSurface,
