@@ -366,7 +366,8 @@ void main() {
 
     expect(find.text('Market Yard Wholesale'), findsOneWidget);
     expect(find.text('2 orders waiting'), findsOneWidget);
-    // StatTile uppercases its label.
+    // The count is the band's figure; the statement names it plainly.
+    expect(find.text('orders waiting for your answer'), findsOneWidget);
     expect(find.text('To answer'), findsOneWidget);
     expect(find.text('₹14,108'), findsOneWidget);
     expect(find.text('₹3,200'), findsOneWidget);
