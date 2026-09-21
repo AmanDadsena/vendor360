@@ -16,7 +16,7 @@ void main() {
     );
     expect(v360.brightness, Brightness.light);
     expect(v360.isDark, isFalse);
-    expect(v360.colors.actionFill, const Color(0xFF1A2E2A));
+    expect(v360.colors.band, V360Colors.light().band);
     expect(v360.spacing.gutter, 20);
   });
 
@@ -33,7 +33,7 @@ void main() {
     );
     expect(v360.brightness, Brightness.dark);
     expect(v360.isDark, isTrue);
-    expect(v360.colors.actionFill, const Color(0xFF2FB39D));
+    expect(v360.colors.band, V360Colors.dark().band);
   });
 
   // Regression: ThemeExtension files itself in ThemeData.extensions under a
@@ -48,9 +48,9 @@ void main() {
 
   test('scaffold background is the canvas token in both themes', () {
     expect(buildV360Theme(Brightness.light).scaffoldBackgroundColor,
-        const Color(0xFFFAF9F6));
+        V360Colors.light().canvas);
     expect(buildV360Theme(Brightness.dark).scaffoldBackgroundColor,
-        const Color(0xFF0B1210));
+        V360Colors.dark().canvas);
   });
 
   test('theme uses bundled Anek as its default family', () {

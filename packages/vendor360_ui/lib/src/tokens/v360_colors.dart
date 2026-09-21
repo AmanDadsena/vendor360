@@ -1,35 +1,28 @@
 import 'package:flutter/widgets.dart';
 
-/// The Vendor360 colour palette.
+/// The Vendor360 colour palette — printed, not glowing.
 ///
-/// Structure is inherited from the CarryO design system; the hues are
-/// Vendor360's own, from the UI/UX Design Guide: a primary teal `#0F7A6B`
-/// with saffron `#D98A0F` as the attention accent, on a warm off-white canvas
-/// rather than pure white. The guide's stated intent is "warm, not corporate",
-/// deliberately unlike generic blue enterprise software.
+/// The palette is taken from the packets on a kirana shelf, which are printed
+/// in a few flat inks on white board: a brand colour that owns the front of
+/// the pack, a dark ink for the small print, and one or two spot colours for
+/// the thing that must be seen. Nothing on a printed pack has a gradient, a
+/// glow or a drop shadow, and nothing here does either.
+///
+/// Four inks on white:
+///
+/// * **Teal** — the brand. Owns one flat [band] per screen and the primary
+///   action. Teal is also the one colour that marks something *live*.
+/// * **Ink** — a green-black for text and keylines.
+/// * **Marigold** — attention: the microphone, low stock, a festival heads-up.
+/// * **MRP red** — out of stock, expired, overdue.
 ///
 /// This is the only file in the codebase permitted to contain colour literals.
-/// Everything else reads tokens through `context.v360.colors`, which is why
-/// re-skinning the entire product was a change to one file.
+/// Everything else reads tokens through `context.v360.colors`.
 ///
-/// Two contrast decisions are load-bearing, and both were derived rather than
-/// eyeballed:
-///
-/// 1. [accentText] differs from [accent] in light mode. Brand teal `#0F7A6B`
-///    sits at 0.151 relative luminance, giving 4.97:1 on the warm canvas —
-///    just past the 4.5:1 WCAG AA floor for body text, so it is usable but has
-///    no margin. [accentText] drops to `#0A5A4F` for 7.71:1, which holds up at
-///    small sizes and in sunlight. Saffron `#D98A0F` manages only 2.63:1 and
-///    fails AA outright, which is why [voice] and [warning] are fill-and-icon
-///    colours and never text; [voiceText] and [warningText] carry the readable
-///    deep amber instead.
-///
-/// 2. [actionFill] inverts between modes — near-black in light, teal in dark.
-///    Dark mode fills the primary button with a bright colour and sets *dark*
-///    text on it, which only works if the accent is light enough. `#2FB39D`
-///    (0.353 luminance) carries 6.50:1 against [onActionFill]; the brand
-///    `#0F7A6B` at 0.151 would have forced white text and changed the design,
-///    so dark mode lightens the teal rather than reusing it.
+/// Contrast is asserted by test, not eyeballed: every text token clears
+/// WCAG AA 4.5:1 on the surfaces it is used on, and [onBandMuted] is tinted
+/// from the teal rather than greyed, so secondary text on the band still
+/// reads in sunlight.
 @immutable
 class V360Colors {
   const V360Colors({
@@ -40,14 +33,19 @@ class V360Colors {
     required this.inkMuted,
     required this.inkSubtle,
     required this.hairline,
+    required this.keyline,
     required this.accent,
     required this.accentText,
     required this.accentSurface,
     required this.accentSurfaceStrong,
+    required this.band,
+    required this.onBand,
+    required this.onBandMuted,
     required this.actionFill,
     required this.onActionFill,
     required this.onFill,
     required this.voice,
+    required this.onVoice,
     required this.voiceText,
     required this.voiceSurface,
     required this.warning,
@@ -58,14 +56,15 @@ class V360Colors {
     required this.dangerSurface,
   });
 
-  /// Page background. Warm off-white — the guide's rationale is legibility in
-  /// bright sunlight at a market stall, where pure white glares.
+  /// Page background. White board, like the back of a pack.
   final Color canvas;
 
-  /// Card background.
+  /// Panel background. Also white: panels are separated by rules, not by
+  /// being lifted off the page.
   final Color surface;
 
-  /// Inset elements — chips, OTP boxes, quantity steppers.
+  /// The second neutral layer — inset fields, steppers, the declaration
+  /// strip, skeletons. A cool board grey, never cream.
   final Color surfaceMuted;
 
   /// Primary text.
@@ -74,152 +73,214 @@ class V360Colors {
   /// Secondary text — timestamps, captions, meta.
   final Color inkMuted;
 
-  /// Section labels and disabled text.
+  /// The quietest readable text — placeholders, disabled labels.
   final Color inkSubtle;
 
-  /// Dividers and unselected borders.
+  /// Light rule between rows.
   final Color hairline;
 
-  /// Accent fills, icons, indicators, progress. The brand teal.
+  /// Strong rule — outlined buttons, a focused field, a panel that must hold
+  /// its edge.
+  final Color keyline;
+
+  /// Brand teal for fills, icons, indicators and live state.
   final Color accent;
 
-  /// Teal used for *text*.
-  ///
-  /// Differs from [accent] in light mode, where the brand teal has only 4.97:1
-  /// on the canvas — past the AA floor but with no margin at small sizes. In
-  /// dark mode the lifted teal is already readable and the two are equal.
+  /// Teal for *text* on white; deeper than [accent] so it holds at 13px.
   final Color accentText;
 
-  /// Pale accent banner fill.
+  /// Pale teal for a selected row or a pressed surface. Never on the band.
   final Color accentSurface;
 
-  /// Raised accent surface.
+  /// Stronger pale teal, for a selected control inside a selected row.
   final Color accentSurfaceStrong;
 
-  /// Saffron, reserved for the voice affordance.
+  /// The flat colour field at the top of a screen — the front of the pack.
   ///
-  /// The UI/UX guide makes the microphone the most prominent action on every
-  /// data-entry screen. Giving it its own token — rather than reusing
-  /// [warning] — means a designer cannot accidentally dilute the one control
-  /// the product is built around by using the same colour for a stock alert.
+  /// One per screen. The distributor shell prints on a darker variant of the
+  /// same teal (see [distributorVariant]), the way one product line uses a
+  /// second colour for a second pack.
+  final Color band;
+
+  /// Text and icons on the [band].
+  final Color onBand;
+
+  /// Secondary text on the [band], tinted from the teal rather than greyed.
+  final Color onBandMuted;
+
+  /// Primary button background. Teal in both themes.
+  final Color actionFill;
+
+  /// Primary button label.
+  final Color onActionFill;
+
+  /// Content on any saturated brand or status fill — a count on a [danger]
+  /// badge, a label on a teal chip. White in both themes.
+  final Color onFill;
+
+  /// Marigold, reserved for the voice affordance.
+  ///
+  /// The microphone is the product's most frequent action and its most
+  /// prominent control. It has its own token — rather than reusing
+  /// [warning] — so a designer cannot dilute it by reaching for "the orange"
+  /// for a stock alert.
   final Color voice;
+
+  /// Icon on a [voice] fill. Ink, not white: white on marigold fails contrast.
+  final Color onVoice;
   final Color voiceText;
   final Color voiceSurface;
 
-  /// Attention states — low stock, approaching expiry, pending sync.
+  /// Attention — low stock, approaching expiry, pending sync. A marker and
+  /// fill colour; [warningText] carries readable text.
   final Color warning;
   final Color warningText;
   final Color warningSurface;
 
-  /// Destructive actions, expired stock, sync errors.
+  /// Out of stock, expired, overdue, destructive actions.
   final Color danger;
   final Color dangerText;
   final Color dangerSurface;
 
-  /// Primary button background. **Near-black in light, teal in dark.**
-  ///
-  /// This inversion is the most load-bearing rule in the design system.
-  final Color actionFill;
-
-  /// Primary button label. Inverts with [actionFill].
-  final Color onActionFill;
-
-  /// Content sitting on a saturated brand or status fill — a count on a
-  /// [danger] badge, a label on an [accent] chip, the dashboard hero over its
-  /// gradient.
-  ///
-  /// White in both themes, because those fills are saturated in both and
-  /// white is what stays legible on them. It is a token rather than a literal
-  /// so the *role* is stated: these were thirteen scattered `Colors.white`
-  /// calls, and the design system permits colour literals in this file only.
-  /// Distinct from [onActionFill], which inverts with the button fill and is
-  /// near-black in dark mode.
-  final Color onFill;
-
   factory V360Colors.light() => const V360Colors(
-        // Warmed neutrals, so the off-white canvas reads as intentional rather
-        // than as a grey that failed to be white.
-        canvas: Color(0xFFFAF9F6),
+        canvas: Color(0xFFFFFFFF),
         surface: Color(0xFFFFFFFF),
-        surfaceMuted: Color(0xFFF2F1EC),
-        ink: Color(0xFF1A2E2A),
-        inkMuted: Color(0xFF5B6B67),
-        inkSubtle: Color(0xFF8A9793),
-        hairline: Color(0xFFD8E4E1),
-        accent: Color(0xFF0F7A6B),
-        accentText: Color(0xFF0A5A4F),
-        accentSurface: Color(0xFFE4F2EF),
-        accentSurfaceStrong: Color(0xFFCCE6E0),
-        voice: Color(0xFFD98A0F),
-        voiceText: Color(0xFF8A5600),
-        voiceSurface: Color(0xFFFDF1DC),
-        actionFill: Color(0xFF1A2E2A),
+        surfaceMuted: Color(0xFFEEF3F1),
+        ink: Color(0xFF10201C),
+        inkMuted: Color(0xFF475853),
+        inkSubtle: Color(0xFF63726D),
+        hairline: Color(0xFFD5DEDA),
+        keyline: Color(0xFF10201C),
+        accent: Color(0xFF0B7768),
+        accentText: Color(0xFF075A4F),
+        accentSurface: Color(0xFFE1EFEB),
+        accentSurfaceStrong: Color(0xFFC6E3DC),
+        band: Color(0xFF0B7768),
+        onBand: Color(0xFFFFFFFF),
+        onBandMuted: Color(0xFFD9F0EA),
+        actionFill: Color(0xFF0B7768),
         onActionFill: Color(0xFFFFFFFF),
         onFill: Color(0xFFFFFFFF),
-        warning: Color(0xFFD98A0F),
-        warningText: Color(0xFF8A5600),
-        warningSurface: Color(0xFFFAEFD9),
-        danger: Color(0xFFE85D4C),
-        dangerText: Color(0xFFB03B2C),
-        dangerSurface: Color(0xFFFCEBE8),
+        voice: Color(0xFFF2A20C),
+        onVoice: Color(0xFF10201C),
+        voiceText: Color(0xFF8A5300),
+        voiceSurface: Color(0xFFFDF0D5),
+        warning: Color(0xFFE39A00),
+        warningText: Color(0xFF7F4C00),
+        warningSurface: Color(0xFFFCF0D6),
+        danger: Color(0xFFC62A1F),
+        dangerText: Color(0xFFA3221A),
+        dangerSurface: Color(0xFFFBE9E7),
       );
 
   factory V360Colors.dark() => const V360Colors(
-        // Cool near-black with a faint green cast, so the teal accent sits on
-        // it without looking pasted on.
-        canvas: Color(0xFF0B1210),
-        surface: Color(0xFF151E1B),
-        surfaceMuted: Color(0xFF111A17),
-        ink: Color(0xFFEDF3F1),
-        inkMuted: Color(0xFF8A9C97),
-        inkSubtle: Color(0xFF6B7C78),
-        hairline: Color(0xFF223029),
-        accent: Color(0xFF2FB39D),
-        // Identical to [accent] here, unlike light mode. The lifted teal
-        // carries 6.53:1 on `surface` and 5.61:1 on `accentSurface`, so it is
-        // already readable as text and a second value would be a token that
-        // has to be kept in sync for no benefit.
-        accentText: Color(0xFF2FB39D),
-        accentSurface: Color(0xFF0C2E28),
-        accentSurfaceStrong: Color(0xFF124039),
-        voice: Color(0xFFE9A22E),
-        voiceText: Color(0xFFF5C069),
-        voiceSurface: Color(0xFF2E2210),
-        actionFill: Color(0xFF2FB39D),
+        canvas: Color(0xFF0D1412),
+        surface: Color(0xFF131C1A),
+        surfaceMuted: Color(0xFF1A2522),
+        ink: Color(0xFFE8EFEC),
+        inkMuted: Color(0xFFA3B2AD),
+        inkSubtle: Color(0xFF879792),
+        hairline: Color(0xFF27342F),
+        keyline: Color(0xFF9FB0AA),
+        accent: Color(0xFF2DB39D),
+        // Identical to [accent] here: the lifted teal already reads as text
+        // on the dark surfaces, so a second value would be a token to keep
+        // in sync for no benefit.
+        accentText: Color(0xFF2DB39D),
+        accentSurface: Color(0xFF11322C),
+        accentSurfaceStrong: Color(0xFF17443B),
+        band: Color(0xFF0B5F54),
+        onBand: Color(0xFFFFFFFF),
+        onBandMuted: Color(0xFFBFE3DB),
+        actionFill: Color(0xFF2DB39D),
         onActionFill: Color(0xFF04211C),
         onFill: Color(0xFFFFFFFF),
-        warning: Color(0xFFE9A22E),
-        warningText: Color(0xFFF5C069),
-        warningSurface: Color(0xFF2E2410),
-        danger: Color(0xFFFF6B59),
-        dangerText: Color(0xFFFF9484),
-        dangerSurface: Color(0xFF2E1512),
+        voice: Color(0xFFF4AE2A),
+        onVoice: Color(0xFF10201C),
+        voiceText: Color(0xFFF7C66A),
+        voiceSurface: Color(0xFF33260E),
+        warning: Color(0xFFF0A928),
+        warningText: Color(0xFFF6C56A),
+        warningSurface: Color(0xFF332710),
+        danger: Color(0xFFE24A3B),
+        dangerText: Color(0xFFFF8E7F),
+        dangerSurface: Color(0xFF341713),
       );
 
-  V360Colors lerp(V360Colors other, double t) => V360Colors(
-        canvas: Color.lerp(canvas, other.canvas, t)!,
-        surface: Color.lerp(surface, other.surface, t)!,
-        surfaceMuted: Color.lerp(surfaceMuted, other.surfaceMuted, t)!,
-        ink: Color.lerp(ink, other.ink, t)!,
-        inkMuted: Color.lerp(inkMuted, other.inkMuted, t)!,
-        inkSubtle: Color.lerp(inkSubtle, other.inkSubtle, t)!,
-        hairline: Color.lerp(hairline, other.hairline, t)!,
-        accent: Color.lerp(accent, other.accent, t)!,
-        accentText: Color.lerp(accentText, other.accentText, t)!,
-        accentSurface: Color.lerp(accentSurface, other.accentSurface, t)!,
-        accentSurfaceStrong:
-            Color.lerp(accentSurfaceStrong, other.accentSurfaceStrong, t)!,
-        voice: Color.lerp(voice, other.voice, t)!,
-        voiceText: Color.lerp(voiceText, other.voiceText, t)!,
-        voiceSurface: Color.lerp(voiceSurface, other.voiceSurface, t)!,
-        actionFill: Color.lerp(actionFill, other.actionFill, t)!,
-        onActionFill: Color.lerp(onActionFill, other.onActionFill, t)!,
-        onFill: Color.lerp(onFill, other.onFill, t)!,
-        warning: Color.lerp(warning, other.warning, t)!,
-        warningText: Color.lerp(warningText, other.warningText, t)!,
-        warningSurface: Color.lerp(warningSurface, other.warningSurface, t)!,
-        danger: Color.lerp(danger, other.danger, t)!,
-        dangerText: Color.lerp(dangerText, other.dangerText, t)!,
-        dangerSurface: Color.lerp(dangerSurface, other.dangerSurface, t)!,
+  /// The distributor shell's variant: the same pack line printed on a deeper
+  /// bottle-green teal, so a shop screen and a wholesaler screen can never be
+  /// mistaken for each other across a room — or across a demo.
+  V360Colors distributorVariant() {
+    final dark = canvas.computeLuminance() < 0.2;
+    return withBand(
+      band: dark ? const Color(0xFF123B35) : const Color(0xFF16433C),
+      onBandMuted: dark ? const Color(0xFFBBD9D2) : const Color(0xFFCFE7E1),
+    );
+  }
+
+  /// A copy printed on a different [band].
+  V360Colors withBand({required Color band, Color? onBandMuted}) => V360Colors(
+        canvas: canvas,
+        surface: surface,
+        surfaceMuted: surfaceMuted,
+        ink: ink,
+        inkMuted: inkMuted,
+        inkSubtle: inkSubtle,
+        hairline: hairline,
+        keyline: keyline,
+        accent: accent,
+        accentText: accentText,
+        accentSurface: accentSurface,
+        accentSurfaceStrong: accentSurfaceStrong,
+        band: band,
+        onBand: onBand,
+        onBandMuted: onBandMuted ?? this.onBandMuted,
+        actionFill: actionFill,
+        onActionFill: onActionFill,
+        onFill: onFill,
+        voice: voice,
+        onVoice: onVoice,
+        voiceText: voiceText,
+        voiceSurface: voiceSurface,
+        warning: warning,
+        warningText: warningText,
+        warningSurface: warningSurface,
+        danger: danger,
+        dangerText: dangerText,
+        dangerSurface: dangerSurface,
       );
+
+  V360Colors lerp(V360Colors other, double t) {
+    Color l(Color a, Color b) => Color.lerp(a, b, t)!;
+    return V360Colors(
+      canvas: l(canvas, other.canvas),
+      surface: l(surface, other.surface),
+      surfaceMuted: l(surfaceMuted, other.surfaceMuted),
+      ink: l(ink, other.ink),
+      inkMuted: l(inkMuted, other.inkMuted),
+      inkSubtle: l(inkSubtle, other.inkSubtle),
+      hairline: l(hairline, other.hairline),
+      keyline: l(keyline, other.keyline),
+      accent: l(accent, other.accent),
+      accentText: l(accentText, other.accentText),
+      accentSurface: l(accentSurface, other.accentSurface),
+      accentSurfaceStrong: l(accentSurfaceStrong, other.accentSurfaceStrong),
+      band: l(band, other.band),
+      onBand: l(onBand, other.onBand),
+      onBandMuted: l(onBandMuted, other.onBandMuted),
+      actionFill: l(actionFill, other.actionFill),
+      onActionFill: l(onActionFill, other.onActionFill),
+      onFill: l(onFill, other.onFill),
+      voice: l(voice, other.voice),
+      onVoice: l(onVoice, other.onVoice),
+      voiceText: l(voiceText, other.voiceText),
+      voiceSurface: l(voiceSurface, other.voiceSurface),
+      warning: l(warning, other.warning),
+      warningText: l(warningText, other.warningText),
+      warningSurface: l(warningSurface, other.warningSurface),
+      danger: l(danger, other.danger),
+      dangerText: l(dangerText, other.dangerText),
+      dangerSurface: l(dangerSurface, other.dangerSurface),
+    );
+  }
 }

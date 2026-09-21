@@ -53,7 +53,7 @@ void main() {
       final style = tester
           .widget<Text>(find.text('Say the code only at the counter'))
           .style!;
-      expect(style.color, const Color(0xFFB03B2C));
+      expect(style.color, V360Colors.light().dangerText);
       expect(style.color, isNot(light.danger));
     });
 
@@ -67,7 +67,7 @@ void main() {
       ));
       expect(
         tester.widget<Text>(find.text('Loaded in boot')).style!.color,
-        const Color(0xFF0A5A4F),
+        V360Colors.light().accentText,
       );
     });
 
@@ -153,7 +153,7 @@ void main() {
           .widget<AnimatedContainer>(
               find.byType(AnimatedContainer).first)
           .decoration! as BoxDecoration;
-      expect(decoration.color, const Color(0xFF1A2E2A));
+      expect(decoration.color, V360Colors.light().actionFill);
 
       await tester.pumpWidget(
         carryHarness(build(), brightness: Brightness.dark),
@@ -163,7 +163,7 @@ void main() {
           .widget<AnimatedContainer>(
               find.byType(AnimatedContainer).first)
           .decoration! as BoxDecoration;
-      expect(decoration.color, const Color(0xFF2FB39D));
+      expect(decoration.color, V360Colors.dark().actionFill);
     });
 
     testWidgets('tapping an unselected chip reports its value',

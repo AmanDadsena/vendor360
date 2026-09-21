@@ -24,7 +24,7 @@ void main() {
         carryHarness(const V360Card(child: Text('x'))),
       );
       await tester.pumpAndSettle();
-      expect(_cardDecoration(tester).color, const Color(0xFFFFFFFF));
+      expect(_cardDecoration(tester).color, V360Colors.light().surface);
 
       // MaterialApp animates theme changes, so settle or we read a lerped
       // colour partway between the two palettes.
@@ -33,7 +33,7 @@ void main() {
         brightness: Brightness.dark,
       ));
       await tester.pumpAndSettle();
-      expect(_cardDecoration(tester).color, const Color(0xFF151E1B));
+      expect(_cardDecoration(tester).color, V360Colors.dark().surface);
     });
 
     // A shadow on a near-black canvas reads as mud, so dark separates with
@@ -107,7 +107,7 @@ void main() {
             matching: find.byType(Container),
           ))
           .firstWhere(_isHairline);
-      expect(divider.color, const Color(0xFFD8E4E1));
+      expect(divider.color, V360Colors.light().hairline);
     });
   });
 
@@ -121,7 +121,7 @@ void main() {
     testWidgets('uses the label style and inkSubtle', (tester) async {
       await tester.pumpWidget(carryHarness(const SectionLabel('departs')));
       final style = tester.widget<Text>(find.text('DEPARTS')).style!;
-      expect(style.color, const Color(0xFF8A9793));
+      expect(style.color, V360Colors.light().inkSubtle);
       expect(style.fontSize, const V360Typography().label.fontSize);
     });
   });
@@ -158,7 +158,7 @@ void main() {
               )
               .first)
           .decoration! as BoxDecoration;
-      expect(decoration.color, const Color(0xFF1A2E2A));
+      expect(decoration.color, V360Colors.light().actionFill);
     });
 
     testWidgets('fires onPressed', (tester) async {

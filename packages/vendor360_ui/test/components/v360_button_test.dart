@@ -18,20 +18,20 @@ BoxDecoration _decorationOf(WidgetTester tester) {
 
 void main() {
   group('V360Button', () {
-    testWidgets('primary is black in light mode', (tester) async {
+    testWidgets('primary uses the action fill in light mode', (tester) async {
       await tester.pumpWidget(carryHarness(
         V360Button.primary(label: 'Find space', onPressed: () {}),
       ));
-      expect(_decorationOf(tester).color, const Color(0xFF1A2E2A));
+      expect(_decorationOf(tester).color, V360Colors.light().actionFill);
     });
 
     // The inversion rule. If this ever flips, every screen looks wrong.
-    testWidgets('primary is teal in dark mode', (tester) async {
+    testWidgets('primary uses the action fill in dark mode', (tester) async {
       await tester.pumpWidget(carryHarness(
         V360Button.primary(label: 'Find space', onPressed: () {}),
         brightness: Brightness.dark,
       ));
-      expect(_decorationOf(tester).color, const Color(0xFF2FB39D));
+      expect(_decorationOf(tester).color, V360Colors.dark().actionFill);
     });
 
     testWidgets('label colour inverts with the fill', (tester) async {
@@ -39,7 +39,7 @@ void main() {
         V360Button.primary(label: 'Go', onPressed: () {}),
       ));
       expect(tester.widget<Text>(find.text('Go')).style!.color,
-          const Color(0xFFFFFFFF));
+          V360Colors.light().onActionFill);
 
       await tester.pumpWidget(carryHarness(
         V360Button.primary(label: 'Go', onPressed: () {}),
@@ -47,7 +47,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
       expect(tester.widget<Text>(find.text('Go')).style!.color,
-          const Color(0xFF04211C));
+          V360Colors.dark().onActionFill);
     });
 
     testWidgets('is a true pill at every size', (tester) async {
@@ -86,17 +86,17 @@ void main() {
         V360Button.secondary(label: 'Directions', onPressed: () {}),
       ));
       final decoration = _decorationOf(tester);
-      expect(decoration.color, const Color(0xFFFFFFFF));
+      expect(decoration.color, V360Colors.light().surface);
       expect(decoration.border, isNotNull);
     });
 
-    testWidgets('ghost uses accentText, the readable blue', (tester) async {
+    testWidgets('ghost uses accentText, the readable teal', (tester) async {
       await tester.pumpWidget(carryHarness(
         V360Button.ghost(label: 'Custom dimensions', onPressed: () {}),
       ));
       expect(
         tester.widget<Text>(find.text('Custom dimensions')).style!.color,
-        const Color(0xFF0A5A4F),
+        V360Colors.light().accentText,
       );
     });
 
