@@ -33,3 +33,18 @@ flutter:
     - family: NotoSansDevanagari
       fonts:
         - asset: assets/fonts/NotoSansDevanagari-Variable.ttf
+
+    # Anek, by Ek Type (Mumbai) — the product's voice from here on. One
+    # design in two scripts, so Hindi and Marathi carry the same letterforms
+    # as English instead of borrowing a stranger's. Both files are variable
+    # on weight (100-800) and width (75-125); the narrow widths are what set
+    # figures the way a pack prints its MRP. Anek Devanagari also carries
+    # full Latin, which is why it can stand behind Anek Latin as the fallback.
+    #
+    # SIL Open Font License 1.1 — see assets/fonts/OFL-Anek.txt.
+    - family: AnekLatin
+      fonts:
+        - asset: assets/fonts/AnekLatin-Variable.ttf
+    - family: AnekDevanagari
+      fonts:
+        - asset: assets/fonts/AnekDevanagari-Variable.ttf
