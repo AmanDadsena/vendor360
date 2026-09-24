@@ -50,6 +50,7 @@ export 'src/components/vendor/voice_orb.dart';
 export 'src/components/vendor/health_dial.dart';
 export 'src/components/vendor/stat_tile.dart';
 export 'src/components/vendor/forecast_spark.dart';
+export 'src/components/vendor/sales_bars.dart';
 export 'src/components/vendor/expiry_chip.dart';
 export 'src/components/vendor/confidence_row.dart';
 export 'src/components/vendor/driver_badge.dart';
