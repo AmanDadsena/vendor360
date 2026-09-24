@@ -104,7 +104,13 @@ cd packages/vendor360_ui && flutter test
 cd packages/vendor360_core && dart test
 ```
 
-410 tests across the four suites. The backend cases are named for the Test
+Or all four at once, with one exit code:
+
+```bash
+./check.sh
+```
+
+561 tests across the four suites. The backend cases are named for the Test
 Plan's `TC-` identifiers.
 
 ---
