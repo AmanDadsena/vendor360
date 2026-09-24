@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 // Unfiltered: `AppLanguage.code` lives on an extension, and a `show`
 // clause filters extensions out along with everything else it omits.
@@ -7,6 +8,7 @@ import 'package:vendor360_core/vendor360_core.dart';
 import 'api_client.dart';
 import 'demo_data.dart';
 import 'marketplace_models.dart';
+import 'report_models.dart';
 import 'offline_queue.dart';
 import 'udhaar_models.dart';
 
@@ -26,6 +28,40 @@ class MarketplaceRepository {
 
   final ApiClient api;
   final OfflineQueue queue;
+
+  // ====================================================== vendor: reports
+  Future<DayClose> dayClose({DateTime? on}) => withFallback(
+        () async {
+          final json = await api.get('/reports/day-close', query: {
+            'on': ?on?.toIso8601String().split('T').first,
+          }) as Map;
+          return DayClose.fromJson(Map<String, dynamic>.from(json));
+        },
+        () => DemoData.dayClose,
+        label: 'day-close',
+      );
+
+  Future<List<SalesPoint>> salesSeries({int days = 14}) => withFallback(
+        () async {
+          final json = await api.get('/reports/sales-series', query: {
+            'days': '$days',
+          }) as List;
+          return <SalesPoint>[
+            for (final p in json)
+              SalesPoint.fromJson(Map<String, dynamic>.from(p as Map)),
+          ];
+        },
+        () => DemoData.salesSeries,
+        label: 'sales-series',
+      );
+
+  /// The bytes of a report, fetched with the session's own token.
+  ///
+  /// No fallback: a shopkeeper handing a lender a PDF must be handed the real
+  /// one or told plainly that it could not be fetched. A seeded stand-in on
+  /// paper would be a document that looks official and is not.
+  Future<Uint8List> reportFile(String path, {Map<String, dynamic>? query}) =>
+      withoutFallback(() => api.getBytes(path, query: query));
 
   // ======================================================= vendor: udhaar
   /// The customer credit book.

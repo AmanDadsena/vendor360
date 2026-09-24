@@ -63,6 +63,22 @@ class ApiClient {
     return _decode(response);
   }
 
+  /// A file, not JSON — a PDF or a workbook.
+  ///
+  /// Fetched through the same authorised client rather than handed to the
+  /// browser as a link, because a link would have to carry the session token
+  /// in the URL, where it ends up in history and server logs.
+  Future<Uint8List> getBytes(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    final response = await _client.get(_uri(path, query), headers: _headers);
+    if (response.statusCode >= 400) {
+      throw ApiException(response.statusCode, response.body);
+    }
+    return response.bodyBytes;
+  }
+
   Future<dynamic> post(String path, {Object? body, Map<String, dynamic>? query}) async {
     final response = await _client.post(
       _uri(path, query),

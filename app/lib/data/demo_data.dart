@@ -4,6 +4,7 @@ import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 
 import 'models.dart';
+import 'report_models.dart';
 import 'udhaar_models.dart';
 
 /// The seeded world every read falls back to.
@@ -346,6 +347,60 @@ class DemoData {
       ),
       build('d12', 'Onion', 'produce', 26, null, 0, seed: 4),
       build('d6', 'Rice', 'staples', 22, null, 0, weekend: 0.2, seed: 6),
+    ];
+  }
+
+  // ------------------------------------------------------------ reports
+  /// The day as the seeded world has it, so the screen works with no signal.
+  static DayClose get dayClose {
+    final sold = <({String name, double qty, String unit, double value})>[
+      (name: 'Milk', qty: 46, unit: 'pkt', value: 1288),
+      (name: 'Rice', qty: 22, unit: 'kg', value: 1364),
+      (name: 'Eggs', qty: 60, unit: 'pc', value: 480),
+      (name: 'Bread', qty: 18, unit: 'pc', value: 630),
+      (name: 'Onion', qty: 24, unit: 'kg', value: 672),
+    ];
+
+    return DayClose(
+      on: _today,
+      salesValue: Money.rupees(12012),
+      transactionCount: 16,
+      // Sales less what went out on the book, plus what came back.
+      cashIn: Money.rupees(12012 - 300 + 200),
+      wastageValue: Money.rupees(210),
+      restockValue: Money.rupees(4820),
+      udhaarGiven: Money.rupees(300),
+      udhaarCollected: Money.rupees(200),
+      lowStockCount: 6,
+      topItems: <SoldItem>[
+        for (final i in sold)
+          SoldItem(
+            skuName: i.name,
+            quantity: Quantity(i.qty, i.unit),
+            value: Money.rupees(i.value),
+          ),
+      ],
+    );
+  }
+
+  /// Fourteen days with a weekend rhythm and one quiet day, so the chart has
+  /// a shape to read rather than a straight line.
+  static List<SalesPoint> get salesSeries {
+    final today = DateTime(_today.year, _today.month, _today.day);
+    return <SalesPoint>[
+      for (var step = 13; step >= 0; step--)
+        () {
+          final on = today.subtract(Duration(days: step));
+          final weekend = on.weekday >= DateTime.saturday;
+          final quiet = step == 9;
+          final base = quiet ? 0.0 : 9200 + (weekend ? 3400 : 0);
+          final wobble = ((step * 37) % 11 - 5) * 90.0;
+          return SalesPoint(
+            on: on,
+            value: Money.rupees(base == 0 ? 0 : base + wobble),
+            count: quiet ? 0 : 11 + (step % 7),
+          );
+        }(),
     ];
   }
 
