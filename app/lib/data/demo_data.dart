@@ -32,6 +32,27 @@ class DemoData {
     supplierLeadDays: 2,
   );
 
+  /// The codes the seeder prints on the same packs, so a barcode scanned
+  /// against the demo world resolves exactly as it does against the server.
+  /// Loose goods are absent on purpose: rice out of a sack has no code, and
+  /// the scan screen has to meet that case in the demo too.
+  static const Map<String, String> barcodes = <String, String>{
+    'Milk': '8909000000008',
+    'Curd': '8909001370179',
+    'Paneer': '8909002740346',
+    'Butter': '8909004110512',
+    'Bread': '8909005480683',
+    'Tea': '8909006850850',
+    'Cooking Oil': '8909008221023',
+    'Salt': '8909009591194',
+    'Biscuits': '8909010961368',
+    'Namkeen': '8909012331534',
+    'Soft Drink': '8909013701701',
+    'Soap': '8909015071871',
+    'Shampoo': '8909016442045',
+    'Detergent': '8909017812212',
+  };
+
   static List<InventoryItem> get items {
     final now = _today;
     InventoryItem make(
@@ -53,6 +74,7 @@ class DemoData {
       reorderPoint: reorder,
       unitCost: Money.rupees(cost),
       unitPrice: Money.rupees(price),
+      barcode: barcodes[sku],
       shelfLifeDays: shelf,
       expiresOn: expiresInDays == null
           ? null

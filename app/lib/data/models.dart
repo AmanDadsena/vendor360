@@ -36,6 +36,7 @@ InventoryItem itemFromJson(Map<String, dynamic> j) => InventoryItem(
       reorderPoint: _d(j['reorder_point']),
       unitCost: Money.rupees(_d(j['unit_cost'])),
       unitPrice: Money.rupees(_d(j['unit_price'])),
+      barcode: j['barcode'] as String?,
       shelfLifeDays: j['shelf_life_days'] == null ? null : _i(j['shelf_life_days']),
       expiresOn: _dt(j['expires_on']),
       syncStatus: switch (j['sync_status']) {
@@ -45,6 +46,52 @@ InventoryItem itemFromJson(Map<String, dynamic> j) => InventoryItem(
       },
       lastUpdated: _dt(j['last_updated']),
     );
+
+/// What a scanned pack turned out to be.
+///
+/// [item] is null when the code is only known from a distributor's price
+/// list — the pack is real and named, but this shop has never stocked it.
+/// That is the difference between logging a sale and offering to add a
+/// shelf row, so the scan screen branches on it.
+class BarcodeHit {
+  const BarcodeHit({
+    required this.barcode,
+    required this.skuName,
+    required this.category,
+    required this.unit,
+    this.item,
+  });
+
+  final String barcode;
+  final String skuName;
+  final String category;
+  final String unit;
+  final InventoryItem? item;
+
+  bool get onTheShelf => item != null;
+}
+
+BarcodeHit barcodeHitFromJson(Map<String, dynamic> j) => BarcodeHit(
+      barcode: j['barcode'] as String,
+      skuName: j['sku_name'] as String,
+      category: j['category'] as String? ?? 'staples',
+      unit: j['unit'] as String? ?? 'pc',
+      item: j['item'] == null
+          ? null
+          : itemFromJson(Map<String, dynamic>.from(j['item'] as Map)),
+    );
+
+/// Keep the digits and throw the rest away.
+///
+/// Mirrors the server's normalisation so an offline scan resolves to the
+/// same row an online one would. A camera, a wedge scanner that appends a
+/// newline, and a shopkeeper typing the code off the pack with its printed
+/// hyphens all mean the same product.
+String? normaliseBarcode(String? code) {
+  if (code == null) return null;
+  final digits = code.replaceAll(RegExp(r'[^0-9]'), '');
+  return digits.isEmpty ? null : digits;
+}
 
 HealthScore healthScoreFromJson(Map<String, dynamic> j) => HealthScore(
       score: _d(j['score']),

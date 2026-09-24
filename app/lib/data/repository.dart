@@ -115,6 +115,50 @@ class VendorRepository {
         label: 'inventory',
       );
 
+  /// Look up a scanned pack.
+  ///
+  /// Returns null when nobody recognises the code. Offline, the cached shelf
+  /// is searched instead — which matters more here than in most reads: a
+  /// shopkeeper scanning at the counter during a signal drop still gets the
+  /// row, because the codes travelled down with the inventory snapshot.
+  Future<BarcodeHit?> scanBarcode(String code) {
+    final digits = normaliseBarcode(code);
+    if (digits == null) return Future<BarcodeHit?>.value();
+
+    return withFallback<BarcodeHit?>(
+      () async {
+        final json = await api.get('/inventory/by-barcode/$digits')
+            as Map<String, dynamic>;
+        return barcodeHitFromJson(json);
+      },
+      () {
+        final cached = queue.readSnapshot('inventory');
+        final items = cached is List
+            ? <InventoryItem>[
+                for (final i in cached)
+                  itemFromJson(Map<String, dynamic>.from(i as Map)),
+              ]
+            : DemoData.items;
+
+        for (final item in items) {
+          if (item.barcode == digits) {
+            return BarcodeHit(
+              barcode: digits,
+              skuName: item.skuName,
+              category: item.category,
+              unit: item.quantity.unit,
+              item: item,
+            );
+          }
+        }
+        // The catalogue lives on the server, so offline there is no second
+        // place to look. An unknown code is unknown rather than pending.
+        return null;
+      },
+      label: 'barcode $digits',
+    );
+  }
+
   /// Record a stock movement.
   ///
   /// Always queued locally first, then flushed. That ordering is what makes

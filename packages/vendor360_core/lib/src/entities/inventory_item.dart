@@ -17,6 +17,7 @@ class InventoryItem {
     required this.reorderPoint,
     required this.unitCost,
     required this.unitPrice,
+    this.barcode,
     this.shelfLifeDays,
     this.expiresOn,
     this.syncStatus = SyncStatus.synced,
@@ -30,6 +31,13 @@ class InventoryItem {
   final double reorderPoint;
   final Money unitCost;
   final Money unitPrice;
+
+  /// The EAN printed on the pack, or null for anything sold loose.
+  ///
+  /// Most of a kirana's turnover has no code at all — rice comes out of a
+  /// sack — so this being null is the ordinary case, not a gap in the data.
+  final String? barcode;
+
   final int? shelfLifeDays;
   final DateTime? expiresOn;
   final SyncStatus syncStatus;
@@ -38,6 +46,7 @@ class InventoryItem {
   bool get isLow => quantity.amount <= reorderPoint;
   bool get isOut => quantity.isZero;
   bool get isPerishable => shelfLifeDays != null;
+  bool get isScannable => barcode != null;
 
   ShelfLife? shelfLife(DateTime today) =>
       expiresOn == null ? null : ShelfLife(expiresOn: expiresOn!, today: today);
@@ -79,6 +88,7 @@ class InventoryItem {
         reorderPoint: reorderPoint ?? this.reorderPoint,
         unitCost: unitCost,
         unitPrice: unitPrice,
+        barcode: barcode,
         shelfLifeDays: shelfLifeDays,
         expiresOn: expiresOn ?? this.expiresOn,
         syncStatus: syncStatus ?? this.syncStatus,
