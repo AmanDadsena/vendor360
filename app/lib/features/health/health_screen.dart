@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
@@ -110,6 +111,13 @@ class _Body extends ConsumerWidget {
               : V360BannerTone.success,
         ),
         SizedBox(height: v360.spacing.x3),
+        // The trading the score is built on, shown rather than asserted: a
+        // lender asking "how has this shop been doing" is asking for this.
+        const SectionLabel('How the shop has been trading'),
+        SizedBox(height: v360.spacing.sm),
+        const _TradingChart(),
+
+        SizedBox(height: v360.spacing.x3),
 
         const SectionLabel('How this is calculated'),
         SizedBox(height: v360.spacing.sm),
@@ -194,6 +202,36 @@ class _Body extends ConsumerWidget {
 /// Off by default and revocable. The PRD names data-sharing hesitancy as a
 /// risk and prescribes showing the vendor their score before any lender sees
 /// it — so consent is granted per lender rather than as one blanket switch.
+/// A fortnight of takings, under the score it explains.
+class _TradingChart extends ConsumerWidget {
+  const _TradingChart();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final series = ref.watch(salesSeriesProvider);
+
+    return V360Card(
+      child: series.when(
+        loading: () => const V360Skeleton(height: 140),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (points) => SalesBars(
+          height: 140,
+          caption: 'Daily takings, last 14 days',
+          points: <SalesPointData>[
+            for (final p in points)
+              SalesPointData(
+                label: DateFormat('d').format(p.on),
+                value: p.value.rupees,
+                display: p.value.display,
+                today: DateUtils.isSameDay(p.on, DateTime.now()),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ConsentList extends ConsumerWidget {
   const _ConsentList({required this.strings});
 
