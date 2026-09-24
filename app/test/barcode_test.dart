@@ -187,6 +187,45 @@ void main() {
     expect(find.byType(PrintedBarcode), findsWidgets);
   });
 
+  testWidgets('the printed codes are wide enough to actually scan',
+      (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final container = ProviderContainer(
+      overrides: [
+        offlineQueueProvider.overrideWithValue(OfflineQueue.inMemory()),
+        apiClientProvider.overrideWithValue(
+          ApiClient(
+            client: MockClient((_) async => throw const SocketException('x')),
+          ),
+        ),
+        cameraSupportProvider.overrideWithValue(
+          const CameraSupport(platform: TargetPlatform.windows, web: false),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: buildV360Theme(Brightness.light),
+          home: const MotionScope(child: ScanScreen()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // An EAN-13 is 95 modules wide. Below roughly three logical pixels a
+    // module it still looks like a barcode and a phone camera cannot read
+    // it — which would quietly defeat the only reason it is on the page.
+    final width = tester.getSize(find.byType(PrintedBarcode).first).width;
+    expect(width / 95, greaterThan(3.0), reason: 'only $width wide');
+  });
+
   testWidgets('typing a code off the pack finds the row', (tester) async {
     final container = ProviderContainer(
       overrides: [

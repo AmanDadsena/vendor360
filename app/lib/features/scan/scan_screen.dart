@@ -334,8 +334,11 @@ class _ShelfCodes extends ConsumerWidget {
     final v360 = context.v360;
     final colors = v360.colors;
     final items = ref.watch(inventoryProvider).value ?? DemoData.items;
+    // Three, not a dozen. Each one needs the full width of the page to be
+    // readable: 95 modules across a 130px column is 1.4 pixels a module at
+    // 1x, which looks like a barcode and will not scan.
     final scannable =
-        items.where((i) => Ean13.isValid(i.barcode ?? '')).take(4).toList();
+        items.where((i) => Ean13.isValid(i.barcode ?? '')).take(3).toList();
 
     if (scannable.isEmpty) {
       return Text(
@@ -355,21 +358,15 @@ class _ShelfCodes extends ConsumerWidget {
                 horizontal: v360.spacing.lg,
                 vertical: v360.spacing.md,
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      scannable[i].skuName,
-                      style: v360.text.body.copyWith(color: colors.ink),
-                    ),
+                  Text(
+                    scannable[i].skuName,
+                    style: v360.text.body.copyWith(color: colors.ink),
                   ),
-                  SizedBox(
-                    width: 132,
-                    child: PrintedBarcode(
-                      code: scannable[i].barcode!,
-                      height: 38,
-                    ),
-                  ),
+                  SizedBox(height: v360.spacing.sm),
+                  PrintedBarcode(code: scannable[i].barcode!, height: 44),
                 ],
               ),
             ),
