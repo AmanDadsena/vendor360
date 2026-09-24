@@ -6,6 +6,7 @@ from .forecast import Forecast
 from .pool import BargainPool, PoolMember
 from .lender import Lender, ScoreConsent
 from .supplier import Supplier
+from .udhaar import UDHAAR_KINDS, Customer, UdhaarEntry
 from .alert import Alert
 from .distributor import CatalogEntry, DistributorUser, VendorDistributor
 from .order import (
@@ -31,6 +32,9 @@ __all__ = [
     "Lender",
     "ScoreConsent",
     "Supplier",
+    "Customer",
+    "UdhaarEntry",
+    "UDHAAR_KINDS",
     "DistributorUser",
     "CatalogEntry",
     "VendorDistributor",
