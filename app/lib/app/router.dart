@@ -26,6 +26,7 @@ import '../features/orders/order_detail_screen.dart';
 import '../features/orders/orders_screen.dart';
 import '../features/pools/pools_screen.dart';
 import '../features/receipt/receipt_screen.dart';
+import '../features/scan/scan_screen.dart';
 import '../features/voice/voice_screen.dart';
 import 'dist_shell.dart';
 import 'providers.dart';
@@ -53,6 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: <RouteBase>[
                 GoRoute(path: 'receipt', builder: (_, _) => const ReceiptScreen()),
                 GoRoute(path: 'expiry', builder: (_, _) => const ExpiryScreen()),
+                GoRoute(path: 'scan', builder: (_, _) => const ScanScreen()),
                 GoRoute(
                   path: 'day-close',
                   builder: (_, _) => const DayCloseScreen(),

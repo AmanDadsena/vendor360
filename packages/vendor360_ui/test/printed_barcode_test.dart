@@ -39,7 +39,7 @@ void main() {
       // because that digit lives in the left group's L/G pattern.
       const a = '8909000000008';
       const bodyB = '790900000000';
-      final b = bodyB + '${Ean13.checkDigit(bodyB)}';
+      final b = '$bodyB${Ean13.checkDigit(bodyB)}';
 
       expect(Ean13.isValid(b), isTrue);
       expect(Ean13.modules(a), isNot(Ean13.modules(b)));

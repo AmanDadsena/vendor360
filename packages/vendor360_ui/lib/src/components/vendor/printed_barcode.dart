@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../tokens/v360_theme.dart';
-import '../../tokens/v360_typography.dart';
 
 /// The EAN-13 encoder, separated from the painting so it can be tested
 /// without a canvas.

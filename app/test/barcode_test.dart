@@ -1,14 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:vendor360/app/providers.dart';
 import 'package:vendor360/data/api_client.dart';
+import 'package:vendor360/data/camera.dart';
 import 'package:vendor360/data/demo_data.dart';
 import 'package:vendor360/data/models.dart';
 import 'package:vendor360/data/offline_queue.dart';
 import 'package:vendor360/data/repository.dart';
+import 'package:vendor360/features/scan/scan_screen.dart';
+import 'package:vendor360_ui/vendor360_ui.dart';
 
 /// Scanning a pack, on the client.
 ///
@@ -122,5 +128,99 @@ void main() {
       expect(hit.item!.barcode, '8909000000008');
       expect(hit.item!.isScannable, isTrue);
     });
+  });
+
+  group('what the device can do', () {
+    test('a phone scans; a laptop does not pretend to', () {
+      const phone = CameraSupport(platform: TargetPlatform.android, web: false);
+      const laptop =
+          CameraSupport(platform: TargetPlatform.windows, web: false);
+      const browser =
+          CameraSupport(platform: TargetPlatform.android, web: true);
+
+      expect(phone.canScan, isTrue);
+      expect(laptop.canScan, isFalse);
+      expect(browser.canScan, isFalse, reason: 'a phone browser is not the app');
+
+      // Choosing a file works everywhere, which is what keeps the receipt
+      // flow real on a laptop rather than reducing it to samples.
+      expect(laptop.canPickImage, isTrue);
+      expect(laptop.canTakePhoto, isFalse);
+    });
+  });
+
+  testWidgets('with no camera the scan screen explains instead of going black',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        offlineQueueProvider.overrideWithValue(OfflineQueue.inMemory()),
+        apiClientProvider.overrideWithValue(
+          ApiClient(
+            client: MockClient((_) async => throw const SocketException('x')),
+          ),
+        ),
+        cameraSupportProvider.overrideWithValue(
+          const CameraSupport(platform: TargetPlatform.windows, web: false),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: buildV360Theme(Brightness.light),
+          home: const MotionScope(child: ScanScreen()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('यहाँ कैमरा नहीं है — नंबर लिखें'), findsOneWidget);
+
+    // And the way through is offered, not just the bad news.
+    expect(find.byType(TextField), findsOneWidget);
+
+    // Real codes are printed on the page, so the flow can be demonstrated by
+    // pointing a phone at the screen.
+    expect(find.byType(PrintedBarcode), findsWidgets);
+  });
+
+  testWidgets('typing a code off the pack finds the row', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        offlineQueueProvider.overrideWithValue(OfflineQueue.inMemory()),
+        apiClientProvider.overrideWithValue(
+          ApiClient(
+            client: MockClient((_) async => throw const SocketException('x')),
+          ),
+        ),
+        cameraSupportProvider.overrideWithValue(
+          const CameraSupport(platform: TargetPlatform.windows, web: false),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: buildV360Theme(Brightness.light),
+          home: const MotionScope(child: ScanScreen()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), '8909000000007');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    // A mistyped check digit is a code no pack carries, and the screen says
+    // so rather than silently doing nothing.
+    expect(find.text('इस नंबर का कोई सामान नहीं'), findsOneWidget);
   });
 }

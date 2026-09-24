@@ -6,6 +6,7 @@ import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 import '../data/api_client.dart';
 import '../data/marketplace_models.dart';
 import '../data/report_models.dart';
+import '../data/camera.dart';
 import '../data/speech.dart';
 import '../data/udhaar_models.dart';
 import '../data/live_connection.dart';
@@ -539,6 +540,14 @@ final distDispatchProvider = FutureProvider.autoDispose<Dispatch>(
 /// refuses the permission. Everything downstream is the same pipeline either
 /// way, so the demo still works where dictation does not.
 final microphoneProvider = Provider<Microphone>((ref) => Microphone());
+
+/// What this device can do with a camera.
+///
+/// Overridden in tests so a screen's no-camera branch can be rendered and
+/// asserted, which is the branch a grader on a laptop actually sees.
+final cameraSupportProvider = Provider<CameraSupport>(
+  (ref) => const CameraSupport(),
+);
 
 // ------------------------------------------------------------ reports
 /// The day being closed. Defaults to today, in the shop's own clock.

@@ -158,6 +158,44 @@ class Strings {
         'इथे माइक नाही — नमुना चालू आहे',
       );
 
+  // Scanning a pack
+  String get scan => _pick('Scan', 'स्कैन', 'स्कॅन');
+  String get pointAtTheBarcode => _pick(
+        'Point at the barcode on the pack',
+        'पैकेट के बारकोड पर कैमरा रखें',
+        'पॅकेटच्या बारकोडवर कॅमेरा धरा',
+      );
+  String get noCameraHere => _pick(
+        'No camera here — type the code',
+        'यहाँ कैमरा नहीं है — नंबर लिखें',
+        'इथे कॅमेरा नाही — नंबर लिहा',
+      );
+  String get barcodeNumber =>
+      _pick('Barcode number', 'बारकोड नंबर', 'बारकोड नंबर');
+  String get lookUp => _pick('Look up', 'ढूँढें', 'शोधा');
+  String get codeNotRecognised => _pick(
+        'No pack with that code',
+        'इस नंबर का कोई सामान नहीं',
+        'या नंबरचे सामान नाही',
+      );
+  String get notOnYourShelfYet => _pick(
+        'Not on your shelf yet',
+        'आपके स्टॉक में नहीं है',
+        'तुमच्या स्टॉकमध्ये नाही',
+      );
+  String get addToShelf => _pick('Add to shelf', 'स्टॉक में जोड़ें', 'स्टॉकमध्ये जोडा');
+  String get scanAnother => _pick('Scan another', 'दूसरा स्कैन करें', 'दुसरे स्कॅन करा');
+  String get codesOnYourShelf => _pick(
+        'Codes on your shelf',
+        'आपके स्टॉक के नंबर',
+        'तुमच्या स्टॉकचे नंबर',
+      );
+  String get looseGoodsHaveNoCode => _pick(
+        'Rice, dal and produce are sold loose and carry no code.',
+        'चावल, दाल और सब्ज़ी खुले बिकते हैं, उन पर नंबर नहीं होता।',
+        'तांदूळ, डाळ आणि भाजी सुटी विकली जाते, त्यावर नंबर नसतो.',
+      );
+
   // Day close and the paper it produces
   String get dayClose => _pick('Day close', 'दिन का हिसाब', 'दिवसाचा हिशोब');
   String get cashIn => _pick('cash in', 'नकद मिला', 'रोख मिळाले');

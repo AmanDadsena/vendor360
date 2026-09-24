@@ -115,6 +115,28 @@ class VendorRepository {
         label: 'inventory',
       );
 
+  /// Put a new SKU on the shelf.
+  ///
+  /// A write, so it does not fall back: an item the vendor believes they
+  /// added, which does not exist, is worse than being told the add failed.
+  /// The id is the server's, because movements logged against it have to
+  /// resolve after the next sync.
+  Future<InventoryItem> createItem({
+    required String skuName,
+    String category = 'staples',
+    String unit = 'pc',
+    String? barcode,
+  }) =>
+      withoutFallback(() async {
+        final json = await api.post('/inventory', body: <String, dynamic>{
+          'sku_name': skuName,
+          'category': category,
+          'unit': unit,
+          'barcode': ?normaliseBarcode(barcode),
+        }) as Map<String, dynamic>;
+        return itemFromJson(json);
+      });
+
   /// Look up a scanned pack.
   ///
   /// Returns null when nobody recognises the code. Offline, the cached shelf

@@ -443,15 +443,23 @@ class _ItemRow extends ConsumerWidget {
     }
   }
 
-  void _openSheet(BuildContext context, WidgetRef ref) {
+  void _openSheet(BuildContext context, WidgetRef ref) =>
+      showQuickEditSheet(context, item);
+}
+
+/// Log a sale, restock or wastage against one item.
+///
+/// Public because the scan screen ends here too: a scanned pack that is
+/// already on the shelf should land in the same sheet the list opens, with
+/// the same three movements and the same write path, rather than in a second
+/// sheet that drifts away from it.
+Future<void> showQuickEditSheet(BuildContext context, InventoryItem item) =>
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => _QuickEditSheet(item: item),
     );
-  }
-}
 
 /// Fast restock / sale / waste logging without leaving the list.
 class _QuickEditSheet extends ConsumerStatefulWidget {
