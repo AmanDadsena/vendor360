@@ -75,6 +75,10 @@ class CatalogEntry(Base):
     category: Mapped[str] = mapped_column(String(60), default="staples", index=True)
     unit: Mapped[str] = mapped_column(String(16), default="pc")
 
+    # The same printed code the vendor's own item carries, which is what
+    # lets a scan name a pack the shop has never stocked.
+    barcode: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+
     pack_size: Mapped[float] = mapped_column(Float, default=1)
     pack_price: Mapped[float] = mapped_column(Float, default=0)
     moq_packs: Mapped[int] = mapped_column(Integer, default=1)

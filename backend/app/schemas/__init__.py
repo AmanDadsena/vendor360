@@ -79,6 +79,7 @@ class ItemOut(ORMModel):
     id: uuid.UUID
     sku_name: str
     category: str
+    barcode: str | None = None
     current_qty: float
     unit: str
     reorder_point: float
@@ -90,9 +91,26 @@ class ItemOut(ORMModel):
     last_updated: datetime | None = None
 
 
+class BarcodeHitOut(BaseModel):
+    """What a scanned pack turns out to be.
+
+    One endpoint answers two questions, because the scan screen asks both at
+    once: what is this, and do I already stock it? `item` is null when the
+    code is only known from a distributor's catalogue, which is the signal to
+    offer adding it rather than to log a sale.
+    """
+
+    barcode: str
+    sku_name: str
+    category: str
+    unit: str
+    item: ItemOut | None = None
+
+
 class ItemCreate(BaseModel):
     sku_name: str
     category: str = "staples"
+    barcode: str | None = None
     current_qty: float = 0
     unit: str = "pc"
     unit_cost: float = 0
@@ -105,6 +123,7 @@ class ItemCreate(BaseModel):
 class ItemUpdate(BaseModel):
     sku_name: str | None = None
     category: str | None = None
+    barcode: str | None = None
     current_qty: float | None = None
     unit: str | None = None
     unit_cost: float | None = None

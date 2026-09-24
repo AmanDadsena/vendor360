@@ -11,8 +11,9 @@ from sqlalchemy.orm import Session
 
 from ...core.db import get_db, utcnow
 from ...core.security import current_vendor
-from ...models import InventoryItem, Transaction, Vendor
+from ...models import CatalogEntry, InventoryItem, Transaction, Vendor
 from ...schemas import (
+    BarcodeHitOut,
     ItemCreate,
     ItemDetailOut,
     ItemOut,
@@ -130,6 +131,7 @@ def create_item(
         vendor_id=vendor.id,
         sku_name=body.sku_name,
         category=body.category,
+        barcode=normalise_barcode(body.barcode),
         current_qty=body.current_qty,
         unit=body.unit,
         unit_cost=body.unit_cost,
@@ -140,6 +142,69 @@ def create_item(
     db.commit()
     refresh_reorder_point(db, item, vendor)
     return ItemOut.model_validate(item)
+
+
+def normalise_barcode(code: str | None) -> str | None:
+    """Keep the digits and throw the rest away.
+
+    A code arrives from a camera, a wedge scanner that appends a newline, or a
+    shopkeeper typing it off the pack with the printed hyphens included. All
+    three mean the same product, so all three have to resolve to it.
+    """
+    if code is None:
+        return None
+    digits = "".join(c for c in code if c.isdigit())
+    return digits or None
+
+
+@router.get("/by-barcode/{code}", response_model=BarcodeHitOut)
+def scan_barcode(
+    code: str,
+    vendor: Vendor = Depends(current_vendor),
+    db: Session = Depends(get_db),
+):
+    """Name a scanned pack, and say whether this shop stocks it.
+
+    The shelf is searched first and scoped to the vendor, so a code another
+    shop stocks is invisible here. Failing that, the catalogue is searched
+    across every distributor, because an EAN identifies a product globally and
+    a scanner that only worked on connected suppliers would look broken. Only
+    the descriptive fields cross that boundary - never a pack price, which
+    belongs to a commercial relationship this vendor may not have.
+    """
+    digits = normalise_barcode(code)
+    if digits is None:
+        raise HTTPException(status_code=404, detail="Not a barcode")
+
+    item = db.scalar(
+        select(InventoryItem).where(
+            InventoryItem.vendor_id == vendor.id, InventoryItem.barcode == digits
+        )
+    )
+    if item is not None:
+        return BarcodeHitOut(
+            barcode=digits,
+            sku_name=item.sku_name,
+            category=item.category,
+            unit=item.unit,
+            item=ItemOut.model_validate(item),
+        )
+
+    entry = db.scalar(
+        select(CatalogEntry)
+        .where(CatalogEntry.barcode == digits, CatalogEntry.active.is_(True))
+        .order_by(CatalogEntry.sku_name)
+    )
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Barcode not recognised")
+
+    return BarcodeHitOut(
+        barcode=digits,
+        sku_name=entry.sku_name,
+        category=entry.category,
+        unit=entry.unit,
+        item=None,
+    )
 
 
 def _owned_item(db: Session, vendor: Vendor, item_id: uuid.UUID) -> InventoryItem:
@@ -180,7 +245,10 @@ def update_item(
     db: Session = Depends(get_db),
 ):
     item = _owned_item(db, vendor, item_id)
-    for field, value in body.model_dump(exclude_unset=True).items():
+    fields = body.model_dump(exclude_unset=True)
+    if "barcode" in fields:
+        fields["barcode"] = normalise_barcode(fields["barcode"])
+    for field, value in fields.items():
         setattr(item, field, value)
     if body.category:
         item.shelf_life_days = shelf_life_for(body.category)

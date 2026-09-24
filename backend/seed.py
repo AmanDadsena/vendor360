@@ -120,6 +120,45 @@ PRODUCTS = [
     ("Ladoo",         "sweets",        "kg", 220, 280,   4),
 ]
 
+
+def ean13(body: str) -> str:
+    """Append the check digit to a 12-digit body.
+
+    Real codes, not random digits: a scanner validates the check digit before
+    it reports a read, so a made-up number would simply never scan. 890 is
+    India's GS1 prefix, which is what a pack off a Pune shelf actually carries.
+    """
+    digits = [int(c) for c in body]
+    total = sum(d * (3 if i % 2 else 1) for i, d in enumerate(digits))
+    return body + str((10 - total % 10) % 10)
+
+
+# Packaged goods carry a printed code; anything scooped out of a sack does
+# not. A kirana sells most of its rice, dal and produce loose, so roughly half
+# the shelf is unscannable - and the scan screen has to be honest about that
+# rather than implying every item can be found by camera.
+BARCODES = {
+    sku: ean13("890" + str(900_000_000 + i * 137_017))
+    for i, sku in enumerate(
+        [
+            "Milk",
+            "Curd",
+            "Paneer",
+            "Butter",
+            "Bread",
+            "Tea",
+            "Cooking Oil",
+            "Salt",
+            "Biscuits",
+            "Namkeen",
+            "Soft Drink",
+            "Soap",
+            "Shampoo",
+            "Detergent",
+        ]
+    )
+}
+
 # Coverage is deliberate: every category a shop stocks is carried by at least
 # two wholesalers, so the sourcing screen always has something to rank against
 # something else. A single-supplier category would render as a list of one,
@@ -457,6 +496,7 @@ def _seed_marketplace(db, today: date) -> tuple[int, int, int]:
                 sku_name=sku,
                 category=cat,
                 unit=unit,
+                barcode=BARCODES.get(sku),
                 pack_size=pack_size,
                 pack_price=round(cost * pack_size * spread, 2),
                 moq_packs=moq,
@@ -757,6 +797,9 @@ def seed(vendor_count: int, days: int, reset: bool) -> None:
                     vendor_id=vendor.id,
                     sku_name=sku,
                     category=cat,
+                    # The same product carries the same code in every shop,
+                    # which is what a global identifier means.
+                    barcode=BARCODES.get(sku),
                     unit=unit,
                     unit_cost=round(cost * RNG.uniform(0.95, 1.05), 2),
                     unit_price=round(price * RNG.uniform(0.97, 1.06), 2),

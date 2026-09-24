@@ -23,6 +23,10 @@ class InventoryItem(Base):
     # a brand-new SKU borrows its category's demand curve (TC-F04).
     category: Mapped[str] = mapped_column(String(60), default="staples", index=True)
 
+    # The pack's printed EAN-13. Null for anything sold loose - rice from a
+    # sack has no barcode, and most of a kirana's turnover is loose.
+    barcode: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+
     current_qty: Mapped[float] = mapped_column(Float, default=0)
     unit: Mapped[str] = mapped_column(String(16), default="pc")
 
