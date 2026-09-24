@@ -94,6 +94,8 @@ class _DashboardBody extends StatelessWidget {
                 SizedBox(height: v360.spacing.md),
                 _ExpiringRow(data: data, strings: strings),
               ],
+              SizedBox(height: v360.spacing.md),
+              const _UdhaarLine(),
               gap,
               SectionLabel(strings.quickActions),
               SizedBox(height: v360.spacing.md),
@@ -346,6 +348,57 @@ class _ExpiringRow extends StatelessWidget {
   }
 }
 
+/// What the neighbourhood owes the shop — one ruled line, with the money.
+///
+/// It sits beside the expiring line rather than in the grid below, because
+/// it is a number about cash, not a place to go. Absent entirely when nobody
+/// owes anything: an empty khata is not news.
+class _UdhaarLine extends ConsumerWidget {
+  const _UdhaarLine();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final v360 = context.v360;
+    final colors = v360.colors;
+    final s = ref.watch(stringsProvider);
+    final book = ref.watch(udhaarBookProvider).value;
+
+    if (book == null || book.isEmpty) return const SizedBox.shrink();
+
+    return V360Card(
+      onTap: () => context.go('/udhaar'),
+      semanticLabel: '${book.outstanding.display} ${s.owedToYou}, '
+          '${book.customers} ${s.customers}',
+      padding: EdgeInsets.symmetric(
+        horizontal: v360.spacing.lg,
+        vertical: v360.spacing.md,
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.menu_book_outlined, size: 20, color: colors.inkMuted),
+          SizedBox(width: v360.spacing.md),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: <InlineSpan>[
+                  TextSpan(
+                    text: book.outstanding.display,
+                    style: v360.text.bodyStrong.weight(FontWeight.w700),
+                  ),
+                  TextSpan(text: ' ${s.owedToYou} · '),
+                  TextSpan(text: '${book.customers} ${s.customers}'),
+                ],
+              ),
+              style: v360.text.body.copyWith(color: colors.ink),
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: colors.inkSubtle),
+        ],
+      ),
+    );
+  }
+}
+
 /// The places to go, as a ruled grid — the back-panel table of a pack, not
 /// a wrap of pill chips.
 class _Places extends StatelessWidget {
@@ -388,6 +441,12 @@ class _Places extends StatelessWidget {
         label: strings.bulkDeals,
         route: '/pools',
         badge: data.pendingPools > 0 ? data.pendingPools : null,
+      ),
+      (
+        icon: Icons.menu_book_outlined,
+        label: strings.udhaar,
+        route: '/udhaar',
+        badge: null,
       ),
       (
         icon: Icons.query_stats_rounded,

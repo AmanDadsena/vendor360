@@ -15,6 +15,8 @@ import 'package:vendor360/features/health/health_screen.dart';
 import 'package:vendor360/features/heatmap/heatmap_screen.dart';
 import 'package:vendor360/features/inventory/inventory_screen.dart';
 import 'package:vendor360/features/onboarding/onboarding_screen.dart';
+import 'package:vendor360/features/udhaar/customer_screen.dart';
+import 'package:vendor360/features/udhaar/udhaar_screen.dart';
 import 'package:vendor360/features/pools/pools_screen.dart';
 import 'package:vendor360/features/receipt/receipt_screen.dart';
 import 'package:vendor360/features/voice/voice_screen.dart';
@@ -269,5 +271,36 @@ void main() {
       await settle(tester);
       expect(tester.takeException(), isNull, reason: '${screen.runtimeType} threw');
     }
+  });
+
+  testWidgets('Udhaar lists who owes, oldest debt first', (tester) async {
+    await tester.pumpWidget(host(const UdhaarScreen()));
+    await settle(tester);
+
+    // Oldest first, not largest: the ninety-day ₹240 leads, not the newer
+    // larger debts.
+    expect(find.text('Ramesh Kale'), findsOneWidget);
+    final rows = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? '')
+        .toList();
+    expect(rows.indexOf('Ramesh Kale'),
+        lessThan(rows.indexOf('Farida Shaikh')));
+    // A debt standing over a month carries the attention square.
+    expect(find.byType(StatusMark), findsWidgets);
+  });
+
+  testWidgets('a customer page shows the balance and both actions',
+      (tester) async {
+    await tester.pumpWidget(host(const CustomerScreen(customerId: 'c1')));
+    await settle(tester);
+
+    expect(find.text('Ramesh Kale'), findsOneWidget);
+    // Hindi is the default language, so the actions read in it.
+    // Twice over: the action, and the entries it has already recorded.
+    expect(find.text('सामान लिया'), findsWidgets);
+    expect(find.text('चुकाया'), findsWidgets);
+    // Only offered when there is something to chase.
+    expect(find.text('याद दिलाएँ'), findsOneWidget);
   });
 }

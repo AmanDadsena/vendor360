@@ -17,6 +17,8 @@ import '../features/health/health_screen.dart';
 import '../features/heatmap/heatmap_screen.dart';
 import '../features/inventory/inventory_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/udhaar/customer_screen.dart';
+import '../features/udhaar/udhaar_screen.dart';
 import '../features/onboarding/setup_flow_screen.dart';
 import '../features/orders/cart_screen.dart';
 import '../features/orders/order_detail_screen.dart';
@@ -50,6 +52,18 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: <RouteBase>[
                 GoRoute(path: 'receipt', builder: (_, _) => const ReceiptScreen()),
                 GoRoute(path: 'expiry', builder: (_, _) => const ExpiryScreen()),
+                GoRoute(
+                  path: 'udhaar',
+                  builder: (_, _) => const UdhaarScreen(),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: ':id',
+                      builder: (_, state) => CustomerScreen(
+                        customerId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ],
+                ),
                 GoRoute(path: 'heatmap', builder: (_, _) => const HeatmapScreen()),
                 GoRoute(path: 'pools', builder: (_, _) => const PoolsScreen()),
                 GoRoute(path: 'accuracy', builder: (_, _) => const AccuracyScreen()),

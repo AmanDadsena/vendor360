@@ -152,6 +152,34 @@ class Strings {
       _pick('Forecast accuracy', 'अनुमान की सटीकता', 'अंदाजाची अचूकता');
   /// Matches the server's window: the dashboard counts stock that expires
   /// within three days, so the label says three days, not "this week".
+  // Udhaar — the customer credit book
+  String get udhaar => _pick('Udhaar', 'उधार', 'उधार');
+  String get owedToYou => _pick('owed to you', 'आपको मिलना है', 'तुम्हाला येणे');
+  String get addCustomer =>
+      _pick('Add customer', 'ग्राहक जोड़ें', 'ग्राहक जोडा');
+  String get customerName => _pick('Name', 'नाम', 'नाव');
+  String get phoneOptional =>
+      _pick('Phone (optional)', 'फ़ोन (वैकल्पिक)', 'फोन (ऐच्छिक)');
+  String get tookGoods => _pick('Took goods', 'सामान लिया', 'माल घेतला');
+  String get paidBack => _pick('Paid', 'चुकाया', 'दिले');
+  String get remind => _pick('Remind', 'याद दिलाएँ', 'आठवण करा');
+  String get amount => _pick('Amount', 'रकम', 'रक्कम');
+  String get whatFor => _pick('What for? (optional)', 'किसलिए? (वैकल्पिक)',
+      'कशासाठी? (ऐच्छिक)');
+  String get nobodyOwes => _pick(
+        'Nobody owes you right now.',
+        'अभी किसी से कुछ लेना नहीं है।',
+        'सध्या कोणाकडून काही येणे नाही.',
+      );
+  String get settled => _pick('Settled', 'चुकता', 'चुकते');
+  String get oldest => _pick('oldest', 'सबसे पुराना', 'सर्वात जुने');
+  String get customers => _pick('customers', 'ग्राहक', 'ग्राहक');
+  String daysOld(int days) => switch (language) {
+        AppLanguage.hindi => '$days दिन से',
+        AppLanguage.marathi => '$days दिवसांपासून',
+        AppLanguage.english => days == 1 ? '1 day' : '$days days',
+      };
+
   String get expiringSoonWindow => _pick(
         'expiring in 3 days',
         '3 दिन में खराब होंगे',
