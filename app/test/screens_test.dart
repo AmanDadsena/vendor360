@@ -191,11 +191,14 @@ void main() {
 
     expect(find.text('Tomato'), findsOneWidget);
     expect(find.textContaining('at risk, '), findsWidgets);
+    // A real, per-item markdown appears...
     expect(find.textContaining('50%'), findsWidgets);
     expect(
-      find.textContaining('Dynamic markdowns recover up to 70%'),
+      find.textContaining('beats thrown away at zero'),
       findsOneWidget,
     );
+    // ...and no headline recovery rate the product cannot stand behind.
+    expect(find.textContaining('recover up to'), findsNothing);
   });
 
   testWidgets('Pools show the group price against the base price',

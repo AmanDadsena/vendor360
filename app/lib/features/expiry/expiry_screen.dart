@@ -96,8 +96,12 @@ class ExpiryScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: v360.spacing.md),
                   Text(
-                    'Dynamic markdowns recover up to 70% of cost on '
-                    'perishables before zero-value write-offs.',
+                    // No percentage claim here. Everywhere else this product
+                    // refuses to state a figure it cannot stand behind, and
+                    // an unsourced recovery rate would be the one exception.
+                    // The discount on each row below is real and computed.
+                    'Sold at a discount beats thrown away at zero. Each row '
+                    'carries the markdown its remaining days justify.',
                     style: v360.text.caption.copyWith(color: colors.inkMuted),
                   ),
                   SizedBox(height: v360.spacing.xl),
