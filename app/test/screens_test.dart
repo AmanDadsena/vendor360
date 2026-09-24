@@ -160,6 +160,12 @@ void main() {
     await settle(tester);
 
     expect(find.byType(HealthDial), findsOneWidget);
+    // The breakdown sits below the trading chart, so scroll to it.
+    await tester.scrollUntilVisible(
+      find.text('Sales consistency'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
     // The guide forbids an opaque number: all three factors must be present.
     expect(find.text('Sales consistency'), findsOneWidget);
     expect(find.text('Inventory turnover'), findsOneWidget);
