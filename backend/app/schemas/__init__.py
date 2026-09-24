@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -864,6 +865,62 @@ class DemoStatusOut(BaseModel):
 class DemoSweepOut(BaseModel):
     removed: int
     note: str
+
+
+# ------------------------------------------------------ udhaar (the khata)
+class CustomerIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    phone: str | None = None
+    note: str | None = None
+
+
+class CustomerOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    phone: str | None
+    note: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UdhaarEntryIn(BaseModel):
+    # credit = goods taken on the book, payment = money returned.
+    kind: Literal["credit", "payment"]
+    amount: float = Field(gt=0)
+    note: str | None = None
+
+
+class UdhaarEntryOut(BaseModel):
+    id: uuid.UUID
+    kind: str
+    amount: float
+    note: str | None
+    occurred_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UdhaarRowOut(BaseModel):
+    """One customer as the book lists them: who, how much, how long."""
+
+    customer: CustomerOut
+    owed: float
+    days_outstanding: int
+    stale: bool
+
+
+class UdhaarBookOut(BaseModel):
+    outstanding: float
+    customers: int
+    oldest_days: int
+    rows: list[UdhaarRowOut]
+
+
+class UdhaarStatementOut(BaseModel):
+    customer: CustomerOut
+    owed: float
+    days_outstanding: int
+    entries: list[UdhaarEntryOut]
 
 
 TokenResponse.model_rebuild()

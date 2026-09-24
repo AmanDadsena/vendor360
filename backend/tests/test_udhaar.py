@@ -173,3 +173,77 @@ def test_tc_u07_day_movement_counts_only_that_day(db, vendor, customer):
 
     assert given == 120
     assert collected == 300
+
+
+# --------------------------------------------------------------- TC-U08 API
+def test_tc_u08_the_book_reads_through_the_api(client_vendor):
+    created = client_vendor.post(
+        "/udhaar/customers",
+        json={"name": "Suresh", "phone": "9876500099"},
+    )
+    assert created.status_code == 201
+    customer_id = created.json()["id"]
+
+    client_vendor.post(
+        f"/udhaar/{customer_id}/entries",
+        json={"kind": "credit", "amount": 320, "note": "atta, oil"},
+    )
+    book = client_vendor.get("/udhaar").json()
+
+    assert book["outstanding"] == 320
+    assert book["customers"] == 1
+    assert book["rows"][0]["customer"]["name"] == "Suresh"
+
+
+def test_tc_u08_a_payment_moves_the_balance(client_vendor):
+    customer_id = client_vendor.post(
+        "/udhaar/customers", json={"name": "Anita"}
+    ).json()["id"]
+    client_vendor.post(
+        f"/udhaar/{customer_id}/entries",
+        json={"kind": "credit", "amount": 500},
+    )
+    after = client_vendor.post(
+        f"/udhaar/{customer_id}/entries",
+        json={"kind": "payment", "amount": 200},
+    ).json()
+
+    assert after["owed"] == 300
+    assert [e["kind"] for e in after["entries"]] == ["payment", "credit"]
+
+
+def test_tc_u08_a_negative_amount_is_refused(client_vendor):
+    customer_id = client_vendor.post(
+        "/udhaar/customers", json={"name": "Vikas"}
+    ).json()["id"]
+
+    response = client_vendor.post(
+        f"/udhaar/{customer_id}/entries",
+        json={"kind": "credit", "amount": -50},
+    )
+    assert response.status_code == 422
+
+
+def test_tc_u09_one_shop_cannot_read_another_shops_customer(client_vendor, db):
+    """A 404, not a 403: "that exists, but not for you" is itself a leak."""
+    other = Vendor(
+        id=uuid.uuid4(),
+        name="Other",
+        store_name="Other Stores",
+        phone="9000000002",
+    )
+    db.add(other)
+    db.flush()
+    theirs = Customer(vendor_id=other.id, name="Not yours")
+    db.add(theirs)
+    db.commit()
+
+    assert client_vendor.get(f"/udhaar/{theirs.id}").status_code == 404
+
+
+def test_tc_u09_a_distributor_token_cannot_open_the_book(client_dist):
+    assert client_dist.get("/udhaar").status_code == 403
+
+
+def test_tc_u09_the_book_needs_a_token(api):
+    assert api.get("/udhaar").status_code in (401, 403)
