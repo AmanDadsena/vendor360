@@ -38,6 +38,7 @@ dependencies:
   vendor360_core:
     path: ../packages/vendor360_core
   share_plus: ^13.3.0
+  speech_to_text: ^7.5.0
 
 dev_dependencies:
   flutter_test:

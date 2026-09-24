@@ -6,6 +6,7 @@ import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 import '../data/api_client.dart';
 import '../data/marketplace_models.dart';
 import '../data/report_models.dart';
+import '../data/speech.dart';
 import '../data/udhaar_models.dart';
 import '../data/live_connection.dart';
 import '../data/marketplace_repository.dart';
@@ -531,6 +532,14 @@ final distDispatchProvider = FutureProvider.autoDispose<Dispatch>(
 /// pulse, which is a human action at a keyboard and not something worth a
 /// socket message. Re-read on every live event so the banner appears within
 /// one tick of the pulse starting.
+/// The microphone, resolved once per session.
+///
+/// Asks the platform whether it can actually listen, and falls back to the
+/// sample utterances when it cannot — a desktop browser, a device that
+/// refuses the permission. Everything downstream is the same pipeline either
+/// way, so the demo still works where dictation does not.
+final microphoneProvider = Provider<Microphone>((ref) => Microphone());
+
 // ------------------------------------------------------------ reports
 /// The day being closed. Defaults to today, in the shop's own clock.
 final dayCloseDateProvider =

@@ -152,6 +152,12 @@ class Strings {
       _pick('Forecast accuracy', 'अनुमान की सटीकता', 'अंदाजाची अचूकता');
   /// Matches the server's window: the dashboard counts stock that expires
   /// within three days, so the label says three days, not "this week".
+  String get dictationUnavailable => _pick(
+        'No microphone here — playing a sample',
+        'यहाँ माइक नहीं है — नमूना चल रहा है',
+        'इथे माइक नाही — नमुना चालू आहे',
+      );
+
   // Day close and the paper it produces
   String get dayClose => _pick('Day close', 'दिन का हिसाब', 'दिवसाचा हिशोब');
   String get cashIn => _pick('cash in', 'नकद मिला', 'रोख मिळाले');

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,39 +31,16 @@ class VoiceScreen extends ConsumerStatefulWidget {
 
 class _VoiceScreenState extends ConsumerState<VoiceScreen> {
   final _transcript = TextEditingController();
-  final _random = Random();
 
   bool _listening = false;
   bool _parsing = false;
+
+  /// Set once the microphone has answered: true when this platform has no
+  /// engine and the screen is replaying a sample instead.
+  bool _simulated = false;
   VoiceParseResult? _result;
   List<ParsedLine> _lines = <ParsedLine>[];
   String? _error;
-
-  /// Sample utterances in all three languages, including the awkward ones —
-  /// a missing verb, a missing quantity — so the confirm path is reachable in
-  /// a demo rather than only the happy path.
-  static const Map<AppLanguage, List<String>> _samples = {
-    AppLanguage.hindi: <String>[
-      '20 doodh packet aur 5 kilo chawal beche',
-      'बीस दूध पैकेट और पांच किलो चावल बेचे',
-      '10 kilo tamatar kharab ho gaya',
-      '50 doodh packet aaya',
-      'bees doodh packet',
-      '3 kilo pyaz aur 2 litre tel liya',
-    ],
-    AppLanguage.marathi: <String>[
-      'दहा किलो कांदा विकले',
-      'पाच लिटर तेल घेतला',
-      'वीस दूध पॅकेट विकले',
-      'तीन किलो साखर विकली',
-    ],
-    AppLanguage.english: <String>[
-      'sold 12 eggs and 2 packets of biscuits',
-      'restocked 30 kg rice',
-      '5 litre cooking oil wasted',
-      'sold 8 bread',
-    ],
-  };
 
   /// Everyday quick-tap vernacular phrases for instant 1-tap logging.
   static const Map<AppLanguage, List<String>> _quickPhrases = {
@@ -95,22 +70,9 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
     super.dispose();
   }
 
-  /// Stands in for Bhashini. Returns a transcript and an ASR confidence.
-  Future<({String text, double confidence})> _capture(
-    AppLanguage language,
-  ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 1400));
-    final pool = _samples[language]!;
-    return (
-      text: pool[_random.nextInt(pool.length)],
-      // Real ASR rarely returns certainty. Varying this is what makes the
-      // review path show up honestly rather than only on contrived input.
-      confidence: 0.62 + _random.nextDouble() * 0.36,
-    );
-  }
-
   Future<void> _startListening() async {
     final language = ref.read(languageProvider);
+    final microphone = ref.read(microphoneProvider);
     HapticFeedback.mediumImpact();
     setState(() {
       _listening = true;
@@ -119,12 +81,28 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
       _error = null;
     });
 
-    final heard = await _capture(language);
+    final dictation = await microphone.resolve();
+    if (!mounted) return;
+    setState(() => _simulated = microphone.isReal == false);
+
+    final heard = await dictation.listen(
+      language: language,
+      // Words appear as they are recognised: the feedback that says the
+      // microphone is working, rather than a spinner that says nothing.
+      onPartial: (partial) {
+        if (mounted) _transcript.text = partial;
+      },
+    );
     if (!mounted) return;
 
     _transcript.text = heard.text;
     HapticFeedback.selectionClick();
     setState(() => _listening = false);
+
+    if (heard.text.trim().isEmpty) {
+      setState(() => _error = 'Nothing was heard. Try again, or type it.');
+      return;
+    }
     await _parse(asrConfidence: heard.confidence);
   }
 
@@ -225,6 +203,15 @@ class _VoiceScreenState extends ConsumerState<VoiceScreen> {
                               .weight(FontWeight.w700),
                         ),
                         SizedBox(height: v360.spacing.sm),
+                        if (_simulated)
+                          Padding(
+                            padding: EdgeInsets.only(top: v360.spacing.xs),
+                            child: StatusMark(
+                              label: s.dictationUnavailable,
+                              color: colors.warning,
+                              dense: true,
+                            ),
+                          ),
                         Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: v360.spacing.xxl,
