@@ -32,5 +32,12 @@ python-jose[cryptography]>=3.3.0,<4.0
 numpy>=1.26,<3.0
 scikit-learn>=1.4,<2.0
 
+# ---------------------------------------------------------------- reports
+# The day sheet and the lender's credit report are rendered server-side, so
+# both shells and any future one get the same page, and the figures on paper
+# come from the same service the screens read.
+reportlab>=4.2,<5.0
+openpyxl>=3.1,<4.0
+
 # ------------------------------------------------------------------ test
 pytest>=8.0,<9.0

@@ -21,6 +21,7 @@ from .api.routes import (
     live,
     onboarding,
     orders,
+    reports,
     udhaar,
 )
 from .core.config import get_settings
@@ -78,6 +79,7 @@ app.include_router(intelligence.router)
 app.include_router(onboarding.router)
 app.include_router(orders.router)
 app.include_router(udhaar.router)
+app.include_router(reports.router)
 app.include_router(distributor.router)
 app.include_router(live.router)
 app.include_router(demo.router)
