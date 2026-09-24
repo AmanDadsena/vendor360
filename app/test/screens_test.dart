@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:vendor360/app/providers.dart';
 import 'package:vendor360/data/api_client.dart';
+import 'package:vendor360/data/camera.dart';
 import 'package:vendor360/data/offline_queue.dart';
 import 'package:vendor360/features/accuracy/accuracy_screen.dart';
 import 'package:vendor360/features/dashboard/dashboard_screen.dart';
@@ -237,6 +238,26 @@ void main() {
 
     expect(find.text('Clear photo'), findsOneWidget);
     expect(find.text('Blurry / angled'), findsOneWidget);
+  });
+
+  testWidgets('Receipt screen names the capture it can actually do',
+      (tester) async {
+    // On a laptop image_picker opens a file dialog, so the button says so
+    // rather than promising a camera that is not there.
+    container = ProviderContainer(
+      overrides: [
+        offlineQueueProvider.overrideWithValue(OfflineQueue.inMemory()),
+        apiClientProvider.overrideWithValue(deadClient()),
+        cameraSupportProvider.overrideWithValue(
+          const CameraSupport(platform: TargetPlatform.windows, web: false),
+        ),
+      ],
+    );
+    await tester.pumpWidget(host(const ReceiptScreen()));
+    await settle(tester);
+
+    expect(find.text('Choose a photo'), findsOneWidget);
+    expect(find.text('Photograph the receipt'), findsNothing);
   });
 
   testWidgets('Accuracy screen reports MAPE with a plain-language verdict',

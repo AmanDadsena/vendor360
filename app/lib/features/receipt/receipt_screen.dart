@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:vendor360_ui/vendor360_ui.dart';
 
@@ -13,12 +14,16 @@ import '../../data/models.dart';
 /// A photograph of a supplier receipt becomes stock, with expiry dates already
 /// computed from each item's category — the vendor never types a shelf life.
 ///
-/// Camera capture and the OCR engine itself are stubbed: the TRD names
-/// Tesseract or a cloud OCR service, neither of which this prototype has
-/// credentials or a device camera for on the web target. The sample receipts
-/// below feed the same parser the real engine would, so line extraction,
-/// confidence flagging, total reconciliation and expiry computation are all
-/// the production path. Swapping in a real engine means replacing `_capture`.
+/// The photograph is real — `image_picker` takes it on a phone and opens a
+/// file dialog on a laptop — and it stays on screen as the reference while
+/// the lines are entered. The OCR engine is not: the TRD names Tesseract or
+/// a cloud service, and this prototype has credentials for neither, so the
+/// screen says plainly that the text has to be read by a person rather than
+/// pretending a photo became stock on its own.
+///
+/// Everything after the text exists is the production path — line extraction,
+/// confidence flagging, total reconciliation, expiry from category. Wiring a
+/// real engine means filling `_text` from the image instead of from a human.
 class ReceiptScreen extends ConsumerStatefulWidget {
   const ReceiptScreen({super.key});
 
@@ -34,6 +39,14 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   ReceiptResult? _result;
   double _ocrConfidence = 0.94;
   String? _error;
+
+  /// The photo the vendor took, held in memory only.
+  ///
+  /// Never uploaded: there is nothing on the server that reads it, and
+  /// shipping a shop's paperwork somewhere it is not used is not a default
+  /// worth having.
+  Uint8List? _photo;
+  bool _picking = false;
 
   /// Sample receipts, including a deliberately poor one so the review path is
   /// demonstrable rather than only the clean case.
@@ -79,6 +92,45 @@ TOTAL                          1560.00''',
     super.dispose();
   }
 
+  /// Take or choose a photograph of the receipt.
+  ///
+  /// Typed confidence drops to 1.0 afterwards, because what follows is not an
+  /// OCR guess at all — it is what the vendor read off their own photo, and
+  /// flagging their own typing for review would be nonsense.
+  Future<void> _photograph() async {
+    final support = ref.read(cameraSupportProvider);
+    setState(() => _picking = true);
+    try {
+      final file = await ImagePicker().pickImage(
+        source: support.canTakePhoto
+            ? ImageSource.camera
+            : ImageSource.gallery,
+        // A receipt only has to be legible on screen. Full-resolution phone
+        // photos are several megabytes of paper held in memory for nothing.
+        maxWidth: 1600,
+        imageQuality: 82,
+      );
+      if (file == null) return;
+
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      HapticFeedback.selectionClick();
+      setState(() {
+        _photo = bytes;
+        _ocrConfidence = 1.0;
+        _result = null;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(
+        () => _error = 'Could not open the camera. Pick a sample instead.',
+      );
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
+
   Future<void> _capture(({String label, String text, double confidence}) sample) async {
     HapticFeedback.selectionClick();
     setState(() {
@@ -92,7 +144,10 @@ TOTAL                          1560.00''',
 
     _text.text = sample.text;
     _ocrConfidence = sample.confidence;
-    setState(() => _scanning = false);
+    setState(() {
+      _scanning = false;
+      _photo = null;
+    });
     await _parse();
   }
 
@@ -170,13 +225,57 @@ TOTAL                          1560.00''',
           ),
           children: <Widget>[
             if (result == null) ...<Widget>[
-              _ScanFrame(scanning: _scanning || _parsing),
+              _ScanFrame(scanning: _scanning || _parsing, photo: _photo),
+              SizedBox(height: v360.spacing.lg),
+              V360Button.primary(
+                label: ref.watch(cameraSupportProvider).canTakePhoto
+                    ? 'Photograph the receipt'
+                    : 'Choose a photo',
+                expand: true,
+                leadingIcon: Icons.photo_camera_outlined,
+                loading: _picking,
+                onPressed: _picking || _scanning ? null : _photograph,
+              ),
+
+              if (_photo != null) ...<Widget>[
+                SizedBox(height: v360.spacing.lg),
+                // The honest part. There is no OCR service configured, so the
+                // photo is a reference and not an input, and saying so is what
+                // keeps the rest of the screen trustworthy.
+                V360Banner(
+                  icon: Icons.edit_note_rounded,
+                  title: 'Type what the receipt says',
+                  body: 'Reading it automatically needs an OCR key this build '
+                      'does not have. The photo stays here while you enter '
+                      'the lines, and everything after that is automatic — '
+                      'including each expiry date.',
+                  tone: V360BannerTone.info,
+                ),
+                SizedBox(height: v360.spacing.md),
+                TextField(
+                  controller: _text,
+                  maxLines: 6,
+                  minLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Receipt lines',
+                    hintText: 'Milk 20 pkt 480, Rice 10 kg 520',
+                  ),
+                ),
+                SizedBox(height: v360.spacing.md),
+                V360Button.primary(
+                  label: 'Read these lines',
+                  expand: true,
+                  loading: _parsing,
+                  onPressed: _parsing ? null : _parse,
+                ),
+              ],
+
               SizedBox(height: v360.spacing.xl),
               const SectionLabel('Sample receipts'),
               SizedBox(height: v360.spacing.sm),
               Text(
-                'No camera on this build — pick a receipt to run through the '
-                'same reader a photo would use.',
+                'Already-typed receipts, including a poorly printed one, so '
+                'the review path can be seen without a camera.',
                 style: v360.text.caption.copyWith(color: colors.inkMuted),
               ),
               SizedBox(height: v360.spacing.md),
@@ -219,14 +318,35 @@ TOTAL                          1560.00''',
 }
 
 class _ScanFrame extends StatelessWidget {
-  const _ScanFrame({required this.scanning});
+  const _ScanFrame({required this.scanning, this.photo});
 
   final bool scanning;
+
+  /// The vendor's own photograph, once there is one.
+  final Uint8List? photo;
 
   @override
   Widget build(BuildContext context) {
     final v360 = context.v360;
     final colors = v360.colors;
+    final photo = this.photo;
+
+    if (photo != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(V360Radius.lg),
+        child: SizedBox(
+          height: 220,
+          width: double.infinity,
+          child: Image.memory(
+            photo,
+            // Cropped to the frame rather than letterboxed: a receipt is
+            // long and narrow, and the top of it is the part being read.
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+          ),
+        ),
+      );
+    }
 
     return Container(
       height: 200,
