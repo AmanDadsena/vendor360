@@ -152,6 +152,26 @@ class Strings {
       _pick('Forecast accuracy', 'अनुमान की सटीकता', 'अंदाजाची अचूकता');
   /// Matches the server's window: the dashboard counts stock that expires
   /// within three days, so the label says three days, not "this week".
+  // Day close and the paper it produces
+  String get dayClose => _pick('Day close', 'दिन का हिसाब', 'दिवसाचा हिशोब');
+  String get cashIn => _pick('cash in', 'नकद मिला', 'रोख मिळाले');
+  String get wasted => _pick('wasted', 'बर्बाद', 'वाया');
+  String get givenOnUdhaar =>
+      _pick('Given on udhaar', 'उधार दिया', 'उधार दिले');
+  String get collectedOnUdhaar =>
+      _pick('Collected on udhaar', 'उधार वसूला', 'उधार वसूल');
+  String get last14Days =>
+      _pick('Last 14 days', 'पिछले 14 दिन', 'मागील 14 दिवस');
+  String get soldMost => _pick('Sold most', 'सबसे ज़्यादा बिका', 'सर्वाधिक विकले');
+  String get takeItWithYou =>
+      _pick('Take it with you', 'साथ ले जाएँ', 'सोबत न्या');
+  String get daySheet => _pick('Day sheet (PDF)', 'दिन का पर्चा (PDF)',
+      'दिवसाचा कागद (PDF)');
+  String get creditReport => _pick('Credit report (PDF)',
+      'क्रेडिट रिपोर्ट (PDF)', 'क्रेडिट अहवाल (PDF)');
+  String get ledgerWorkbook =>
+      _pick('Ledger (Excel)', 'बही (Excel)', 'वही (Excel)');
+
   // Udhaar — the customer credit book
   String get udhaar => _pick('Udhaar', 'उधार', 'उधार');
   String get owedToYou => _pick('owed to you', 'आपको मिलना है', 'तुम्हाला येणे');

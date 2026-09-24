@@ -17,6 +17,7 @@ import '../features/health/health_screen.dart';
 import '../features/heatmap/heatmap_screen.dart';
 import '../features/inventory/inventory_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/reports/day_close_screen.dart';
 import '../features/udhaar/customer_screen.dart';
 import '../features/udhaar/udhaar_screen.dart';
 import '../features/onboarding/setup_flow_screen.dart';
@@ -52,6 +53,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: <RouteBase>[
                 GoRoute(path: 'receipt', builder: (_, _) => const ReceiptScreen()),
                 GoRoute(path: 'expiry', builder: (_, _) => const ExpiryScreen()),
+                GoRoute(
+                  path: 'day-close',
+                  builder: (_, _) => const DayCloseScreen(),
+                ),
                 GoRoute(
                   path: 'udhaar',
                   builder: (_, _) => const UdhaarScreen(),

@@ -15,6 +15,7 @@ import 'package:vendor360/features/health/health_screen.dart';
 import 'package:vendor360/features/heatmap/heatmap_screen.dart';
 import 'package:vendor360/features/inventory/inventory_screen.dart';
 import 'package:vendor360/features/onboarding/onboarding_screen.dart';
+import 'package:vendor360/features/reports/day_close_screen.dart';
 import 'package:vendor360/features/udhaar/customer_screen.dart';
 import 'package:vendor360/features/udhaar/udhaar_screen.dart';
 import 'package:vendor360/features/pools/pools_screen.dart';
@@ -302,5 +303,34 @@ void main() {
     expect(find.text('चुकाया'), findsWidgets);
     // Only offered when there is something to chase.
     expect(find.text('याद दिलाएँ'), findsOneWidget);
+  });
+
+  testWidgets('Day close leads with cash in, not sales', (tester) async {
+    await tester.pumpWidget(host(const DayCloseScreen()));
+    await settle(tester);
+
+    // Sales were ₹12,012 but ₹300 went out on the book and ₹200 came back,
+    // so the drawer saw ₹11,912 — and that is the figure on the band.
+    final glyphs = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? '')
+        .join(' ');
+    expect(glyphs, contains('₹11,912'));
+    expect(glyphs, contains('₹12,012'));
+    expect(find.byType(SalesBars), findsOneWidget);
+  });
+
+  testWidgets('Day close offers the three things to take away',
+      (tester) async {
+    await tester.pumpWidget(host(const DayCloseScreen()));
+    await settle(tester);
+
+    await tester.scrollUntilVisible(
+      find.textContaining('Excel'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.textContaining('PDF'), findsWidgets);
+    expect(find.textContaining('Excel'), findsOneWidget);
   });
 }

@@ -449,6 +449,12 @@ class _Places extends StatelessWidget {
         badge: null,
       ),
       (
+        icon: Icons.summarize_outlined,
+        label: strings.dayClose,
+        route: '/day-close',
+        badge: null,
+      ),
+      (
         icon: Icons.query_stats_rounded,
         label: strings.accuracy,
         route: '/accuracy',
