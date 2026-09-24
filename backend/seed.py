@@ -28,6 +28,7 @@ from app.models import (
     BargainPool,
     CatalogEntry,
     ConflictAudit,
+    Customer,
     DistributorUser,
     Forecast,
     InventoryItem,
@@ -42,6 +43,7 @@ from app.models import (
     Supplier,
     SyncEvent,
     Transaction,
+    UdhaarEntry,
     Vendor,
     VendorDistributor,
 )
@@ -367,6 +369,49 @@ def _stage_demo_shop(db, vendor: Vendor) -> int:
     return staged
 
 
+def _seed_udhaar(db, vendor: Vendor, today: date) -> tuple[int, float]:
+    """Give the demo shop a credit book with a history worth reading.
+
+    Every kirana keeps one, so a shop with an empty khata looks like a shop
+    nobody trusts. The spread matters more than the total: one customer who
+    settles every week, two carrying a month, and one who has owed a small
+    amount since the monsoon — which is what makes the oldest-first ordering
+    and the stale marker visible on the screen instead of theoretical.
+    """
+    from app.models import Customer
+    from app.services import udhaar as udhaar_service
+
+    people = [
+        # name,           phone,        debts (days ago, amount), payments
+        ("Suresh Patil",  "9822011001", [(2, 340), (9, 210)],      [(5, 200)]),
+        ("Anita Joshi",   "9822011002", [(34, 780)],               [(20, 300)]),
+        ("Ramesh Kale",   None,         [(76, 240)],               []),
+        ("Farida Shaikh", "9822011004", [(1, 120)],                []),
+        ("Deepak More",   "9822011005", [(12, 560), (3, 180)],     [(6, 560)]),
+        ("Vaishali Rane", "9822011006", [(21, 430)],               [(21, 430)]),
+    ]
+
+    outstanding = 0.0
+    for name, phone, debts, payments in people:
+        customer = Customer(vendor_id=vendor.id, name=name, phone=phone)
+        db.add(customer)
+        db.flush()
+        for days, amount in debts:
+            udhaar_service.record(
+                db, vendor, customer, "credit", amount,
+                occurred_at=as_utc(today - timedelta(days=days), hour=19),
+            )
+        for days, amount in payments:
+            udhaar_service.record(
+                db, vendor, customer, "payment", amount,
+                occurred_at=as_utc(today - timedelta(days=days), hour=20),
+            )
+
+    db.commit()
+    totals = udhaar_service.totals(db, vendor)
+    return totals.customers, totals.outstanding
+
+
 def _seed_marketplace(db, today: date) -> tuple[int, int, int]:
     """Wire up the two-sided half: logins, price lists, connections, orders.
 
@@ -645,6 +690,7 @@ def seed(vendor_count: int, days: int, reset: bool) -> None:
             for model in (
                 ConflictAudit, SyncEvent, Forecast, OrderEvent,
                 PurchaseOrderLine, LedgerEntry, PurchaseOrder,
+                UdhaarEntry, Customer,
                 Transaction, PoolMember, BargainPool, ScoreConsent,
                 VendorDistributor, CatalogEntry, DistributorUser,
                 InventoryItem, OtpChallenge, Supplier, Lender, Vendor,
@@ -808,6 +854,10 @@ def seed(vendor_count: int, days: int, reset: bool) -> None:
         staged = _stage_demo_shop(db, demo)
         db.commit()
         print(f"  {staged} items drawn down at {demo.store_name} for the demo login")
+
+        print("\nopening the customer credit book...")
+        owing, outstanding = _seed_udhaar(db, demo, today)
+        print(f"  {owing} customers owing Rs {outstanding:,.0f} at {demo.store_name}")
 
         # After the draw-down, so the cached forecasts reflect the stock the
         # app will actually open on.
