@@ -260,6 +260,26 @@ void main() {
     expect(find.text('Photograph the receipt'), findsNothing);
   });
 
+  testWidgets('Home offers every place the product has', (tester) async {
+    await tester.pumpWidget(host(const DashboardScreen()));
+    await settle(tester);
+
+    // The grid sits below the fold, so it has to be scrolled to before it
+    // is built at all — which is also true of the shopkeeper's thumb.
+    await tester.dragUntilVisible(
+      find.text('स्कैन'),
+      find.byType(CustomScrollView),
+      const Offset(0, -220),
+    );
+    await tester.pump();
+
+    // The grid is the product's table of contents; a feature missing from it
+    // is a feature nobody finds.
+    for (final place in <String>['स्कैन', 'उधार', 'दिन का हिसाब']) {
+      expect(find.text(place), findsOneWidget, reason: place);
+    }
+  });
+
   testWidgets('Accuracy screen reports MAPE with a plain-language verdict',
       (tester) async {
     await tester.pumpWidget(host(const AccuracyScreen()));

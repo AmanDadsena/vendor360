@@ -3,9 +3,10 @@
 AI-powered predictive intelligence for India's local vendors.
 
 A kirana store's backend turned from passive record-keeping into active
-prediction: forecast what will sell, log stock by speaking, scan a receipt
-instead of typing it, keep working with no signal, and build the operating
-record a lender cannot otherwise see.
+prediction: forecast what will sell, log stock by speaking or by scanning the
+pack, photograph a receipt instead of typing it, keep the udhaar book, close
+the day on paper you can hand to someone, keep working with no signal, and
+build the operating record a lender cannot otherwise see.
 
 And then the other half — because a prediction nobody can act on is a
 newsletter. Distributors are real accounts with price lists and an order
@@ -233,6 +234,30 @@ computed at publish time by code that can read the frozen scope, and a
 distributor outside it gets no alert row either — filtering only the socket
 would leave the same leak arriving more slowly.
 
+**The udhaar book stores no balance.** Every figure is derived from the entries,
+oldest debt first, by the same settlement the distributor ledger uses. A stored
+balance is a second source of truth that drifts the first time a correction is
+made, and in a credit book that drift is somebody's money. The reminder is
+composed and handed to the shopkeeper to send — the app never sends it, because
+sending on someone's behalf needs consent plumbing a prototype has no business
+inventing.
+
+**A scanned pack resolves offline.** The barcode rides on the inventory
+snapshot rather than sitting behind a lookup service, so a scan at the counter
+during a signal drop finds the row exactly as it would online. Normalisation is
+written twice, once on each side, because the two paths must agree on what
+`890-1234 567894` means or the fallback would find a different item. Where the
+shelf does not know a code, the catalogue is searched across every distributor —
+an EAN identifies a product globally, and a scanner that only worked on
+connected suppliers would look broken — but only the name, category and unit
+cross that line, never a pack price.
+
+**Half a kirana's shelf has no barcode at all.** Rice, dal and produce come out
+of sacks. The scan screen meets that case rather than implying every item is
+findable by camera, and the codes it does print are real EAN-13s with computed
+check digits, drawn as actual bars — which is also how the flow can be
+demonstrated on a laptop with no camera: point a phone at the screen.
+
 **Distributor visibility** is a connection-scoped consent, frozen at the moment
 it is granted. Computing the scope live from the wholesaler's catalogue would
 mean a grain trader could add `dairy` to their price list tomorrow and silently
@@ -254,8 +279,8 @@ requirement.
 | Prophet | scikit-learn gradient boosting | Prophet compiles a Stan backend and is fragile on current Python. Same feature semantics (seasonality + holiday regressors) behind a stable interface; swapping it in means changing `_fit_base_model` and nothing that calls it. |
 | Supabase Postgres | SQLite, Postgres-compatible models | Runs with no external service. UUID/JSONB/timestamptz are handled by portable column types, so moving is a `DATABASE_URL` change, not a migration. |
 | SQLite on device (drift/sqflite) | `shared_preferences` | The one durable store that behaves identically on Android and Flutter web. The queue holds tens of events, not a dataset; TC-S04's actual requirement — surviving a relaunch — is unaffected. |
-| Bhashini ASR | stubbed capture | Needs credentials this prototype does not have. Everything downstream — parsing, confidence, correction, commit — is the real pipeline; only `_capture` would be replaced. |
-| Camera + OCR engine | sample receipts | Same: the parser, confidence flagging, total reconciliation and expiry computation are the production path. |
+| Bhashini ASR | the device's own speech engine | `speech_to_text`, with the locale following the app's language. Bhashini needs credentials this prototype does not have; the device engine is real dictation with the same pipeline behind it. Where no engine answers — a desktop browser, a refused permission — the sample utterances take over and the screen says so in words. |
+| Cloud OCR engine | a real photo, read by a person | `image_picker` takes the photograph and it stays on screen as the reference, but no OCR key ships with this build, so the screen says the lines have to be typed rather than implying a photo became stock on its own. Everything after the text exists — extraction, confidence flagging, total reconciliation, expiry from category — is the production path. |
 | UPI / payment rail | a recorded ledger | The khata is real — charges on delivery, payments, terms, ageing and overdue netting. Settlement is the one step that needs a gateway and a licence, so recording a payment is a manual act by either side, which is also what most of this trade looks like today. |
 
 The design system is forked from **CarryO**, keeping its structure wholesale —

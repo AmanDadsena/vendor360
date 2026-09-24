@@ -16,12 +16,14 @@ import '../../data/models.dart';
 /// refusing to commit a low-confidence parse regardless of what the client asks
 /// for.
 ///
-/// Speech capture itself is stubbed. The TRD specifies Bhashini for ASR, which
-/// needs credentials this prototype does not have, so the orb produces a
-/// realistic utterance from a sample set and the transcript field accepts any
-/// text. Everything downstream — parsing, confidence, correction, commit — is
-/// the real pipeline running against the real backend, so swapping in Bhashini
-/// means replacing `_capture` and nothing else.
+/// Capture is the device's own speech engine, with the locale following the
+/// app's language. The TRD specifies Bhashini, which needs credentials this
+/// prototype does not have; swapping it in means replacing one implementation
+/// of `Dictation` and nothing else.
+///
+/// Where no engine answers — a desktop browser, a refused permission — the
+/// sample utterances take over and the screen says so. Everything downstream
+/// is the same pipeline either way, which is the point of the seam.
 class VoiceScreen extends ConsumerStatefulWidget {
   const VoiceScreen({super.key});
 

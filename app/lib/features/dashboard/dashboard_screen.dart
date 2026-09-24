@@ -412,6 +412,14 @@ class _Places extends StatelessWidget {
     final colors = context.v360.colors;
 
     final places = <({IconData icon, String label, String route, int? badge})>[
+      // First, because scanning a pack is the fastest way to log a sale —
+      // faster than speaking it, and much faster than finding the row.
+      (
+        icon: Icons.barcode_reader,
+        label: strings.scan,
+        route: '/scan',
+        badge: null,
+      ),
       (
         icon: Icons.document_scanner_outlined,
         label: strings.scanReceipt,
