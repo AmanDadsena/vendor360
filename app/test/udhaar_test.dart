@@ -7,6 +7,8 @@ import 'package:vendor360/app/providers.dart';
 import 'package:vendor360/data/api_client.dart';
 import 'package:vendor360/data/offline_queue.dart';
 import 'package:vendor360/data/udhaar_models.dart';
+import 'package:vendor360/features/udhaar/reminder.dart';
+import 'package:vendor360_core/vendor360_core.dart';
 
 /// The customer credit book on the client.
 ///
@@ -117,5 +119,39 @@ void main() {
           ),
       throwsA(isA<Object>()),
     );
+  });
+
+  group('the reminder the shopkeeper sends', () {
+    final since = DateTime(2026, 9, 12);
+
+    String message(AppLanguage language) => reminderMessage(
+          shopName: 'Kumar General Stores',
+          customerName: 'Suresh',
+          owed: Money.rupees(320),
+          since: since,
+          language: language,
+        );
+
+    test('names the shop, the amount and the date', () {
+      final text = message(AppLanguage.english);
+      expect(text, contains('Kumar General Stores'));
+      expect(text, contains('Suresh'));
+      expect(text, contains('₹320'));
+      expect(text, contains('12 Sep'));
+    });
+
+    test('is written in the shop language, since the customer reads it', () {
+      expect(message(AppLanguage.hindi), contains('बकाया'));
+      expect(message(AppLanguage.marathi), contains('बाकी'));
+      // The amount survives translation.
+      expect(message(AppLanguage.hindi), contains('₹320'));
+    });
+
+    test('asks rather than threatens', () {
+      final text = message(AppLanguage.english).toLowerCase();
+      expect(text, contains('please'));
+      expect(text, isNot(contains('immediately')));
+      expect(text, isNot(contains('legal')));
+    });
   });
 }
