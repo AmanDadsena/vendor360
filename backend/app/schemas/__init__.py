@@ -923,4 +923,33 @@ class UdhaarStatementOut(BaseModel):
     entries: list[UdhaarEntryOut]
 
 
+# ------------------------------------------------------------- reports
+class SoldItemOut(BaseModel):
+    sku_name: str
+    qty: float
+    unit: str
+    value: float
+
+
+class DayCloseOut(BaseModel):
+    """One shop-day, closed."""
+
+    on: date
+    sales_value: float
+    transaction_count: int
+    cash_in: float
+    wastage_value: float
+    restock_value: float
+    udhaar_given: float
+    udhaar_collected: float
+    low_stock_count: int
+    top_items: list[SoldItemOut]
+
+
+class SalesPointOut(BaseModel):
+    on: date
+    value: float
+    count: int
+
+
 TokenResponse.model_rebuild()
