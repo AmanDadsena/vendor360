@@ -5,8 +5,10 @@ import 'dart:math' as math;
 import 'package:vendor360_core/vendor360_core.dart';
 
 import 'api_client.dart';
+import 'demo_data.dart';
 import 'marketplace_models.dart';
 import 'offline_queue.dart';
+import 'udhaar_models.dart';
 
 /// Data access for the two-sided marketplace.
 ///
@@ -24,6 +26,57 @@ class MarketplaceRepository {
 
   final ApiClient api;
   final OfflineQueue queue;
+
+  // ======================================================= vendor: udhaar
+  /// The customer credit book.
+  ///
+  /// A read that degrades, like every other: a shopkeeper standing at the
+  /// counter with no signal still needs to know roughly who owes what, and
+  /// the seeded book says so rather than showing an error.
+  Future<UdhaarBook> udhaarBook() => withFallback(
+        () async {
+          final json = await api.get('/udhaar') as Map;
+          return UdhaarBook.fromJson(Map<String, dynamic>.from(json));
+        },
+        () => DemoData.udhaarBook,
+        label: 'udhaar',
+      );
+
+  Future<UdhaarStatement> udhaarStatement(String customerId) => withFallback(
+        () async {
+          final json = await api.get('/udhaar/$customerId') as Map;
+          return UdhaarStatement.fromJson(Map<String, dynamic>.from(json));
+        },
+        () => DemoData.udhaarStatement(customerId),
+        label: 'udhaar-statement',
+      );
+
+  /// Writes never degrade. A debt the shopkeeper was told was recorded, that
+  /// does not exist, is the failure this book cannot afford — it is the one
+  /// they will read back to the customer next week.
+  Future<Customer> addCustomer({required String name, String? phone}) =>
+      withoutFallback(() async {
+        final json = await api.post('/udhaar/customers', body: {
+          'name': name,
+          'phone': ?phone,
+        }) as Map;
+        return Customer.fromJson(Map<String, dynamic>.from(json));
+      });
+
+  Future<UdhaarStatement> recordUdhaar({
+    required String customerId,
+    required String kind,
+    required double amount,
+    String? note,
+  }) =>
+      withoutFallback(() async {
+        final json = await api.post('/udhaar/$customerId/entries', body: {
+          'kind': kind,
+          'amount': amount,
+          'note': ?note,
+        }) as Map;
+        return UdhaarStatement.fromJson(Map<String, dynamic>.from(json));
+      });
 
   // ==================================================== vendor: discovery
   Future<List<SupplierCard>> distributors({String? category}) => withFallback(

@@ -5,6 +5,7 @@ import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 
 import '../data/api_client.dart';
 import '../data/marketplace_models.dart';
+import '../data/udhaar_models.dart';
 import '../data/live_connection.dart';
 import '../data/marketplace_repository.dart';
 import '../data/models.dart';
@@ -529,6 +530,19 @@ final distDispatchProvider = FutureProvider.autoDispose<Dispatch>(
 /// pulse, which is a human action at a keyboard and not something worth a
 /// socket message. Re-read on every live event so the banner appears within
 /// one tick of the pulse starting.
+// ------------------------------------------------------------- udhaar
+/// The customer credit book. Refreshed after every entry, because the
+/// balance on the screen is the number a customer is standing there to hear.
+final udhaarBookProvider = FutureProvider.autoDispose<UdhaarBook>(
+  (ref) => ref.watch(marketplaceProvider).udhaarBook(),
+);
+
+final udhaarStatementProvider =
+    FutureProvider.autoDispose.family<UdhaarStatement, String>(
+  (ref, customerId) =>
+      ref.watch(marketplaceProvider).udhaarStatement(customerId),
+);
+
 final demoPulseProvider = FutureProvider<DemoStatus>(
   (ref) => ref.watch(marketplaceProvider).demoStatus(),
 );

@@ -4,6 +4,7 @@ import 'package:vendor360_core/vendor360_core.dart';
 import 'package:vendor360_ui/vendor360_ui.dart' show HeatCell, SupplierPin;
 
 import 'models.dart';
+import 'udhaar_models.dart';
 
 /// The seeded world every read falls back to.
 ///
@@ -346,6 +347,64 @@ class DemoData {
       build('d12', 'Onion', 'produce', 26, null, 0, seed: 4),
       build('d6', 'Rice', 'staples', 22, null, 0, weekend: 0.2, seed: 6),
     ];
+  }
+
+  // ------------------------------------------------------------- udhaar
+  /// The seeded credit book, matching what `seed.py` writes, so the offline
+  /// screen and the served one tell the same story.
+  static const List<({String id, String name, String? phone, double owed,
+      int days})> _debtors = <({String id, String name, String? phone,
+      double owed, int days})>[
+    (id: 'c1', name: 'Ramesh Kale', phone: null, owed: 240, days: 76),
+    (id: 'c2', name: 'Anita Joshi', phone: '9822011002', owed: 480, days: 34),
+    (id: 'c3', name: 'Deepak More', phone: '9822011005', owed: 180, days: 3),
+    (id: 'c4', name: 'Suresh Patil', phone: '9822011001', owed: 350, days: 2),
+    (id: 'c5', name: 'Farida Shaikh', phone: '9822011004', owed: 120, days: 1),
+  ];
+
+  static UdhaarBook get udhaarBook => UdhaarBook(
+        outstanding: Money.rupees(
+          _debtors.fold<double>(0, (sum, d) => sum + d.owed),
+        ),
+        customers: _debtors.length,
+        oldestDays: _debtors.map((d) => d.days).reduce((a, b) => a > b ? a : b),
+        rows: <UdhaarRow>[
+          for (final d in _debtors)
+            UdhaarRow(
+              customer: Customer(id: d.id, name: d.name, phone: d.phone),
+              owed: Money.rupees(d.owed),
+              daysOutstanding: d.days,
+              stale: d.days >= 30,
+            ),
+        ],
+      );
+
+  static UdhaarStatement udhaarStatement(String customerId) {
+    final row = udhaarBook.rows.firstWhere(
+      (r) => r.customer.id == customerId,
+      orElse: () => udhaarBook.rows.first,
+    );
+    final now = _today;
+    return UdhaarStatement(
+      customer: row.customer,
+      owed: row.owed,
+      daysOutstanding: row.daysOutstanding,
+      entries: <UdhaarEntry>[
+        UdhaarEntry(
+          id: '${row.customer.id}-e2',
+          kind: 'credit',
+          amount: row.owed,
+          occurredAt: now.subtract(Duration(days: row.daysOutstanding)),
+          note: 'atta, oil, biscuits',
+        ),
+        UdhaarEntry(
+          id: '${row.customer.id}-e1',
+          kind: 'payment',
+          amount: Money.rupees(200),
+          occurredAt: now.subtract(Duration(days: row.daysOutstanding + 6)),
+        ),
+      ],
+    );
   }
 
   static List<ExpiryEntry> get expiring {
